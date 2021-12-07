@@ -1,0 +1,132 @@
+.App-header{
+    font-family: Circular Std;
+    width: 100%;
+    top: 0;
+    background:linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 90%, rgba(173,179,199,1) 100%);
+    display: flex;
+    flex-direction: row;
+    height: fit-content;
+    justify-content: space-between;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 20%), 0 4px 5px 0 rgb(0 0 0 / 14%), 0 1px 10px 0 rgb(0 0 0 / 12%);
+}
+
+.header-left{
+    width: 50%;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    padding-left: 20px;
+}
+.ifesa-logo{
+    width: 150px;
+    height: 35px;
+}
+
+.ancon-logo{
+    width: 35px;
+    height: 35px;
+    margin-left: 10px;
+}
+
+.user-logo-container{
+    width: 35px;
+    height: 35px;
+    margin-right: 10px;
+    
+}
+.user-logo-container .spinner{
+    width: 36px;
+    height: 36px;
+    z-index: 1;
+    align-self: center;
+    position: relative;
+    border-radius: 50%;
+    background: linear-gradient(45deg,  #2bd2ff, #2bd2ff);
+    animation: multiColor 10s linear infinite;
+}
+
+.user-logo-container .spinner::after{
+    content: '';
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    background: linear-gradient(45deg,  #2bd2ff, #2bd2ff);
+    border-radius: 50%;
+    z-index: 1;
+    filter: blur(5px);
+}
+
+@keyframes multiColor{
+    0%{ filter: hue-rotate(0deg);}
+
+    100%{filter: hue-rotate(360deg);}
+}
+
+.user-logo-container img{
+    z-index: 1000;
+    position: relative;
+    transform: translateY(-34px);
+    width: 32px;
+    height: 32px;
+}
+
+.header-right{
+    width: 50%;
+    display: flex;
+    flex-direction: row;
+    justify-content:  flex-end;
+    padding-right: 20px;
+}
+
+.header-right-text{
+    color:  #282b39;
+    font-size: 18px;
+    line-height: 30px;
+    margin-right: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.header-user-container{
+    width: 40%;
+    min-width: 100px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.header-user{
+    color: #282b39;
+    font-size: 18px;
+    line-height: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+@media (max-width: 700px) {
+    
+    .header-user{
+        font-size: 12px;
+        line-height: 20px;
+    }
+
+    .header-right-text{
+        font-size: 12px;
+        line-height: 20px;
+    }
+}
+
+@media (max-width: 400px) {
+    .header-user{
+        display: none;
+    }
+    .header-user-container{
+        min-width: 50px;
+    }
+}

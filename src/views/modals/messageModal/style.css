@@ -1,0 +1,129 @@
+
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width:100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    transition: 0.3s;
+}
+
+.modal-main {
+    font-family: Circular Std;
+    font-size: 28px;
+    line-height: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    border-radius: 12px;
+    border: 1px solid #222531;
+    position:fixed;
+    background-color: #171924; 
+    
+    width: 40%;
+    min-width: 280px;
+    height: 200px;
+    top:50%;
+    left:50%;
+    transform: translate(-50%,-50%);
+}
+
+.modal-btn{
+    display: flex;
+    justify-content: center;
+}
+.btn{
+    width: 40%;
+}
+.display-block {
+    opacity: 1;
+    display: block;
+    transition: 0.3s;
+}
+
+.display-none {
+    opacity: 0;
+    display: none;
+    transition: 0.3s;
+}
+
+.error{
+    margin-top: 30px;
+    text-align: center;
+    color: #ff1f71;
+}
+
+.success{
+    margin-top: 30px;
+    text-align: center;
+    color: #16c784;
+}
+
+
+
+
+
+
+.message-modal-btn{
+    font-family: Circular Std;
+    font-weight: 500;
+    position: relative;
+    width: 40%;
+    color: #eff2f5;
+    height: 50px;
+    font-size: 12px;
+    border: 0px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  
+  .message-modal-btn a{
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    color: #eff2f5;
+    z-index: 1;
+    font-family: Circular Std;
+    letter-spacing: 1px;
+    text-decoration: none;
+    overflow: hidden;
+    transition: 0.3s;
+    backdrop-filter: blur(15px);
+  }
+  
+  .message-modal-btn::before{
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -5px;
+    width: 30px;
+    height: 10px;
+    border-radius: 10px;
+    transition: 0.3s;
+    transition-delay: 0s;
+  }
+  
+  .message-modal-btn:hover::before{
+    bottom: 0;
+    height: 50%;
+    width: 80%;
+    border-radius: 30px;
+  }
+  
+  .message-modal-btn::before{
+    background: #2bd2ff;
+    box-shadow: 0 0 5px #2bd2ff, 0 0 15px #2bd2ff, 0 0 30px #2bd2ff, 0 0 60px #2bd2ff;
+  }

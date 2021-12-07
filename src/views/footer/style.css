@@ -1,0 +1,61 @@
+.App-footer{
+    font-family: Circular Std;
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    background-color: #282b39;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: row;
+    height: fit-content;
+    justify-content: space-between;
+  }
+  
+  .footer-left{
+    width: 50%;
+    color: #eff2f5;
+    font-size: 18px;
+    line-height: 30px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+  
+  .footer-right{
+    width: 50%;
+    color: #eff2f5;
+    font-size: 16px;
+    line-height: 30px;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+    
+    justify-content: space-evenly;
+  }
+  .footer-right-text{
+    margin-top: 15px;
+    letter-spacing: 2px;
+  }
+  
+  .heart-img{
+    width: 15px;
+    height: 15px;
+  }
+
+@media (max-width: 800px) {
+    .footer-left{
+      font-size: 8px;
+      line-height: 20px;
+      
+    }
+    .footer-right{
+      flex-direction: column;
+      font-size: 7px;
+      line-height: 20px;
+    }
+    .footer-right-text{
+      margin-top: 0px;
+    }
+  }
