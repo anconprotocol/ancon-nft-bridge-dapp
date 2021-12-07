@@ -13,36 +13,38 @@ function App() {
 
 
   return (
-    <div className="App">
-      <Header></Header>
-      <body className="App-body">
-        <BrowserRouter>
-          <Routes>
-            <Route 
-              exact
-              path="/"
-              name="Home"
-              element={<Products/>}
-            />
-            <Route 
-              exact
-              path="/Transfer"
-              name="Transfer"
-              element={<Transfer/>}
-            />
-            <Route 
-              exact
-              path="/Create"
-              name="Create"
-              element={<Create/>}
-            />
-            
-          </Routes>
-        </BrowserRouter>
-      </body>
-      
-      <Footer></Footer>
-    </div>
+    <BrowserRouter>
+      <div className="App">
+        <Header></Header>
+        <body className="App-body">
+          
+            <Routes>
+              <Route 
+                exact
+                path="/"
+                name="Home"
+                element={<Products/>}
+              />
+              <Route 
+                exact
+                path="/Transfer"
+                name="Transfer"
+                element={<Transfer/>}
+              />
+              <Route 
+                exact
+                path="/Create"
+                name="Create"
+                element={<Create/>}
+              />
+              
+            </Routes>
+          
+        </body>
+        
+        <Footer></Footer>
+      </div>
+    </BrowserRouter>
 
   );
 }

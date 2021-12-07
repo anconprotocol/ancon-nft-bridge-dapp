@@ -13,10 +13,10 @@ function Products() {
     return(
         <div className="Products-body">
             {
-                transfer == true? <Navigate exact from="/" to="/Transfer" /> : null  
+                transfer == true? <Navigate exact to="/Transfer" /> : null  
             }
             {
-                create == true? <Navigate exact from="/" to="/Create" /> : null 
+                create == true? <Navigate exact to="/Create" /> : null 
             }
             
             <div className="products-container">
