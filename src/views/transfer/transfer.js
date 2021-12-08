@@ -12,34 +12,33 @@ function Transfer() {
     return (
         <div className="transfer-body">
             <div className="card">
-            <div className="card-title">
-                <span>Owner swap</span>
-                <div class="check-btn" onClick= {() => setInfoModal(true)}><a>Check CID </a></div>
+                <div className="card-title">
+                    <span>Owner swap</span>
+                    <div class="check-btn" onClick= {() => setInfoModal(true)}><a>Check CID </a></div>
 
-            </div>
-            <div className="card-body">
-                <a className="input-label">NFT-CID</a>
-                <input 
-                type="text" 
-                className="card-input"
-                onChange={(e)=>{setNewCid(e.target.value)}}> 
-                </input>
-                <a className="input-label">New Owner</a>
-                <input 
-                type="text" 
-                className="card-input">
-                </input>
-                <div class="container">
-                <div 
-                    class="card-btn"
-                    onClick= {() => setMessageModal(true)}
-                >
-                    <a>Send transaction</a>
                 </div>
+                <div className="card-body">
+                    <a className="input-label">NFT-CID</a>
+                    <input 
+                    type="text" 
+                    className="card-input"
+                    onChange={(e)=>{setNewCid(e.target.value)}}> 
+                    </input>
+                    <a className="input-label">New Owner</a>
+                    <input 
+                    type="text" 
+                    className="card-input">
+                    </input>
+                    <div class="container">
+                    <div 
+                        class="card-btn"
+                        onClick= {() => setMessageModal(true)}
+                    >
+                        <a>Send transaction</a>
+                    </div>
+                    </div>
+                    
                 </div>
-                
-            </div>
-
             </div>
             <MessageModal
                 show={openMessageModal}

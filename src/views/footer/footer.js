@@ -13,6 +13,7 @@ const Footer = () => {
             </div>
             <div className="footer-right">
                 <span class="footer-right-text">INQUIRY BUSINESS SOLUTIONS</span>
+                
                 <span class="footer-right-text">SUPPORT</span>
             </div>
         </footer>
