@@ -181,8 +181,15 @@ function Create() {
                 </div>
                 {step==1?
                     <div className="create-card-body">
-                        <a className="input-label">Image</a>
-                        <a className="input-file" onClick={clickInput}>Upload Image</a>
+
+                        <a className="input-file" onClick={clickInput}>Select Image</a>
+                        {localImage!=null?
+                            <img
+                                className="nft-img"
+                                src={`data:image/jpeg;base64,${localImage}`}
+                                style={{ maxWidth: "120px" }}
+                            />
+                        :null}
                         <input 
                             type="file"
                             onChange={onImageChange}
@@ -237,12 +244,16 @@ function Create() {
                 }
                 
             </div>
-            <MessageModal
-                show={openMessageModal}
-                handleClose={() => returnToHome()}
-                type='success'
-            >
-            </MessageModal>
+            {openMessageModal?
+                <CreateModal
+                    show={openMessageModal}
+                    handleClose={() => returnToHome()}
+                    message='Minting NFT...'
+                    step={step}
+                >
+                </CreateModal>
+                :null
+            }
             {openCreateModal?
                 <CreateModal
                     show={openCreateModal}

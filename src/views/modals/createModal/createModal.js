@@ -21,6 +21,9 @@ const CreateModal = ({ handleClose, show, step, message }) => {
             if(step == 1 && localMessage=='Creating metadata...'){
                 setLoading(false)
             }
+            if(step == 2){
+                setLoading(false)
+            }
         }, 3000);
         return () => clearTimeout(timer);
     }, [localMessage]);
