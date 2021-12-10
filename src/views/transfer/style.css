@@ -216,4 +216,34 @@
     background: #2bd2ff;
     box-shadow: 0 0 5px #2bd2ff, 0 0 15px #2bd2ff, 0 0 30px #2bd2ff, 0 0 60px #2bd2ff;
   }
+
+  .info-modal-body{
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.modal-label{
+  margin-top: 20px;
+  color: #cfd6e4;
+  text-align: left;
+  width: 100%;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.info-text{
+  color: #ffffff;
+  text-align: left;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+@media (max-width: 700px) {
+  .info-text{
+    font-size: 15px;
+  }
+}
   

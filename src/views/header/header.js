@@ -25,7 +25,7 @@ const Header = () => {
                         <img  src={userLogo}></img>
                     </div>
                    
-                    <span class="header-user">Jhon Doe</span>
+                    <span class="header-user">Kendall Kant</span>
                 </div>
             </div>
         </header>

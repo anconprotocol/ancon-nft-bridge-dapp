@@ -26,7 +26,7 @@ function Products() {
                 </div>
                 <div className="products-card" onClick= {()=>{goTransfer(true)}}>
                     <img className="products-icon" src={transferIcon}></img>
-                    <span className="products-name">Owner Swap</span>
+                    <span className="products-name">CrossChain Transfer</span>
                 </div>
             </div>
         </div>
