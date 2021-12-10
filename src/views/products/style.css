@@ -18,18 +18,39 @@
     border-radius: 14px;
     width: 180px;
     padding: 24px;
-    background-color: #282b39;
+    background: #282b39;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-content: center;
     min-height: fit-content;
+    overflow: hidden;
     transition: 0.3s;
+    backdrop-filter: blur(15px);
 }
+
+.products-card::before{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255,255,255, 0.15),transparent);
+    transform: skewX(45deg) translateX(-30%);
+    transition: 0.3s;
+    
+  }
 
 .products-card:hover{
     background-color: #713c94;
+    box-shadow: 0 0 5px #713c94, 0 0 15px #713c94, 0 0 30px #713c94, 0 0 60px #713c94;
+
+}
+
+.products-card:hover::before{
+    transform: skewX(45deg) translateX(200%);
 }
 
 

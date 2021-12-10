@@ -181,8 +181,10 @@ function Create() {
                 </div>
                 {step==1?
                     <div className="create-card-body">
-
-                        <a className="input-file" onClick={clickInput}>Select Image</a>
+                        <div className="file-container">
+                            <a className="input-file" onClick={clickInput}>Select Image</a>
+                        </div>
+                        
                         {localImage!=null?
                             <img
                                 className="nft-img"

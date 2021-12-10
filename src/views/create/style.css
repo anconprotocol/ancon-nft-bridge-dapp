@@ -105,6 +105,7 @@
     align-self: center;
     margin-top: 20px;
   }
+
   .input-label{
     color: #a1a7bb;
     font-size: 14px;
@@ -113,12 +114,32 @@
     width: 100%;
     margin-top: 10px;
   }
+  .file-container{
+    width: 200px;
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    justify-content: center;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    transition: 0.3s;
+  }
+  .file-container:hover{
+    background-color: #713c94;
+    box-shadow: 0 0 5px #713c94, 0 0 15px #713c94, 0 0 30px #713c94, 0 0 60px #713c94;
+  }
+  .file-container:hover .input-file{
+    letter-spacing: 2px;
+  }
   .input-file{
     cursor: pointer;
-    text-decoration: underline;
     color: #eff2f5;
     font-size: 20px;
     line-height: 21px;
+    letter-spacing: 1px;
+    transition: 0.3s;
   }
   
   .create-card-input{
