@@ -17,9 +17,12 @@ const SwapModal = ({ handleClose, show, message }) => {
     useEffect(() => {
         const timer = setTimeout(() => {
             if(step == 1 && localMessage=='loading...'){
-                setMessage("Creating metadata...")
+                setMessage("Requesting proof signing...")
             }
-            if(step == 1 && localMessage=='Creating metadata...'){
+            if(step == 1 && localMessage=='Requesting proof signing...'){
+                setMessage("Swap mint with proof...")
+            }
+            if(step == 1 && localMessage=='Swap mint with proof...'){
                 setLoading(false)
             }
         }, 3000);
