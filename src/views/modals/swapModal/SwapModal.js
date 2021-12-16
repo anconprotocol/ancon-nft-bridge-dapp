@@ -2,11 +2,9 @@ import React, {useState,useEffect} from 'react'
 import './style.css';
 
 
-
-const SwapModal = ({ handleClose, show, message }) => {
+const SwapModal = ({ handleClose, show, message, step }) => {
     const [loading, setLoading] = useState(true)
     const [localMessage, setMessage] = useState(message)
-    const [step, setStep] = useState(1)
     const showHideClassName = show==true ? "swap-modal display-block" : "modal display-none";
     const response={
         owner: 'Jhon Doe',
@@ -15,14 +13,18 @@ const SwapModal = ({ handleClose, show, message }) => {
 
 
     useEffect(() => {
+        console.log("step= ", step)
         const timer = setTimeout(() => {
-            if(step == 1 && localMessage=='loading...'){
+            if(step == 1 && localMessage=='Requesting NFT info...'){
+                setLoading(false)
+            }
+            if(step == 2 && localMessage=='Loading...'){
                 setMessage("Requesting proof signing...")
             }
-            if(step == 1 && localMessage=='Requesting proof signing...'){
+            if(step == 2 && localMessage=='Requesting proof signing...'){
                 setMessage("Swap mint with proof...")
             }
-            if(step == 1 && localMessage=='Swap mint with proof...'){
+            if(step == 2 && localMessage=='Swap mint with proof...'){
                 setLoading(false)
             }
         }, 3000);

@@ -16,6 +16,7 @@
 
 .products-card{
     border-radius: 14px;
+    position:relative;
     width: 180px;
     padding: 24px;
     background: #282b39;

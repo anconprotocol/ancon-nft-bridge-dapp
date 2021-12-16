@@ -36,8 +36,10 @@ function Create() {
     }
 
     const nextStep = () => {
-        setStep(2)
+        var tempStep = step
+        setStep(tempStep+1)
         setCreateModal(false)
+        setMessageModal(false)
     }
 
     const returnToHome = () => {
@@ -244,12 +246,53 @@ function Create() {
                     </div>
                     :null
                 }
+                {step==3?
+                    <div className="create-card-body">
+                        <a className="input-label">NFT Name</a>
+                        <span class="info-text">
+                            {name}
+                        </span>
+
+                        <a className="input-label">Description</a>
+                        <span class="info-text">
+                            {description}
+                        </span>
+
+                        <a class="input-label">CID</a>
+                        <span class="info-text">
+                            {"QmdmQXB2mzChmMeKY47C43LxUdg1NDJ5M"}
+                        </span>
+
+                        <a class="input-label">OWNER</a>
+                        <span class="info-text">
+                            {"z8mWaJHXieAVxxLagBpdaNWFEBKVWmMiE"}
+                        </span>
+
+                        <img
+                            className="nft-img"
+                            src={`data:image/jpeg;base64,${localImage}`}
+                            style={{ maxWidth: "120px" }}
+                        />
+
+                        <div class="create-container">
+                            <div 
+                                class="create-card-btn"
+                                onClick= {() => goHome(true)}
+                            >
+                                <a>Continue</a>
+                            </div>
+                        </div>
+
+                    
+                    </div>
+                    :null
+                }
                 
             </div>
             {openMessageModal?
                 <CreateModal
                     show={openMessageModal}
-                    handleClose={() => returnToHome()}
+                    handleClose={() => nextStep()}
                     message='Minting NFT...'
                     step={step}
                 >

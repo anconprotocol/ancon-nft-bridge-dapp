@@ -104,6 +104,9 @@
     display: flex;
     align-self: center;
     margin-top: 20px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    box-shadow: 0 15px 20px rgba(0,0,0,0.2);
   }
 
   .input-label{
@@ -112,7 +115,7 @@
     line-height: 21px;
     text-align: left;
     width: 100%;
-    margin-top: 10px;
+    margin-top: 20px;
   }
   .file-container{
     width: 200px;
@@ -180,6 +183,9 @@
     height: 50px;
     margin: 20px;
     cursor: pointer;
+    box-shadow: 0 15px 20px rgba(0,0,0,0.2);
+    border-radius: 12px;
+    transition: 0.3s;
   }
   
   .create-card-btn a{
@@ -190,18 +196,19 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 15px 20px rgba(0,0,0,0.2);
+    position: absolute;
     border-top: 1px solid rgba(255,255,255,0.1);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     border-radius: 12px;
     color: #eff2f5;
-    z-index: 1;
     font-family: Circular Std;
     letter-spacing: 1px;
     text-decoration: none;
     overflow: hidden;
+    overflow: -moz-hidden-unscrollable;
     transition: 0.3s;
     backdrop-filter: blur(15px);
+    
   }
   
   .create-card-btn:hover a{
@@ -222,6 +229,7 @@
   
   .create-card-btn:hover a::before{
     transform: skewX(45deg) translateX(200%);
+    opacity: 0;
   }
   
   .create-card-btn::before{
@@ -245,6 +253,10 @@
     transition-delay: 0.3s;
   }
   
+/*   .create-card-btn:hover{
+    background: #2693b0;
+    box-shadow: 0 0 5px #2bd2ff, 0 0 15px #2bd2ff, 0 0 30px #2bd2ff;
+  } */
   .create-card-btn::before{
     background: #2bd2ff;
     box-shadow: 0 0 5px #2bd2ff, 0 0 15px #2bd2ff, 0 0 30px #2bd2ff, 0 0 60px #2bd2ff;
