@@ -239,6 +239,22 @@
     height: 50px;
     cursor: pointer;
   }
+  .back-btn-moz{
+    border-radius: 14px;
+    position:relative;
+    width: 100%;
+    min-width: 150px;
+    height: 50px;
+    background: #282b39;
+    box-shadow: 0 15px 20px rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+    align-self: center;
+    overflow: hidden;
+    transition: 0.3s;
+    backdrop-filter: blur(15px);
+  }
   .back-btn a{
     top: 0;
     left: 0;
@@ -260,8 +276,29 @@
     transition: 0.3s;
     backdrop-filter: blur(15px);
   }
+  .back-btn-moz a{
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #eff2f5;
+    z-index: 1;
+    font-family: Circular Std;
+    letter-spacing: 1px;
+    text-decoration: none;
+    overflow: hidden;
+    transition: 0.3s;
+  }
   .back-btn:hover a{
-    letter-spacing: 3px;
+    letter-spacing: 2px;
+  }
+  .back-btn-moz:hover a{
+    transition-delay: 0.3s;
+    color: #282b39;
+    letter-spacing: 2px;
   }
   
   .back-btn a::before{
@@ -305,6 +342,27 @@
     background: #ff1f71;
     box-shadow: 0 0 5px #ff1f71, 0 0 15px #ff1f71, 0 0 30px #ff1f71, 0 0 60px #ff1f71;
   }
+  .back-btn-moz::before{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255,255,255, 0.15),transparent);
+    transform: skewX(45deg) translateX(-30%);
+    transition: 0.3s; 
+  }
+
+  .back-btn-moz:hover{
+      transition-delay: 0.3s;
+      background-color: #ff1f71;
+      box-shadow: 0 0 5px #ff1f71, 0 0 15px #ff1f71, 0 0 30px #ff1f71, 0 0 60px #ff1f71;
+  }
+
+  .back-btn-moz:hover::before{
+      transform: skewX(45deg) translateX(200%);
+  }
 
 
   .card-btn{
@@ -317,7 +375,30 @@
     margin: 20px;
     cursor: pointer;
   }
+  .card-btn-moz{
+    position: relative;
+    box-sizing: border-box;
+    align-self: center;
+    width: 60%;
+    min-width: 200px;
+    height: 50px;
+    margin: 20px;
+    cursor: pointer;
+    background: #282b39;
+    border-radius: 14px;
+    box-shadow: 0 15px 20px rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    transition: 0.3s;
+    backdrop-filter: blur(15px);
+  }
+
   .swap-card-body-buttons .container .card-btn{
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  .swap-card-body-buttons .container .card-btn-moz{
     width: 100% !important;
     margin: 0 !important;
   }
@@ -343,9 +424,31 @@
     transition: 0.3s;
     backdrop-filter: blur(15px);
   }
+
+  .card-btn-moz a{
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #eff2f5;
+    z-index: 1;
+    font-family: Circular Std;
+    letter-spacing: 1px;
+    text-decoration: none;
+    overflow: hidden;
+    transition: 0.3s;
+  }
   
   .card-btn:hover a{
-    letter-spacing: 3px;
+    letter-spacing: 2px;
+  }
+  .card-btn-moz:hover a{
+    letter-spacing: 2px;
+    color: #282b39;
+    transition-delay: 0.3s;
   }
   
   .card-btn a::before{
@@ -390,12 +493,57 @@
     box-shadow: 0 0 5px #2bd2ff, 0 0 15px #2bd2ff, 0 0 30px #2bd2ff, 0 0 60px #2bd2ff;
   }
 
+
+  .card-btn-moz::before{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255,255,255, 0.15),transparent);
+    transform: skewX(45deg) translateX(-30%);
+    transition: 0.3s; 
+  }
+
+  .card-btn-moz:hover{
+      transition-delay: 0.3s;
+      background-color: #2bd2ff;
+      box-shadow: 0 0 5px #2bd2ff, 0 0 15px #2bd2ff, 0 0 30px #2bd2ff, 0 0 60px #2bd2ff;
+  }
+
+  .card-btn-moz:hover::before{
+      
+      transform: skewX(45deg) translateX(200%);
+  }
+
   .info-modal-body{
     display: flex;
     flex-direction: column;
     margin-top: 20px;
     margin-bottom: 20px;
-}
+  }
+
+  .products-card{
+    border-radius: 14px;
+    position:relative;
+    width: 180px;
+    padding: 24px;
+    background: #282b39;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    min-height: fit-content;
+    overflow: hidden;
+    transition: 0.3s;
+    backdrop-filter: blur(15px);
+  }
+
+
+
+
 
 .modal-label{
   margin-top: 20px;
@@ -435,6 +583,9 @@
     width: 100%;
   }
   .swap-card-body-buttons .container .card-btn{
+    min-width: 160px;
+  }
+  .swap-card-body-buttons .container .card-btn-moz{
     min-width: 160px;
   }
 }

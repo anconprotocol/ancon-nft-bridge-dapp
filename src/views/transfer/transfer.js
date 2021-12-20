@@ -12,6 +12,7 @@ function Transfer() {
     const [inputCid, setNewCid] = useState('')
     const [modalMessage, setMessage] = useState('')
     const [localStep, setStep] = useState(1)
+    const [fireFoxClass, isFireFox] = useState('')
 
 
     const fetchNft = () => {
@@ -25,6 +26,7 @@ function Transfer() {
     }
 
     const back = () => {
+        window.scrollTo(0, 0)
         var tempStep = localStep
         setStep(tempStep-1)
     }
@@ -35,6 +37,13 @@ function Transfer() {
         setFetchModal(false)
     }
 
+    
+    useEffect(() => {
+        var firefox = typeof InstallTrigger !== 'undefined';
+        if(firefox == true){
+            isFireFox('-moz')
+        }
+    }, [])
     return (
         <div className="transfer-body">
             {localStep==1?
@@ -54,7 +63,7 @@ function Transfer() {
                             </input>
                             <div class="container">
                                 <div
-                                    class="card-btn"
+                                    class={`card-btn${fireFoxClass}`}
                                     onClick={() => fetchNft()}
                                 >
                                     <a>Check NFT</a>
@@ -142,7 +151,7 @@ function Transfer() {
                         <div className="swap-card-body-buttons">
                             <div class="container">
                                 <div
-                                    class="back-btn"
+                                    class={`back-btn${fireFoxClass}`}
                                     onClick={() => back()}
                                 >
                                     <a>{"< Back"}</a>
@@ -150,7 +159,7 @@ function Transfer() {
                             </div>
                             <div class="container">
                                 <div
-                                    class="card-btn"
+                                    class={`card-btn${fireFoxClass}`}
                                     onClick={() => send()}
                                 >
                                     <a>Send transaction</a>
