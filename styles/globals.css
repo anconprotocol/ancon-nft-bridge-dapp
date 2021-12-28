@@ -1,16 +1,309 @@
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .animated-underline {
+    background-image: linear-gradient(#33333300, #33333300),
+      linear-gradient(to right, #c084fc, #7e22ce);
+    background-size: 100% 2px, 0 2px;
+    background-position: 100% 100%, 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.3s ease;
+  }
+  .animated-underline:hover,
+  .animated-underline:focus {
+    background-size: 0 2px, 100% 2px;
+  }
+  /* scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(65,71,92,1);
 }
 
-a {
-  color: inherit;
+::-webkit-scrollbar-thumb {
+  background: rgba(37,37,46,1);
+  border-radius: 10px;
+  border: 3px solid rgba(65,71,92,1);
+}
+::-webkit-scrollbar-corner{
+  background: rgba(65,71,92,1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9a21b3;
+}
+}
+
+@layer components {
+  .card-button {
+    @apply bg-primary-500 shadow-lg md:w-72 md:h-40 rounded-lg p-2 my-2 w-60 justify-self-center cursor-pointer hover:shadow-xl hover:shadow-indigo-500/40 hover:bg-primary-600 transition-all ease-out duration-150 hover:scale-105 active:scale-110 select-none;
+  }
+  
+
+.create-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width:100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  transition: 0.3s;
+}
+
+.create-modal-main {
+  font-family: Circular Std;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #222531;
+  position:fixed;
+  background-color: #171924; 
+  width: 300px;
+  height: fit-content;
+  top:50%;
+  left:50%;
+  transform: translate(-50%,-50%);
+}
+
+.create-modal-header{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.create-modal-header span{
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.create-modal-body{
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.modal-label{
+  margin-top: 10px;
+  color: #cfd6e4;
+  text-align: left;
+  width: 100%;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.create-modal-text{
+  color: #16c784;
+  text-align: center;
+  width: 100%;
+  font-size: 20px;
+  font-weight: 500;
+  margin-top: 20px;
+}
+
+.create-modal-message{
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.create-modal-btn{
+  display: flex;
+  justify-content: center;
+}
+.btn{
+  width: 40%;
+}
+.display-block {
+  opacity: 1;
+  display: block;
+  transition: 0.3s;
+}
+
+.display-none {
+  opacity: 0;
+  display: none;
+  transition: 0.3s;
+}
+
+.error{
+  margin-top: 30px;
+  text-align: center;
+  color: #ff1f71;
+}
+
+.success{
+  margin-top: 30px;
+  text-align: center;
+  color: #16c784;
+}
+
+
+.create-modal-btn{
+  font-family: Circular Std;
+  font-weight: 500;
+  position: relative;
+  width: 60px;
+  color: #eff2f5;
+  height: 30px;
+  font-size: 12px;
+  border: 0px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+
+.create-modal-btn a{
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  color: #eff2f5;
+  z-index: 1;
+  font-family: Circular Std;
+  letter-spacing: 1px;
   text-decoration: none;
+  overflow: hidden;
+  transition: 0.3s;
+  backdrop-filter: blur(15px);
 }
 
-* {
-  box-sizing: border-box;
+.create-modal-btn::before{
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -5px;
+  width: 30px;
+  height: 10px;
+  border-radius: 10px;
+  transition: 0.3s;
+  transition-delay: 0s;
+}
+
+.create-modal-btn:hover::before{
+  bottom: 0;
+  height: 50%;
+  width: 80%;
+  border-radius: 30px;
+}
+
+.create-modal-btn::before{
+  background: #ff1f71;
+  box-shadow: 0 0 5px #ff1f71, 0 0 15px #ff1f71, 0 0 30px #ff1f71, 0 0 60px #ff1f71;
+}
+
+
+.create-modal-loader{
+  align-self: center;
+  position: relative;
+  width: 75px;
+  height: 75px;
+  margin-top: 25px;
+  margin-bottom: 25px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, transparent, transparent 40%, #2bd2ff);
+  animation: spin 1.5s linear infinite;
+}
+@keyframes spin{
+  0%{transform: rotate(0deg);}
+  100%{transform: rotate(360deg);}
+}
+
+.create-modal-loader::before{
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  background: #222531;
+  border-radius: 50%;
+  z-index: 1000;
+}
+.create-modal-loader::after{
+  content: '';
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  background: linear-gradient(45deg, transparent, transparent 40%, #2bd2ff);
+  border-radius: 50%;
+  z-index: 1;
+  filter: blur(15px);
+}
+.App-footer{
+  font-family: Circular Std;
+  position: relative;
+  width: 100%;
+  bottom: 0;
+  background-color: #282b39;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: row;
+  height: fit-content;
+  justify-content: space-between;
+}
+
+.footer-left{
+  width: 50%;
+  color: #eff2f5;
+  font-size: 18px;
+  line-height: 30px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.footer-right{
+  width: 50%;
+  color: #eff2f5;
+  font-size: 16px;
+  line-height: 30px;
+  padding-right: 20px;
+  display: flex;
+  flex-direction: row;
+  text-align: center;
+  
+  justify-content: space-evenly;
+}
+.footer-right-text{
+  margin-top: 15px;
+  letter-spacing: 2px;
+}
+
+.heart-img{
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 800px) {
+  .footer-left{
+    font-size: 8px;
+    line-height: 20px;
+    
+  }
+  .footer-right{
+    flex-direction: column;
+    font-size: 7px;
+    line-height: 20px;
+  }
+  .footer-right-text{
+    margin-top: 0px;
+  }
+}
 }
