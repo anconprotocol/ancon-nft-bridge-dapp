@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-
+declare let window: any;
 //custom hook that check the provider
 function useProvider() {
   if (typeof window !== "undefined") {

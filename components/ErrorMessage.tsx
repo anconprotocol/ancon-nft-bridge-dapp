@@ -2,7 +2,7 @@ import { messagePrefix } from "@ethersproject/hash";
 
 interface ErrorMessageProps {
   message: string;
-  show: string;
+  show: boolean;
 }
 const ErrorMessage = ({ message, show }: ErrorMessageProps) => {
   return (
