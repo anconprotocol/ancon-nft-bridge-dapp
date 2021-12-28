@@ -37,6 +37,30 @@ function Create() {
   const clickInput = () => document.getElementById("nft-img").click();
 
   //step 0 //
+  // get transaction
+  const getTransaction = async () => {
+    console.log("getting transaction");
+    try {
+      const rawList = await fetch(
+        `https://api.etherscan.io/api?module=account&action=txlist&address=${"0xf4b935043eb0700af49ed94e13d4d5c6988984f1"}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${
+          process.env.NEXT_PUBLIC_ETHER_KEY
+        }`
+      );
+      const list = await rawList.json();
+      let item;
+      for (item of list.result) {
+        if (
+          item.from == "0xf4b935043eb0700af49ed94e13d4d5c6988984f1" ||
+          item.from == address
+        ) {
+          return item.hash;
+        }
+        continue;
+      }
+    } catch (error) {
+      console.log("no transaction found");
+    }
+  };
   // get did
   const handleProof = (pubkey: string) => {
     const base58Encode = ethers.utils.base58.encode(pubkey);
@@ -57,8 +81,9 @@ function Create() {
           requestOptions
         );
         const data = await rawdata.json();
-        const cid = await Object.values(data.cid)[0];
-        console.log("post /did/web==>", data);
+        console.log("post raw", data);
+        const cid = await Object?.values(data.cid)[0];
+        console.log("post /did/web==>", data, cid);
         const rawGetReq = await fetch(
           `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
         );
@@ -74,6 +99,7 @@ function Create() {
         // console.log('did',JSON.parse(didRequest))
 
         // post the proof
+        const history = await Web3.utils;
         const rawProof = await fetch(
           "https://api.ancon.did.pa/v0/proofs",
           {
@@ -88,7 +114,7 @@ function Create() {
         const proof = await rawProof.json();
 
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/proofs/get/${getReq.id}`
+          `https://api.ancon.did.pa/v0/proofs/get/${cid}`
         );
         const GetProof = await rawGetProof.json();
         console.log("post /proofs ===>", proof);
@@ -101,6 +127,7 @@ function Create() {
       console.log("err", error);
     }
   };
+
   //get the public key
   const getPublicKey = async () => {
     if (transactionHash.transaction === "") {
@@ -118,9 +145,8 @@ function Create() {
     }
     try {
       const provider = ethers.getDefaultProvider();
-      const transaction: any = await provider.getTransaction(
-        transactionHash.transaction
-      );
+      const trans = await getTransaction();
+      const transaction: any = await provider.getTransaction(trans);
       // join the signature
       const sig = ethers.utils.joinSignature({
         r: transaction.r,
@@ -242,7 +268,8 @@ function Create() {
           requestOptions
         );
         const metadata = await rawMetadata.json();
-        const id: any = await Object.values(metadata.cid)[0];
+        console.log("metadata", metadata);
+        const id: any = await Object?.values(metadata.cid)[0];
         setTokenCid(id);
         const dagRequest = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${id}/`
