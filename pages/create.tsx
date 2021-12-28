@@ -1,8 +1,8 @@
 import { useRouter } from "next/router";
+import React from "react";
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 // components
-import Footer from "../components/Footer";
 import Header from "../components/Header";
 import ErrorMessage from "../components/ErrorMessage";
 
@@ -22,6 +22,7 @@ function Create() {
   const [localImage, setLocalImage] = useState<any | null>(null);
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
+  const [error1, setError1] = useState(false);
   const [name, setName] = useState<string | null>("");
   const [description, setDescription] = useState<string | null>("");
   const [cid, setCid] = useState<string>("");
@@ -33,9 +34,7 @@ function Create() {
   });
   const router = useRouter();
   const provider = useProvider();
-  const clickInput = () => (
-    document.getElementById("nft-img").click()
-  )
+  const clickInput = () => document.getElementById("nft-img").click();
 
   //step 0 //
   // get did
@@ -43,7 +42,7 @@ function Create() {
     const base58Encode = ethers.utils.base58.encode(pubkey);
     //post to get the did
     const payload = {
-      domainName: "cerroancon-7",
+      domainName: transactionHash.name,
       pub: base58Encode,
     };
     const requestOptions = {
@@ -59,13 +58,13 @@ function Create() {
         );
         const data = await rawdata.json();
         const cid = await Object.values(data.cid)[0];
-
+        console.log("post /did/web==>", data);
         const rawGetReq = await fetch(
-          `https://api.ancon.did.pa/user/cerroancon-7/did.json`
+          `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
         );
         const getReqParse = await rawGetReq.json();
         const getReq = await JSON.parse(getReqParse);
-        console.log("did.json", getReq);
+        console.log("get user/domain/did.json ==>>", getReq);
 
         // // another way to request the did
         // const rawDidRequest = await fetch(
@@ -92,8 +91,8 @@ function Create() {
           `https://api.ancon.did.pa/v0/proofs/get/${getReq.id}`
         );
         const GetProof = await rawGetProof.json();
-        console.log("post proof", proof);
-        console.log("get proof", GetProof);
+        console.log("post /proofs ===>", proof);
+        console.log("get /proofs/key ===>", GetProof);
       };
 
       getDid();
@@ -107,10 +106,19 @@ function Create() {
     if (transactionHash.transaction === "") {
       setError(true);
       return;
+    } else {
+      setError(false);
+    }
+
+    if (transactionHash.name === "") {
+      setError1(true);
+      return;
+    } else {
+      setError1(false);
     }
     try {
       const provider = ethers.getDefaultProvider();
-      const transaction:any = await provider.getTransaction(
+      const transaction: any = await provider.getTransaction(
         transactionHash.transaction
       );
       // join the signature
@@ -179,6 +187,7 @@ function Create() {
     return apikey;
   };
 
+  // step3 //
   // uploads the file to the ipfs
   const handleUpload = async () => {
     try {
@@ -212,6 +221,7 @@ function Create() {
     }
   };
 
+  // step4 //
   // creates the metadata
   const createMetadata = () => {
     const payload = {
@@ -359,8 +369,26 @@ function Create() {
                   value={transactionHash.transaction}
                 ></input>
                 <ErrorMessage
-                  message="Please insert the hash"
+                  message="Please insert the hash or try with another one"
                   show={error}
+                />
+                <a className="text-gray-600 text-sm font-bold mt-4">
+                  Domain Name
+                </a>
+                <input
+                  type="text"
+                  className="bg-gray-100 rounded-sm h-10 pl-2"
+                  onChange={(e) => {
+                    setTransactionHash({
+                      ...transactionHash,
+                      name: e.target.value,
+                    });
+                  }}
+                  value={transactionHash.name}
+                ></input>
+                <ErrorMessage
+                  message="Please provide a Domain Name"
+                  show={error1}
                 />
               </div>
               <div className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer">
