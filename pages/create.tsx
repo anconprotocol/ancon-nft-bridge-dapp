@@ -12,6 +12,7 @@ import { ethers } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { addressState } from "../atoms/addressAtom";
 import Web3 from "web3";
+import { errorState } from "../atoms/errorAtom";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -28,6 +29,7 @@ function Create() {
   const [cid, setCid] = useState<string>("");
   const [tokenCid, setTokenCid] = useState<string>("");
   const [address, setAddress] = useRecoilState(addressState);
+  const [errorModal, setErrorModal] = useRecoilState(errorState);
   const [transactionHash, setTransactionHash] = useState({
     transaction: "",
     name: "",
@@ -42,9 +44,7 @@ function Create() {
     console.log("getting transaction");
     try {
       const rawList = await fetch(
-        `https://api.etherscan.io/api?module=account&action=txlist&address=${"0xf4b935043eb0700af49ed94e13d4d5c6988984f1"}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${
-          process.env.NEXT_PUBLIC_ETHER_KEY
-        }`
+        `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_ETHER_KEY}`
       );
       const list = await rawList.json();
       let item;
@@ -57,8 +57,12 @@ function Create() {
         }
         continue;
       }
+      throw new Error("no transaction found");
     } catch (error) {
       console.log("no transaction found");
+      setErrorModal([
+        "we couldn't find a valid transaction in your address",
+      ]);
     }
   };
   // get did
@@ -130,13 +134,6 @@ function Create() {
 
   //get the public key
   const getPublicKey = async () => {
-    if (transactionHash.transaction === "") {
-      setError(true);
-      return;
-    } else {
-      setError(false);
-    }
-
     if (transactionHash.name === "") {
       setError1(true);
       return;
@@ -184,15 +181,15 @@ function Create() {
       console.log(typeof pubkey);
       if (recoveredAddress === transaction.from) {
         // setStep(-1);
-        setTimeout(() => {
-          handleProof(pubkey);
-        }, 2000);
+        // setTimeout(() => {
+        //   handleProof(pubkey);
+        // }, 2000);
       } else {
         setError(true);
       }
       // console.log("pubkey ===>", pubkey);
     } catch (error) {
-      console.log("error");
+      console.log("error", error);
     }
   };
 
@@ -361,44 +358,11 @@ function Create() {
           {step == 0 ? (
             <div className="mt-4 flex flex-col items-center select-none">
               <p className="font-medium">
-                In order to continue you have to provide the hash from
-                a transaction you have done before{" "}
+                In order to continue you have to provide a Domain
+                name.
               </p>
-              <p className="text-gray-500">
-                If you do not know how to get one, go to{" "}
-                <a
-                  href={`https://etherscan.io/address/${address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 animated-underline"
-                >
-                  etherscan
-                </a>
-                .
-                <span className="font-medium">
-                  {" "}
-                  It does not work with transfer transactions
-                </span>
-              </p>
+
               <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  Transaction hash
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTransactionHash({
-                      ...transactionHash,
-                      transaction: e.target.value,
-                    });
-                  }}
-                  value={transactionHash.transaction}
-                ></input>
-                <ErrorMessage
-                  message="Please insert the hash or try with another one"
-                  show={error}
-                />
                 <a className="text-gray-600 text-sm font-bold mt-4">
                   Domain Name
                 </a>
