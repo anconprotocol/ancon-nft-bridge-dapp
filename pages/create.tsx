@@ -358,13 +358,12 @@ function Create() {
           {step == 0 ? (
             <div className="mt-4 flex flex-col items-center select-none">
               <p className="font-medium">
-                In order to continue you have to provide a Domain
-                name.
+                Claim L2 Decentralized Identity
               </p>
 
               <div className="flex-col flex mt-3">
                 <a className="text-gray-600 text-sm font-bold mt-4">
-                  Domain Name
+                  Name
                 </a>
                 <input
                   type="text"
