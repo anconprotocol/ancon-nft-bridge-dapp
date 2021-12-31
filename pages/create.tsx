@@ -97,6 +97,7 @@ function Create() {
       throw new Error("no transaction found");
     } catch (error) {
       console.log("no transaction found");
+      setStep(0)
       setErrorModal([
         "we couldn't find a valid transaction in your address",
       ]);
@@ -115,10 +116,10 @@ function Create() {
         "0x3AD9090a3E3af4e288805d8c020F4CCd20212036",
         signer
       );
-      const UTF8_cid = ethers.utils.toUtf8Bytes(cid)
+      const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
       console.log("utf8 ===>", UTF8_cid);
       const getProof = await contract1.getProof(UTF8_cid);
-      console.log('getProof', getProof)
+      console.log("getProof", getProof);
       if (getProof !== "0x") {
         return "proof already exist";
       }
@@ -146,9 +147,10 @@ function Create() {
         UTF8_cid,
         z
       );
-
+      setStep(1);
       console.log("enroll==>", enroll);
     } catch (error) {
+      setErrorModal(["we could not procces your transaction please try again"])
       console.log("error", error);
     }
   };
@@ -279,7 +281,7 @@ function Create() {
       );
       console.log(typeof pubkey);
       if (recoveredAddress === transaction.from) {
-        // setStep(-1);
+        setStep(-1);
         setTimeout(() => {
           handleProof(pubkey);
         }, 2000);
@@ -491,7 +493,7 @@ function Create() {
                 className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
                 role="status"
               ></div>
-              <p className="animate-pulse mt-4">Getting Proof</p>
+              <p className="animate-pulse mt-4">Getting Proof...</p>
             </div>
           ) : null}
           {step == 1 ? (

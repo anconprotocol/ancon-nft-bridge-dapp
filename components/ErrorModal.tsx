@@ -8,7 +8,7 @@ function ErrorModal() {
     <>
       {state?.length !== 0 ? (
         // center the container
-        <div className="fixed w-full h-full bg-black flex items-center justify-center bg-opacity-75 z-50 select-none">
+        <div className="fixed w-full h-full bg-black flex items-center justify-center bg-opacity-75 z-50 select-none px-4">
           {/* white container */}
           <div className="bg-white py-4 px-4 rounded-lg opacity-100 z-50 relative">
             <div className="w-full flex justify-between pb-2" onClick={() => setState([])}>
