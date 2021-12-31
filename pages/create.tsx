@@ -150,6 +150,7 @@ function Create() {
       setStep(1);
       console.log("enroll==>", enroll);
     } catch (error) {
+      setStep(0)
       setErrorModal(["we could not procces your transaction please try again"])
       console.log("error", error);
     }
