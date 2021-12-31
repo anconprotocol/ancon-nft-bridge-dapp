@@ -176,7 +176,7 @@ function Create() {
         const data = await rawdata.json();
         console.log("post raw", data);
         const proofCID = await Object?.values(data.proof)[0];
-        const cid = await Object?.values(data.cid)[0];
+        const cid:any = await Object?.values(data.cid)[0];
         console.log("post /did/web==>", data, cid);
         const rawGetReq = await fetch(
           `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
