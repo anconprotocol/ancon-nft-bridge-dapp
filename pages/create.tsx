@@ -13,6 +13,8 @@ import useProvider from "../hooks/useProvider";
 import { addressState } from "../atoms/addressAtom";
 import Web3 from "web3";
 import { errorState } from "../atoms/errorAtom";
+import { base64 } from "ethers/lib/utils";
+import { AnconProtocol__factory } from "./types/ethers-contracts/factories/AnconProtocol__factory";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -38,13 +40,48 @@ function Create() {
   const provider = useProvider();
   const clickInput = () => document.getElementById("nft-img").click();
 
+  const toAbiProof = (z: any) => {
+    console.log("z", z);
+    z.key = ethers.utils.hexlify(base64.decode(z.key));
+    z.value = ethers.utils.hexlify(base64.decode(z.value));
+    z.leaf.prefix = ethers.utils.hexlify(
+      base64.decode(z.leaf.prefix)
+    );
+    z.leaf.hash = 1;
+    z.path = z.path.map((x: any) => {
+      let suffix;
+      if (!!x.suffix) {
+        suffix = ethers.utils.hexlify(base64.decode(x.suffix));
+        return {
+          valid: true,
+          prefix: ethers.utils.hexlify(base64.decode(x.prefix)),
+          suffix: suffix,
+          hash: 1,
+        };
+      } else {
+        return {
+          valid: true,
+          prefix: ethers.utils.hexlify(base64.decode(x.prefix)),
+          hash: 1,
+          suffix: "0x",
+        };
+      }
+    });
+    z.leaf.prehash_key = 0;
+    z.leaf.len = z.leaf.length;
+    z.valid = true;
+    z.leaf.valid = true;
+    return z;
+  };
   //step 0 //
   // get transaction
   const getTransaction = async () => {
     console.log("getting transaction");
     try {
       const rawList = await fetch(
-        `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_ETHER_KEY}`
+        `https://api.etherscan.io/api?module=account&action=txlist&address=${"0xf4b935043eb0700af49ed94e13d4d5c6988984f1"}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${
+          process.env.NEXT_PUBLIC_ETHER_KEY
+        }`
       );
       const list = await rawList.json();
       let item;
@@ -63,6 +100,56 @@ function Create() {
       setErrorModal([
         "we couldn't find a valid transaction in your address",
       ]);
+    }
+  };
+  const enrollL2Account = async (cid: string, z: any) => {
+    try {
+      const prov = new ethers.providers.Web3Provider(provider);
+      const signer = prov.getSigner();
+
+      const contract1 = AnconProtocol__factory.connect(
+        "0x3AD9090a3E3af4e288805d8c020F4CCd20212036",
+        prov
+      );
+      const contract2 = AnconProtocol__factory.connect(
+        "0x3AD9090a3E3af4e288805d8c020F4CCd20212036",
+        signer
+      );
+      const UTF8_cid = ethers.utils.toUtf8Bytes(cid)
+      console.log("utf8 ===>", UTF8_cid);
+      const getProof = await contract1.getProof(UTF8_cid);
+      console.log('getProof', getProof)
+      if (getProof !== "0x") {
+        return "proof already exist";
+      }
+
+      console.log(
+        "proof key",
+        Web3.utils.hexToString(z.key),
+        Web3.utils.hexToString(z.value)
+      );
+      const rawLastHash = await fetch(
+        "https://api.ancon.did.pa/v0/proofs/lasthash"
+      );
+      const lasthash = await rawLastHash.json();
+      const relayHash = await contract1.getProtocolHeader();
+      console.log(
+        "last hash",
+        ethers.utils.hexlify(
+          ethers.utils.base64.decode(lasthash.lastHash.hash)
+        )
+      );
+      console.log("relay hash", relayHash);
+
+      const enroll = await contract2.enrollL2Account(
+        z.key,
+        UTF8_cid,
+        z
+      );
+
+      console.log("enroll==>", enroll);
+    } catch (error) {
+      console.log("error", error);
     }
   };
   // get did
@@ -86,6 +173,7 @@ function Create() {
         );
         const data = await rawdata.json();
         console.log("post raw", data);
+        const proofCID = await Object?.values(data.proof)[0];
         const cid = await Object?.values(data.cid)[0];
         console.log("post /did/web==>", data, cid);
         const rawGetReq = await fetch(
@@ -118,9 +206,20 @@ function Create() {
         const proof = await rawProof.json();
 
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/proofs/get/${cid}`
+          `https://api.ancon.did.pa/v0/dagjson/${proofCID}/`
         );
         const GetProof = await rawGetProof.json();
+        console.log("proof==>", {
+          ...GetProof.proof?.proofs[0].Proof,
+        });
+        const z = toAbiProof({
+          ...GetProof.proof?.proofs[0].Proof.exist,
+        });
+        let enroll;
+        setTimeout(async () => {
+          enroll = await enrollL2Account(cid, z);
+        }, 30000);
+
         console.log("post /proofs ===>", proof);
         console.log("get /proofs/key ===>", GetProof);
       };
@@ -181,9 +280,9 @@ function Create() {
       console.log(typeof pubkey);
       if (recoveredAddress === transaction.from) {
         // setStep(-1);
-        // setTimeout(() => {
-        //   handleProof(pubkey);
-        // }, 2000);
+        setTimeout(() => {
+          handleProof(pubkey);
+        }, 2000);
       } else {
         setError(true);
       }
