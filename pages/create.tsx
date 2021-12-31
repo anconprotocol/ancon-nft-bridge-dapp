@@ -14,7 +14,7 @@ import { addressState } from "../atoms/addressAtom";
 import Web3 from "web3";
 import { errorState } from "../atoms/errorAtom";
 import { base64 } from "ethers/lib/utils";
-import { AnconProtocol__factory } from "./types/ethers-contracts/factories/AnconProtocol__factory";
+import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
