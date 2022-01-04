@@ -9,7 +9,7 @@ async function EnrollL2Account(
   z: any,
   setStep: React.Dispatch<React.SetStateAction<number>>,
   provider: any,
-  setErrorModal: React.Dispatch<React.SetStateAction<[string]>>
+  setErrorModal: React.Dispatch<React.SetStateAction<string[]>>
 ) {
   // const [errorModal, setErrorModal] = useRecoilState(errorState);
   console.log("enrolling to L2");
@@ -56,12 +56,12 @@ async function EnrollL2Account(
       UTF8_cid,
       z
     );
-    setStep(1);
+    setStep(2);
     console.log("enroll==>", enroll);
   } catch (error) {
     setStep(0);
     setErrorModal([
-      "we could not procces your transaction please try again",
+      "We could not procces your transaction please try again",
     ]);
     console.log("error", error);
   }

@@ -8,7 +8,8 @@ function Header() {
   return (
     <header className="flex justify-between p-4 items-center shadow-md bg-white">
       {/* left section */}
-      <div className="flex md:flex-grow">
+      <Link passHref href={'/'}>
+      <div className="flex md:flex-grow cursor-pointer">
         <img
           className="ifesa-logo"
           src={"/ifesa-logo.png"}
@@ -22,6 +23,7 @@ function Header() {
           className="ml-2 md:ml-4"
         ></img>
       </div>
+      </Link>
 
       {/* right section */}
       <div className="header-right md:flex md:justify-end md:flex-shrink md:items-center md:space-x-3">

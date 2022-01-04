@@ -293,13 +293,16 @@ function Create() {
       console.log("err", error);
     }
   };
+
+
+  // step 5 //
   let web3;
   let ethersInstance;
   let nftContract: any;
   let anconTokenContract: any;
   let ethersContract;
   let transactionAddress;
-  // step 5
+  
   const mintNft = async () => {
     setStep(5);
     const _web3 = new Web3(provider);
@@ -336,8 +339,9 @@ function Create() {
     console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
     createDocumentNode(web3);
   }
+
   async function createDocumentNode(web3: any) {
-    setStep(4);
+    
     console.log("Beginning of CREATEDOCUMENTNODE()");
     console.log("Local Account Address", nftContract.defaultAccount);
     try {
@@ -372,6 +376,7 @@ function Create() {
       //await txmint.wait(1);
       // const response = await nftContract.getPastEvents("Transfer", {
       //   toBlock: "latest",
+      //   fromBlock: // latest blocknumber
       //   filter: { user: address },
       // });
       // console.log('address', address)

@@ -22,9 +22,9 @@ export default function Home() {
             url="create"
           />
           <ButtonCard
-            title="CrossChain Transfer"
-            img="/transfer-icon.png"
-            url=""
+            title="Claim Account"
+            img=""
+            url="enroll"
           />
         </section>
       </main>
