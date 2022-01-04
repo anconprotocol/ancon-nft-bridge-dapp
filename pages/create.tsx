@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
+
 // components
 import Header from "../components/Header";
 import ErrorMessage from "../components/ErrorMessage";
@@ -15,6 +16,9 @@ import Web3 from "web3";
 import { errorState } from "../atoms/errorAtom";
 import { base64 } from "ethers/lib/utils";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
+import enrollL2Account from "../functions/EnrollL2Account";
+import toAbiProof from "../functions/ToAbiProof";
+import getTransaction from "../functions/GetTransaction";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -40,121 +44,8 @@ function Create() {
   const provider = useProvider();
   const clickInput = () => document.getElementById("nft-img").click();
 
-  const toAbiProof = (z: any) => {
-    console.log("z", z);
-    z.key = ethers.utils.hexlify(base64.decode(z.key));
-    z.value = ethers.utils.hexlify(base64.decode(z.value));
-    z.leaf.prefix = ethers.utils.hexlify(
-      base64.decode(z.leaf.prefix)
-    );
-    z.leaf.hash = 1;
-    z.path = z.path.map((x: any) => {
-      let suffix;
-      if (!!x.suffix) {
-        suffix = ethers.utils.hexlify(base64.decode(x.suffix));
-        return {
-          valid: true,
-          prefix: ethers.utils.hexlify(base64.decode(x.prefix)),
-          suffix: suffix,
-          hash: 1,
-        };
-      } else {
-        return {
-          valid: true,
-          prefix: ethers.utils.hexlify(base64.decode(x.prefix)),
-          hash: 1,
-          suffix: "0x",
-        };
-      }
-    });
-    z.leaf.prehash_key = 0;
-    z.leaf.len = z.leaf.length;
-    z.valid = true;
-    z.leaf.valid = true;
-    return z;
-  };
   //step 0 //
-  // get transaction
-  const getTransaction = async () => {
-    console.log("getting transaction");
-    try {
-      const rawList = await fetch(
-        `https://api.etherscan.io/api?module=account&action=txlist&address=${"0xf4b935043eb0700af49ed94e13d4d5c6988984f1"}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${
-          process.env.NEXT_PUBLIC_ETHER_KEY
-        }`
-      );
-      const list = await rawList.json();
-      let item;
-      for (item of list.result) {
-        if (
-          item.from == "0xf4b935043eb0700af49ed94e13d4d5c6988984f1" ||
-          item.from == address
-        ) {
-          return item.hash;
-        }
-        continue;
-      }
-      throw new Error("no transaction found");
-    } catch (error) {
-      console.log("no transaction found");
-      setStep(0)
-      setErrorModal([
-        "we couldn't find a valid transaction in your address",
-      ]);
-    }
-  };
-  const enrollL2Account = async (cid: string, z: any) => {
-    try {
-      const prov = new ethers.providers.Web3Provider(provider);
-      const signer = prov.getSigner();
 
-      const contract1 = AnconProtocol__factory.connect(
-        "0x3AD9090a3E3af4e288805d8c020F4CCd20212036",
-        prov
-      );
-      const contract2 = AnconProtocol__factory.connect(
-        "0x3AD9090a3E3af4e288805d8c020F4CCd20212036",
-        signer
-      );
-      const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
-      console.log("utf8 ===>", UTF8_cid);
-      const getProof = await contract1.getProof(UTF8_cid);
-      console.log("getProof", getProof);
-      if (getProof !== "0x") {
-        return "proof already exist";
-      }
-
-      console.log(
-        "proof key",
-        Web3.utils.hexToString(z.key),
-        Web3.utils.hexToString(z.value)
-      );
-      const rawLastHash = await fetch(
-        "https://api.ancon.did.pa/v0/proofs/lasthash"
-      );
-      const lasthash = await rawLastHash.json();
-      const relayHash = await contract1.getProtocolHeader();
-      console.log(
-        "last hash",
-        ethers.utils.hexlify(
-          ethers.utils.base64.decode(lasthash.lastHash.hash)
-        )
-      );
-      console.log("relay hash", relayHash);
-
-      const enroll = await contract2.enrollL2Account(
-        z.key,
-        UTF8_cid,
-        z
-      );
-      setStep(1);
-      console.log("enroll==>", enroll);
-    } catch (error) {
-      setStep(0)
-      setErrorModal(["we could not procces your transaction please try again"])
-      console.log("error", error);
-    }
-  };
   // get did
   const handleProof = (pubkey: string) => {
     const base58Encode = ethers.utils.base58.encode(pubkey);
@@ -177,7 +68,7 @@ function Create() {
         const data = await rawdata.json();
         console.log("post raw", data);
         const proofCID = await Object?.values(data.proof)[0];
-        const cid:any = await Object?.values(data.cid)[0];
+        const cid: any = await Object?.values(data.cid)[0];
         console.log("post /did/web==>", data, cid);
         const rawGetReq = await fetch(
           `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
@@ -194,8 +85,7 @@ function Create() {
         // console.log('did',JSON.parse(didRequest))
 
         // post the proof
-        const history = await Web3.utils;
-        const rawProof = await fetch(
+        const rawPostProof = await fetch(
           "https://api.ancon.did.pa/v0/proofs",
           {
             method: "POST",
@@ -206,7 +96,7 @@ function Create() {
             }),
           }
         );
-        const proof = await rawProof.json();
+        const Postproof = await rawPostProof.json();
 
         const rawGetProof = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${proofCID}/`
@@ -220,10 +110,10 @@ function Create() {
         });
         let enroll;
         setTimeout(async () => {
-          enroll = await enrollL2Account(cid, z);
+          enroll = await enrollL2Account(cid, z, setStep, provider);
         }, 30000);
 
-        console.log("post /proofs ===>", proof);
+        console.log("post /proofs ===>", Postproof);
         console.log("get /proofs/key ===>", GetProof);
       };
 
@@ -234,8 +124,9 @@ function Create() {
     }
   };
 
+  // STEP 0  gets the public key and handle the get did//
   //get the public key
-  const getPublicKey = async () => {
+  const getDid = async () => {
     if (transactionHash.name === "") {
       setError1(true);
       return;
@@ -244,7 +135,11 @@ function Create() {
     }
     try {
       const provider = ethers.getDefaultProvider();
-      const trans = await getTransaction();
+      const trans = await getTransaction(
+        setStep,
+        address,
+        setErrorModal
+      );
       const transaction: any = await provider.getTransaction(trans);
       // join the signature
       const sig = ethers.utils.joinSignature({
@@ -409,43 +304,43 @@ function Create() {
 
   // contract
 
-  const handleClickOpen = () => {
-    const _web3 = new Web3(provider);
-    _web3.eth.defaultAccount = address;
-    //setWeb3(_web3);
-    bindContracts(_web3);
-  };
+  // const handleClickOpen = () => {
+  //   const _web3 = new Web3(provider);
+  //   _web3.eth.defaultAccount = address;
+  //   //setWeb3(_web3);
+  //   bindContracts(_web3);
+  // };
 
-  async function bindContracts(web3: any) {
-    console.log("Beginning of BINDCONTRACTS()", web3);
-    const ethersInstance = new ethers.providers.Web3Provider(
-      web3.currentProvider
-    );
-    const anconNFTContractAddress: any =
-      process.env.NEXT_PUBLIC_AnconTestNFTAddress;
-    const anconTokenContractAddress: any =
-      process.env.NEXT_PUBLIC_AnconTokenAddress;
-    console.log(
-      "contracts ==>",
-      anconNFTContractAddress,
-      anconTokenContractAddress
-    );
-    // // const marketplateContractAddress = env.MarketplaceAddress;
-    const nftContract = new web3.eth.Contract(
-      AnconNFT.abi,
-      anconNFTContractAddress
-    );
-    const anconTokenContract = new web3.eth.Contract(
-      AnconToken.abi,
-      anconTokenContractAddress
-    );
-    const ethersContract = new ethers.Contract(
-      anconNFTContractAddress,
-      AnconNFT.abi,
-      ethersInstance.getSigner(0)
-    );
-    console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
-  }
+  // async function bindContracts(web3: any) {
+  //   console.log("Beginning of BINDCONTRACTS()", web3);
+  //   const ethersInstance = new ethers.providers.Web3Provider(
+  //     web3.currentProvider
+  //   );
+  //   const anconNFTContractAddress: any =
+  //     process.env.NEXT_PUBLIC_AnconTestNFTAddress;
+  //   const anconTokenContractAddress: any =
+  //     process.env.NEXT_PUBLIC_AnconTokenAddress;
+  //   console.log(
+  //     "contracts ==>",
+  //     anconNFTContractAddress,
+  //     anconTokenContractAddress
+  //   );
+  //   // // const marketplateContractAddress = env.MarketplaceAddress;
+  //   const nftContract = new web3.eth.Contract(
+  //     AnconNFT.abi,
+  //     anconNFTContractAddress
+  //   );
+  //   const anconTokenContract = new web3.eth.Contract(
+  //     AnconToken.abi,
+  //     anconTokenContractAddress
+  //   );
+  //   const ethersContract = new ethers.Contract(
+  //     anconNFTContractAddress,
+  //     AnconNFT.abi,
+  //     ethersInstance.getSigner(0)
+  //   );
+  //   console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
+  // }
   // useEffect(() => {
   //   handleClickOpen();
   // }, []);
@@ -484,7 +379,7 @@ function Create() {
                 />
               </div>
               <div className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer">
-                <p onClick={getPublicKey}>Continue</p>
+                <p onClick={getDid}>Continue</p>
               </div>
             </div>
           ) : null}
