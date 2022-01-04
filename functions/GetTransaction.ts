@@ -2,7 +2,7 @@ import { useRecoilState } from "recoil";
 import { errorState } from "../atoms/errorAtom";
 
 // get transaction
-const getTransaction = async (setStep:any, address:string, setErrorModal:any) => {
+const getTransaction = async (setStep:React.Dispatch<React.SetStateAction<number>>, address:string, setErrorModal:React.Dispatch<React.SetStateAction<string[]>>) => {
   // const [errorModal, setErrorModal] = useRecoilState(errorState);
   console.log("getting transaction");
   try {

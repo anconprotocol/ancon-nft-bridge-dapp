@@ -19,6 +19,8 @@ import { AnconProtocol__factory } from "../types/ethers-contracts/factories/Anco
 import enrollL2Account from "../functions/EnrollL2Account";
 import toAbiProof from "../functions/ToAbiProof";
 import getTransaction from "../functions/GetTransaction";
+import { get } from "https";
+import GetPublicKey from "../functions/GetPublicKey";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -29,11 +31,14 @@ function Create() {
   const [localImage, setLocalImage] = useState<any | null>(null);
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
-  const [error1, setError1] = useState(false);
-  const [name, setName] = useState<string | null>("");
-  const [description, setDescription] = useState<string | null>("");
-  const [cid, setCid] = useState<string>("");
-  const [tokenCid, setTokenCid] = useState<string>("");
+  const[message, setMessage] = useState('')
+  const [DIDcid, setDIDCid] = useState<string>("");
+  const [tokenData, setTokenData] = useState({
+    name: "",
+    description: "",
+    imageCid: "",
+    tokenCid: "",
+  });
   const [address, setAddress] = useRecoilState(addressState);
   const [errorModal, setErrorModal] = useRecoilState(errorState);
   const [transactionHash, setTransactionHash] = useState({
@@ -46,7 +51,79 @@ function Create() {
 
   //step 0 //
 
-  // get did
+  // STEP 0  gets the public key and handle the get did//
+  //get the public key
+  const getDid = async () => {
+    // check if the a name written
+    if (transactionHash.name === "") {
+      setError(true);
+      return;
+    } else {
+      setError(false);
+    }
+    try {
+      const provider = ethers.getDefaultProvider();
+      // check if the user has made any transaction
+      const trans = await getTransaction(
+        setStep,
+        address,
+        setErrorModal
+      );
+      const transaction: any = await provider.getTransaction(trans);
+
+      // join the signature
+      const sig = ethers.utils.joinSignature({
+        r: transaction.r,
+        s: transaction.s,
+        v: transaction.v,
+      });
+      const getPublicKey = await GetPublicKey(transaction, sig)
+      const pubkey = getPublicKey[1]
+      const recoveredAddress = getPublicKey[0]
+      // // get the txData
+      // const txData = {
+      //   gasPrice: transaction.gasPrice,
+      //   gasLimit: transaction.gasLimit,
+      //   value: transaction.value,
+      //   nonce: transaction.nonce,
+      //   data: transaction.data,
+      //   chainId: transaction.chainId,
+      //   to: transaction.to,
+      // };
+
+      // const rsTx = await ethers.utils.resolveProperties(txData);
+      // // returns RLP encoded tx
+      // const raw = ethers.utils.serializeTransaction(rsTx);
+      // // not sure about this step but it made it work
+      // const msgHash = ethers.utils.keccak256(raw);
+      // // create binary hash
+      // const msgBytes = ethers.utils.arrayify(msgHash);
+
+      // const pubkey = ethers.utils.recoverPublicKey(msgBytes, sig);
+      // const recoveredAddress = ethers.utils.recoverAddress(
+      //   msgBytes,
+      //   sig
+      // );
+      // console.log(
+      //   "addresses are equal ==>",
+      //   recoveredAddress === transaction.from
+      // );
+
+      // if the address are equal procced to get the proof
+      if (recoveredAddress === transaction.from) {
+        setStep(-1);
+        setTimeout(() => {
+          handleProof(pubkey);
+        }, 2000);
+      } else {
+        setError(true);
+      }
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  //get the cid and the proof
   const handleProof = (pubkey: string) => {
     const base58Encode = ethers.utils.base58.encode(pubkey);
     //post to get the did
@@ -66,10 +143,11 @@ function Create() {
           requestOptions
         );
         const data = await rawdata.json();
-        console.log("post raw", data);
-        const proofCID = await Object?.values(data.proof)[0];
+        const proofCID: any = await Object?.values(data.proof)[0];
         const cid: any = await Object?.values(data.cid)[0];
-        console.log("post /did/web==>", data, cid);
+        setDIDCid(cid);
+        console.log("get /did/web ==>>", data);
+
         const rawGetReq = await fetch(
           `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
         );
@@ -83,21 +161,6 @@ function Create() {
         // );
         // const didRequest = await rawDidRequest.json()
         // console.log('did',JSON.parse(didRequest))
-
-        // post the proof
-        const rawPostProof = await fetch(
-          "https://api.ancon.did.pa/v0/proofs",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              key: getReq.id,
-              value: getReqParse,
-            }),
-          }
-        );
-        const Postproof = await rawPostProof.json();
-
         const rawGetProof = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${proofCID}/`
         );
@@ -105,15 +168,20 @@ function Create() {
         console.log("proof==>", {
           ...GetProof.proof?.proofs[0].Proof,
         });
+
+        // calling to abi proof
         const z = toAbiProof({
           ...GetProof.proof?.proofs[0].Proof.exist,
         });
-        let enroll;
-        setTimeout(async () => {
-          enroll = await enrollL2Account(cid, z, setStep, provider);
-        }, 30000);
 
-        console.log("post /proofs ===>", Postproof);
+        // enroll to L2
+        let enroll;
+        setMessage('Enrolling account')
+        // setTimeout(async () => {
+        //   enroll = await enrollL2Account(cid, z, setStep, provider, setErrorModal);
+        // }, 30000);
+        setStep(1);
+        // console.log("post /proofs ===>", Postproof);
         console.log("get /proofs/key ===>", GetProof);
       };
 
@@ -121,72 +189,6 @@ function Create() {
       // setStep(1)
     } catch (error) {
       console.log("err", error);
-    }
-  };
-
-  // STEP 0  gets the public key and handle the get did//
-  //get the public key
-  const getDid = async () => {
-    if (transactionHash.name === "") {
-      setError1(true);
-      return;
-    } else {
-      setError1(false);
-    }
-    try {
-      const provider = ethers.getDefaultProvider();
-      const trans = await getTransaction(
-        setStep,
-        address,
-        setErrorModal
-      );
-      const transaction: any = await provider.getTransaction(trans);
-      // join the signature
-      const sig = ethers.utils.joinSignature({
-        r: transaction.r,
-        s: transaction.s,
-        v: transaction.v,
-      });
-      // get the txData
-      const txData = {
-        gasPrice: transaction.gasPrice,
-        gasLimit: transaction.gasLimit,
-        value: transaction.value,
-        nonce: transaction.nonce,
-        data: transaction.data,
-        chainId: transaction.chainId,
-        to: transaction.to,
-      };
-
-      const rsTx = await ethers.utils.resolveProperties(txData);
-      // returns RLP encoded tx
-      const raw = ethers.utils.serializeTransaction(rsTx);
-      // not sure about this step but it made it work
-      const msgHash = ethers.utils.keccak256(raw);
-      // create binary hash
-      const msgBytes = ethers.utils.arrayify(msgHash);
-
-      const pubkey = ethers.utils.recoverPublicKey(msgBytes, sig);
-      const recoveredAddress = ethers.utils.recoverAddress(
-        msgBytes,
-        sig
-      );
-      console.log(
-        "address is equal ==>",
-        recoveredAddress === transaction.from
-      );
-      console.log(typeof pubkey);
-      if (recoveredAddress === transaction.from) {
-        setStep(-1);
-        setTimeout(() => {
-          handleProof(pubkey);
-        }, 2000);
-      } else {
-        setError(true);
-      }
-      // console.log("pubkey ===>", pubkey);
-    } catch (error) {
-      console.log("error", error);
     }
   };
 
@@ -230,11 +232,11 @@ function Create() {
         console.log(`Uploading... ${pct.toFixed(2)}% complete`);
       };
 
-      const rawCid: string = await storage.put([image], {
+      const imageCid: string = await storage.put([image], {
         onRootCidReady,
         onStoredChunk,
       });
-      setCid(rawCid);
+      setTokenData({...tokenData, imageCid})
       setStep(3);
     } catch (error) {
       console.log("err", error);
@@ -243,28 +245,45 @@ function Create() {
 
   // step4 //
   // creates the metadata
-  const createMetadata = () => {
+  const createMetadata = async () => {
+    const prov = new ethers.providers.Web3Provider(provider);
+    const signer = prov.getSigner();
     const payload = {
-      name,
-      description,
-      image: cid,
+      name:tokenData.name,
+      description:tokenData.description,
+      image: tokenData.imageCid,
       sources: [],
     };
+    // sign the message
+    const signature = await signer.signMessage(ethers.utils.keccak256(Buffer.from(JSON.stringify(payload))))
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: "/", data: payload }),
+      body: JSON.stringify({
+        path: "/",
+        from: DIDcid,
+        signature,
+        data: payload,
+      }),
     };
+    
     try {
+      // creates the metadata
       const PostRequest = async () => {
         const rawMetadata = await fetch(
           "https://api.ancon.did.pa/v0/dagjson",
           requestOptions
         );
         const metadata = await rawMetadata.json();
+        // returns the metadata cid
         console.log("metadata", metadata);
-        const id: any = await Object?.values(metadata.cid)[0];
-        setTokenCid(id);
+        let id:any;
+        if(metadata !== null){
+          id= await Object?.values(metadata.cid)[0];
+        }
+        
+        setTokenData({...tokenData, tokenCid:id})
+        console.log('didCID', DIDcid)
         const dagRequest = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${id}/`
         );
@@ -294,7 +313,7 @@ function Create() {
 
   // checks if the user has written a name, if so the it continue
   const handleSetMessageUpload = () => {
-    if (name === null) {
+    if (tokenData.name === null) {
       setError(true);
     } else {
       createMetadata();
@@ -375,11 +394,14 @@ function Create() {
                 ></input>
                 <ErrorMessage
                   message="Please provide a Domain Name"
-                  show={error1}
+                  show={error}
                 />
               </div>
-              <div className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer">
-                <p onClick={getDid}>Continue</p>
+              <div
+                onClick={getDid}
+                className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer"
+              >
+                <p>Continue</p>
               </div>
             </div>
           ) : null}
@@ -389,7 +411,7 @@ function Create() {
                 className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
                 role="status"
               ></div>
-              <p className="animate-pulse mt-4">Getting Proof...</p>
+              <p className="animate-pulse mt-4">{message != '' ? message: 'getting proof...'}</p>
             </div>
           ) : null}
           {step == 1 ? (
@@ -445,7 +467,7 @@ function Create() {
                   type="text"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
                   onChange={(e) => {
-                    setName(e.target.value);
+                    setTokenData({...tokenData, name:e.target.value});
                   }}
                 ></input>
               </div>
@@ -462,7 +484,7 @@ function Create() {
                   id="TITLE"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
                   onChange={(e) => {
-                    setDescription(e.target.value);
+                    setTokenData({...tokenData, description:e.target.value});
                   }}
                 ></input>
               </div>
@@ -499,22 +521,22 @@ function Create() {
               <div className="flex flex-col items-start mt-3">
                 <a className="text-gray-600 text-sm">NFT Name</a>
                 <span className="text-lg font-medium mb-2">
-                  {name}
+                  {tokenData.name}
                 </span>
 
                 <a className="text-gray-600 text-sm">Description</a>
                 <span className="text-lg font-medium mb-2">
-                  {description}
+                  {tokenData.description}
                 </span>
 
                 <a className="text-gray-600 text-sm">Image CID</a>
                 <span className="text-lg font-medium mb-2">
-                  {cid}
+                  {tokenData.imageCid}
                 </span>
 
-                <a className="text-gray-600 text-sm">Token CID</a>
+                <a className="text-gray-600 text-sm">Metada CID</a>
                 <span className="text-lg font-medium mb-2">
-                  {tokenCid}
+                  {tokenData.tokenCid}
                 </span>
 
                 <a className="text-gray-600 text-sm">OWNER</a>

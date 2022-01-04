@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { base64 } from "ethers/lib/utils";
 
 const toAbiProof = (z: any) => {
-    console.log("z", z);
+    
     z.key = ethers.utils.hexlify(base64.decode(z.key));
     z.value = ethers.utils.hexlify(base64.decode(z.value));
     z.leaf.prefix = ethers.utils.hexlify(
@@ -32,6 +32,7 @@ const toAbiProof = (z: any) => {
     z.leaf.len = z.leaf.length;
     z.valid = true;
     z.leaf.valid = true;
+    console.log("to abi proof", z);
     return z;
   };
 
