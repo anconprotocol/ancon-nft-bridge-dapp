@@ -243,9 +243,11 @@ function Create() {
       sources: [],
     };
     // sign the message
-    const signature = await signer.signMessage(
-      ethers.utils.keccak256(Buffer.from(JSON.stringify(payload)))
-    );
+    const signature = await signer.signMessage(ethers.utils.arrayify(
+      ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(JSON.stringify(payload))
+      )
+    ));
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -294,12 +296,12 @@ function Create() {
   let web3;
   let ethersInstance;
   let nftContract: any;
-  let anconTokenContract:any;
+  let anconTokenContract: any;
   let ethersContract;
   let transactionAddress;
   // step 5
   const mintNft = async () => {
-    setStep(5)
+    setStep(5);
     const _web3 = new Web3(provider);
     _web3.eth.defaultAccount = address;
     //setWeb3(_web3);
@@ -334,7 +336,7 @@ function Create() {
     console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
     createDocumentNode(web3);
   }
-  async function createDocumentNode(web3:any) {
+  async function createDocumentNode(web3: any) {
     setStep(4);
     console.log("Beginning of CREATEDOCUMENTNODE()");
     console.log("Local Account Address", nftContract.defaultAccount);
@@ -363,7 +365,7 @@ function Create() {
         .send({
           gasPrice: "22000000000",
           gas: 4000000,
-          from: address
+          from: address,
         });
 
       setMessage("Wrapping up...");
@@ -388,7 +390,10 @@ function Create() {
       //ipfsId = indexes;
       // let urlVideo = "https://ipfs.io/ipfs/" + root.videoUrl;
       // setIPFSLink(urlVideo);
-      setTransactionHash({transaction:transactionAddress, name: "https://testnet.bscscan.com/tx/" + transactionAddress});
+      setTransactionHash({
+        transaction: transactionAddress,
+        name: "https://testnet.bscscan.com/tx/" + transactionAddress,
+      });
       //await this.fetchDocuments();
       // this.instanceVideoPlayer(
       //     "https://ipfs.io/ipfs/" + root.value.metadata.videourl.toString()
