@@ -2,7 +2,7 @@ import { useRecoilState } from "recoil";
 import { errorState } from "../atoms/errorAtom";
 
 // get transaction
-const getTransaction = async (setStep:React.Dispatch<React.SetStateAction<number>>, address:string, setErrorModal:React.Dispatch<React.SetStateAction<string[]>>) => {
+const getTransaction = async (setStep:React.Dispatch<React.SetStateAction<number>>, address:string, setErrorModal:React.Dispatch<React.SetStateAction<string[]>>, setMessage:React.Dispatch<React.SetStateAction<string>>) => {
   // const [errorModal, setErrorModal] = useRecoilState(errorState);
   console.log("getting transaction");
   try {
@@ -18,6 +18,7 @@ const getTransaction = async (setStep:React.Dispatch<React.SetStateAction<number
         item.from == "0xf4b935043eb0700af49ed94e13d4d5c6988984f1" ||
         item.from == address
       ) {
+        setMessage("Obtaining public key...")
         return item.hash;
       }
       continue;

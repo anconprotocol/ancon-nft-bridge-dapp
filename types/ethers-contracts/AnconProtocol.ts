@@ -125,13 +125,25 @@ export type ExistenceProofStructOutput = [
 
 export interface AnconProtocolInterface extends utils.Interface {
   functions: {
+    "ENROLL_PAYMENT()": FunctionFragment;
+    "SUBMIT_PAYMENT()": FunctionFragment;
     "accountByAddrProofs(address)": FunctionFragment;
     "accountProofs(bytes)": FunctionFragment;
+    "accountRegistrationFee()": FunctionFragment;
     "getIavlSpec()": FunctionFragment;
     "owner()": FunctionFragment;
     "proofs(bytes)": FunctionFragment;
+    "protocolFee()": FunctionFragment;
     "relayNetworkHash()": FunctionFragment;
+    "relayer()": FunctionFragment;
+    "renounceOwnership()": FunctionFragment;
+    "stablecoin()": FunctionFragment;
+    "transferOwnership(address)": FunctionFragment;
     "verify((bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),((bool,uint8,uint8,uint8,uint8,bytes),(uint256[],uint256,uint256,uint256,bytes,uint8),uint256,uint256),bytes,bytes,bytes)": FunctionFragment;
+    "withdraw(address)": FunctionFragment;
+    "withdrawToken(address,address)": FunctionFragment;
+    "setProtocolFee(uint256)": FunctionFragment;
+    "setAccountRegistrationFee(uint256)": FunctionFragment;
     "getProtocolHeader()": FunctionFragment;
     "getProof(bytes)": FunctionFragment;
     "hasProof(bytes)": FunctionFragment;
@@ -139,9 +151,16 @@ export interface AnconProtocolInterface extends utils.Interface {
     "updateProtocolHeader(bytes)": FunctionFragment;
     "submitPacketWithProof(bytes,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
     "verifyProof((bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
-    "queryRootCalculation((bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "ENROLL_PAYMENT",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "SUBMIT_PAYMENT",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "accountByAddrProofs",
     values: [string]
@@ -151,14 +170,35 @@ export interface AnconProtocolInterface extends utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "accountRegistrationFee",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getIavlSpec",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "proofs", values: [BytesLike]): string;
   encodeFunctionData(
+    functionFragment: "protocolFee",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "relayNetworkHash",
     values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "relayer", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "renounceOwnership",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "stablecoin",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferOwnership",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "verify",
@@ -169,6 +209,19 @@ export interface AnconProtocolInterface extends utils.Interface {
       BytesLike,
       BytesLike
     ]
+  ): string;
+  encodeFunctionData(functionFragment: "withdraw", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "withdrawToken",
+    values: [string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setProtocolFee",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setAccountRegistrationFee",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getProtocolHeader",
@@ -192,11 +245,15 @@ export interface AnconProtocolInterface extends utils.Interface {
     functionFragment: "verifyProof",
     values: [ExistenceProofStruct]
   ): string;
-  encodeFunctionData(
-    functionFragment: "queryRootCalculation",
-    values: [ExistenceProofStruct]
-  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "ENROLL_PAYMENT",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "SUBMIT_PAYMENT",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "accountByAddrProofs",
     data: BytesLike
@@ -206,16 +263,47 @@ export interface AnconProtocolInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "accountRegistrationFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getIavlSpec",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "proofs", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "protocolFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "relayNetworkHash",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "relayer", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "renounceOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "stablecoin", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "verify", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setProtocolFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setAccountRegistrationFee",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getProtocolHeader",
     data: BytesLike
@@ -238,20 +326,22 @@ export interface AnconProtocolInterface extends utils.Interface {
     functionFragment: "verifyProof",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "queryRootCalculation",
-    data: BytesLike
-  ): Result;
 
   events: {
     "AccountRegistered(bool,bytes,bytes)": EventFragment;
     "HeaderUpdated(bytes)": EventFragment;
+    "OwnershipTransferred(address,address)": EventFragment;
     "ProofPacketSubmitted(bytes,bytes)": EventFragment;
+    "ServiceFeePaid(address,uint256)": EventFragment;
+    "Withdrawn(address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "AccountRegistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "HeaderUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProofPacketSubmitted"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ServiceFeePaid"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Withdrawn"): EventFragment;
 }
 
 export type AccountRegisteredEvent = TypedEvent<
@@ -266,6 +356,14 @@ export type HeaderUpdatedEvent = TypedEvent<[string], { hash: string }>;
 
 export type HeaderUpdatedEventFilter = TypedEventFilter<HeaderUpdatedEvent>;
 
+export type OwnershipTransferredEvent = TypedEvent<
+  [string, string],
+  { previousOwner: string; newOwner: string }
+>;
+
+export type OwnershipTransferredEventFilter =
+  TypedEventFilter<OwnershipTransferredEvent>;
+
 export type ProofPacketSubmittedEvent = TypedEvent<
   [string, string],
   { key: string; packet: string }
@@ -273,6 +371,20 @@ export type ProofPacketSubmittedEvent = TypedEvent<
 
 export type ProofPacketSubmittedEventFilter =
   TypedEventFilter<ProofPacketSubmittedEvent>;
+
+export type ServiceFeePaidEvent = TypedEvent<
+  [string, BigNumber],
+  { from: string; fee: BigNumber }
+>;
+
+export type ServiceFeePaidEventFilter = TypedEventFilter<ServiceFeePaidEvent>;
+
+export type WithdrawnEvent = TypedEvent<
+  [string, BigNumber],
+  { paymentAddress: string; amount: BigNumber }
+>;
+
+export type WithdrawnEventFilter = TypedEventFilter<WithdrawnEvent>;
 
 export interface AnconProtocol extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -301,6 +413,10 @@ export interface AnconProtocol extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    ENROLL_PAYMENT(overrides?: CallOverrides): Promise<[string]>;
+
+    SUBMIT_PAYMENT(overrides?: CallOverrides): Promise<[string]>;
+
     accountByAddrProofs(
       arg0: string,
       overrides?: CallOverrides
@@ -311,13 +427,39 @@ export interface AnconProtocol extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    accountRegistrationFee(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     getIavlSpec(overrides?: CallOverrides): Promise<[ProofSpecStructOutput]>;
 
+    /**
+     * Returns the address of the current owner.
+     */
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     proofs(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
 
+    protocolFee(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     relayNetworkHash(overrides?: CallOverrides): Promise<[string]>;
+
+    relayer(overrides?: CallOverrides): Promise<[string]>;
+
+    /**
+     * Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.
+     */
+    renounceOwnership(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    stablecoin(overrides?: CallOverrides): Promise<[string]>;
+
+    /**
+     * Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.
+     */
+    transferOwnership(
+      newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     verify(
       proof: ExistenceProofStruct,
@@ -327,6 +469,27 @@ export interface AnconProtocol extends BaseContract {
       value: BytesLike,
       overrides?: CallOverrides
     ): Promise<[void]>;
+
+    withdraw(
+      payee: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    withdrawToken(
+      payee: string,
+      erc20token: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setProtocolFee(
+      _fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setAccountRegistrationFee(
+      _fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     getProtocolHeader(overrides?: CallOverrides): Promise<[string]>;
 
@@ -357,24 +520,49 @@ export interface AnconProtocol extends BaseContract {
       exProof: ExistenceProofStruct,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
-
-    queryRootCalculation(
-      proof: ExistenceProofStruct,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
   };
+
+  ENROLL_PAYMENT(overrides?: CallOverrides): Promise<string>;
+
+  SUBMIT_PAYMENT(overrides?: CallOverrides): Promise<string>;
 
   accountByAddrProofs(arg0: string, overrides?: CallOverrides): Promise<string>;
 
   accountProofs(arg0: BytesLike, overrides?: CallOverrides): Promise<string>;
 
+  accountRegistrationFee(overrides?: CallOverrides): Promise<BigNumber>;
+
   getIavlSpec(overrides?: CallOverrides): Promise<ProofSpecStructOutput>;
 
+  /**
+   * Returns the address of the current owner.
+   */
   owner(overrides?: CallOverrides): Promise<string>;
 
   proofs(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
+  protocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
   relayNetworkHash(overrides?: CallOverrides): Promise<string>;
+
+  relayer(overrides?: CallOverrides): Promise<string>;
+
+  /**
+   * Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.
+   */
+  renounceOwnership(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  stablecoin(overrides?: CallOverrides): Promise<string>;
+
+  /**
+   * Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.
+   */
+  transferOwnership(
+    newOwner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   verify(
     proof: ExistenceProofStruct,
@@ -384,6 +572,27 @@ export interface AnconProtocol extends BaseContract {
     value: BytesLike,
     overrides?: CallOverrides
   ): Promise<void>;
+
+  withdraw(
+    payee: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  withdrawToken(
+    payee: string,
+    erc20token: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setProtocolFee(
+    _fee: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setAccountRegistrationFee(
+    _fee: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   getProtocolHeader(overrides?: CallOverrides): Promise<string>;
 
@@ -415,12 +624,11 @@ export interface AnconProtocol extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  queryRootCalculation(
-    proof: ExistenceProofStruct,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
   callStatic: {
+    ENROLL_PAYMENT(overrides?: CallOverrides): Promise<string>;
+
+    SUBMIT_PAYMENT(overrides?: CallOverrides): Promise<string>;
+
     accountByAddrProofs(
       arg0: string,
       overrides?: CallOverrides
@@ -428,13 +636,37 @@ export interface AnconProtocol extends BaseContract {
 
     accountProofs(arg0: BytesLike, overrides?: CallOverrides): Promise<string>;
 
+    accountRegistrationFee(overrides?: CallOverrides): Promise<BigNumber>;
+
     getIavlSpec(overrides?: CallOverrides): Promise<ProofSpecStructOutput>;
 
+    /**
+     * Returns the address of the current owner.
+     */
     owner(overrides?: CallOverrides): Promise<string>;
 
     proofs(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
+    protocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
     relayNetworkHash(overrides?: CallOverrides): Promise<string>;
+
+    relayer(overrides?: CallOverrides): Promise<string>;
+
+    /**
+     * Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.
+     */
+    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+
+    stablecoin(overrides?: CallOverrides): Promise<string>;
+
+    /**
+     * Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.
+     */
+    transferOwnership(
+      newOwner: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     verify(
       proof: ExistenceProofStruct,
@@ -442,6 +674,24 @@ export interface AnconProtocol extends BaseContract {
       root: BytesLike,
       key: BytesLike,
       value: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    withdraw(payee: string, overrides?: CallOverrides): Promise<void>;
+
+    withdrawToken(
+      payee: string,
+      erc20token: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setProtocolFee(
+      _fee: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setAccountRegistrationFee(
+      _fee: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -461,7 +711,7 @@ export interface AnconProtocol extends BaseContract {
     updateProtocolHeader(
       rootHash: BytesLike,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<void>;
 
     submitPacketWithProof(
       key: BytesLike,
@@ -474,11 +724,6 @@ export interface AnconProtocol extends BaseContract {
       exProof: ExistenceProofStruct,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    queryRootCalculation(
-      proof: ExistenceProofStruct,
-      overrides?: CallOverrides
-    ): Promise<string>;
   };
 
   filters: {
@@ -496,6 +741,15 @@ export interface AnconProtocol extends BaseContract {
     "HeaderUpdated(bytes)"(hash?: null): HeaderUpdatedEventFilter;
     HeaderUpdated(hash?: null): HeaderUpdatedEventFilter;
 
+    "OwnershipTransferred(address,address)"(
+      previousOwner?: string | null,
+      newOwner?: string | null
+    ): OwnershipTransferredEventFilter;
+    OwnershipTransferred(
+      previousOwner?: string | null,
+      newOwner?: string | null
+    ): OwnershipTransferredEventFilter;
+
     "ProofPacketSubmitted(bytes,bytes)"(
       key?: null,
       packet?: null
@@ -504,9 +758,28 @@ export interface AnconProtocol extends BaseContract {
       key?: null,
       packet?: null
     ): ProofPacketSubmittedEventFilter;
+
+    "ServiceFeePaid(address,uint256)"(
+      from?: string | null,
+      fee?: null
+    ): ServiceFeePaidEventFilter;
+    ServiceFeePaid(from?: string | null, fee?: null): ServiceFeePaidEventFilter;
+
+    "Withdrawn(address,uint256)"(
+      paymentAddress?: string | null,
+      amount?: null
+    ): WithdrawnEventFilter;
+    Withdrawn(
+      paymentAddress?: string | null,
+      amount?: null
+    ): WithdrawnEventFilter;
   };
 
   estimateGas: {
+    ENROLL_PAYMENT(overrides?: CallOverrides): Promise<BigNumber>;
+
+    SUBMIT_PAYMENT(overrides?: CallOverrides): Promise<BigNumber>;
+
     accountByAddrProofs(
       arg0: string,
       overrides?: CallOverrides
@@ -517,13 +790,39 @@ export interface AnconProtocol extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    accountRegistrationFee(overrides?: CallOverrides): Promise<BigNumber>;
+
     getIavlSpec(overrides?: CallOverrides): Promise<BigNumber>;
 
+    /**
+     * Returns the address of the current owner.
+     */
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     proofs(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
+    protocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
     relayNetworkHash(overrides?: CallOverrides): Promise<BigNumber>;
+
+    relayer(overrides?: CallOverrides): Promise<BigNumber>;
+
+    /**
+     * Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.
+     */
+    renounceOwnership(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    stablecoin(overrides?: CallOverrides): Promise<BigNumber>;
+
+    /**
+     * Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.
+     */
+    transferOwnership(
+      newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     verify(
       proof: ExistenceProofStruct,
@@ -532,6 +831,27 @@ export interface AnconProtocol extends BaseContract {
       key: BytesLike,
       value: BytesLike,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    withdraw(
+      payee: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    withdrawToken(
+      payee: string,
+      erc20token: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setProtocolFee(
+      _fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setAccountRegistrationFee(
+      _fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     getProtocolHeader(overrides?: CallOverrides): Promise<BigNumber>;
@@ -563,14 +883,13 @@ export interface AnconProtocol extends BaseContract {
       exProof: ExistenceProofStruct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    queryRootCalculation(
-      proof: ExistenceProofStruct,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    ENROLL_PAYMENT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    SUBMIT_PAYMENT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     accountByAddrProofs(
       arg0: string,
       overrides?: CallOverrides
@@ -581,8 +900,15 @@ export interface AnconProtocol extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    accountRegistrationFee(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getIavlSpec(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    /**
+     * Returns the address of the current owner.
+     */
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     proofs(
@@ -590,7 +916,28 @@ export interface AnconProtocol extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    protocolFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     relayNetworkHash(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    relayer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    /**
+     * Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.
+     */
+    renounceOwnership(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    stablecoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    /**
+     * Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.
+     */
+    transferOwnership(
+      newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     verify(
       proof: ExistenceProofStruct,
@@ -599,6 +946,27 @@ export interface AnconProtocol extends BaseContract {
       key: BytesLike,
       value: BytesLike,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    withdraw(
+      payee: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    withdrawToken(
+      payee: string,
+      erc20token: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setProtocolFee(
+      _fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setAccountRegistrationFee(
+      _fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     getProtocolHeader(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -634,11 +1002,6 @@ export interface AnconProtocol extends BaseContract {
 
     verifyProof(
       exProof: ExistenceProofStruct,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    queryRootCalculation(
-      proof: ExistenceProofStruct,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };

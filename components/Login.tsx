@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 import Web3 from "web3";
@@ -15,12 +16,15 @@ function Login() {
   const [butState, setButState] = useRecoilState(buttonState);
   const [address, setAddress] = useRecoilState(addressState);
   const [connected, setConnected] = useState(false);
+  const router = useRouter()
   // creates the web3 object and request the accounts
+  let changed = ''
   const onLogin = async (provider:any) => {
     console.log("calling the provider");
     const web3 = new Web3(provider);
     const accounts = await web3.eth.getAccounts();
     setAccounts(accounts);
+    changed = accounts[0]
     setAddress(accounts[0])
     // console.log("accounts", accounts[0]);
   };
@@ -57,7 +61,6 @@ function Login() {
       onLogin(provider);
     }
   };
-
   // check if the connect button was pressed
   if (butState == "connect") {
     console.log("here");
@@ -66,7 +69,20 @@ function Login() {
       setButState("");
     }, 1000);
   }
-
+  if (typeof window !== "undefined") {
+    // browser code
+    window.ethereum.on('accountsChanged', function (accounts:any) {
+      console.log('changed')
+    setAddress(accounts[0])
+    router.reload()
+  })
+  }
+  
+  async function getAccount() {
+    const accounts = await window.ethereum.enable();
+    const account = accounts[0];
+    // do something with new account here
+  }
   useEffect(() => {
     handleUsualLogin();
   }, []);
