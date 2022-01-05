@@ -124,7 +124,7 @@ function Create() {
     try {
       const getDid = async () => {
         const rawdata = await fetch(
-          "https://api.ancon.did.pa/v0/did/web",
+          "http://localhost:7788/v0/did/web",
           requestOptions
         );
         const data = await rawdata.json();
@@ -134,7 +134,7 @@ function Create() {
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
-          `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
+          `http://localhost:7788/user/${transactionHash.name}/did.json`
         );
         const getReqParse = await rawGetReq.json();
         const getReq = await JSON.parse(getReqParse);
@@ -142,12 +142,12 @@ function Create() {
 
         // // another way to request the did
         // const rawDidRequest = await fetch(
-        //   `https://api.ancon.did.pa/v0/did/${getReq.id}`
+        //   `http://localhost:7788/v0/did/${getReq.id}`
         // );
         // const didRequest = await rawDidRequest.json()
         // console.log('did',JSON.parse(didRequest))
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${proofCID}/`
+          `http://localhost:7788/v0/dagjson/${proofCID}/`
         );
         const GetProof = await rawGetProof.json();
         console.log("proof==>", {
@@ -243,11 +243,15 @@ function Create() {
       sources: [],
     };
     // sign the message
-    const signature = await signer.signMessage(ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(JSON.stringify(payload))
-      )
-    ));
+    const  h = ethers.utils.arrayify(
+        ethers.utils.toUtf8Bytes(JSON.stringify(payload))      
+    );
+    const signature = await signer.signMessage( h);
+    const pubkey = ethers.utils.verifyMessage(h, signature);
+  const recoveredAddress = ethers.utils.recoverAddress(h, signature);
+  console.log(
+    pubkey, recoveredAddress
+  );
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -262,7 +266,7 @@ function Create() {
       // creates the metadata
       const PostRequest = async () => {
         const rawMetadata = await fetch(
-          "https://api.ancon.did.pa/v0/dagjson",
+          "http://localhost:7788/v0/dagjson",
           requestOptions
         );
         const metadata = await rawMetadata.json();
@@ -276,7 +280,7 @@ function Create() {
         setTokenData({ ...tokenData, tokenCid: id });
         console.log("didCID", DIDcid);
         const dagRequest = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${id}/`
+          `http://localhost:7788/v0/dagjson/${id}/`
         );
         const dag = await dagRequest.json();
         let metadataCid: any;

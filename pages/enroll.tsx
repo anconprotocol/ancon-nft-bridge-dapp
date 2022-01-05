@@ -32,7 +32,7 @@ function Enroll() {
   // check if domain already exists
   const getDomainName = async () => {
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
+      `http://localhost:7788/user/${transactionHash.name}/did.json`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -110,7 +110,7 @@ function Enroll() {
     try {
       const getDid = async () => {
         const rawdata = await fetch(
-          "https://api.ancon.did.pa/v0/did/web",
+          "http://localhost:7788/v0/did/web",
           requestOptions
         );
         const data = await rawdata.json();
@@ -120,14 +120,14 @@ function Enroll() {
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
-          `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
+          `http://localhost:7788/user/${transactionHash.name}/did.json`
         );
         const getReqParse = await rawGetReq.json();
         const getReq = await JSON.parse(getReqParse);
         console.log("get user/domain/did.json ==>>", getReq);
 
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${proofCID}/`
+          `http://localhost:7788/v0/dagjson/${proofCID}/`
         );
         const GetProof = await rawGetProof.json();
         console.log("proof==>", {
