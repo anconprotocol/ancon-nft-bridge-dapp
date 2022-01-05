@@ -39,7 +39,7 @@ async function EnrollL2Account(
       Web3.utils.hexToString(z.value)
     );
     const rawLastHash = await fetch(
-      "https://api.ancon.did.pa/v0/proofs/lasthash"
+      "http://localhost:7788/v0/proofs/lasthash"
     );
     const lasthash = await rawLastHash.json();
     const relayHash = await contract1.getProtocolHeader();
