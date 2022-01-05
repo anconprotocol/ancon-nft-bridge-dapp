@@ -56,7 +56,7 @@ function Create() {
 
   // hooks
   const router = useRouter();
-  const provider:any = useProvider();
+  const provider: any = useProvider();
   const clickInput = () => document.getElementById("nft-img").click();
 
   //step 0 //
@@ -70,42 +70,35 @@ function Create() {
       return;
     } else {
       setStep(-1);
-      setMessage("Getting a valid transaction...");
+      setMessage("Verifying L2 name...");
     }
     try {
-      const provider = ethers.getDefaultProvider();
-      // check if the user has made any transaction
-      const trans = await getTransaction(
-        setStep,
-        address,
-        setErrorModal,
-        setMessage
-      );
-      const transaction: any = await provider.getTransaction(trans);
-
-      // join the signature
-      const sig = ethers.utils.joinSignature({
-        r: transaction.r,
-        s: transaction.s,
-        v: transaction.v,
-      });
-
-      // get publicKey
-      const getPublicKey = await GetPublicKey(transaction, sig, provider);
-      const pubkey = getPublicKey[1];
-      const recoveredAddress = getPublicKey[0];
-      setMessage("Validating proof...");
-      // if the address are equal procced to get the proof
-      if (recoveredAddress === transaction.from) {
-        setTimeout(() => {
-          handleProof(pubkey);
-        }, 2000);
-      } else {
-        setError(true);
+      const domain = await getDomainName();
+      if (domain === false) {
+        setErrorModal([
+          "This Domain does not match the records please try again or procced to create a NFT",
+          "Try again",
+          "/create",
+          "Enroll Account",
+          "/enroll",
+        ]);
+      } else{
+        setStep(1)
       }
     } catch (error) {
       console.log("error", error);
     }
+  };
+  const getDomainName = async () => {
+    const rawResponse = await fetch(
+      `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
+    );
+    const response = await rawResponse.json();
+    console.log("response", rawResponse);
+    if (rawResponse.status === 400) {
+      return false;
+    }
+    return true;
   };
 
   //get the cid and the proof
@@ -243,11 +236,13 @@ function Create() {
       sources: [],
     };
     // sign the message
-    const signature = await signer.signMessage(ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(JSON.stringify(payload))
+    const signature = await signer.signMessage(
+      ethers.utils.arrayify(
+        ethers.utils.keccak256(
+          ethers.utils.toUtf8Bytes(JSON.stringify(payload))
+        )
       )
-    ));
+    );
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -294,7 +289,6 @@ function Create() {
     }
   };
 
-
   // step 5 //
   let web3;
   let ethersInstance;
@@ -302,7 +296,7 @@ function Create() {
   let anconTokenContract: any;
   let ethersContract;
   let transactionAddress;
-  
+
   const mintNft = async () => {
     setStep(5);
     const _web3 = new Web3(provider);
@@ -341,7 +335,6 @@ function Create() {
   }
 
   async function createDocumentNode(web3: any) {
-    
     console.log("Beginning of CREATEDOCUMENTNODE()");
     console.log("Local Account Address", nftContract.defaultAccount);
     try {
@@ -487,7 +480,7 @@ function Create() {
           {step == 0 ? (
             <div className="mt-4 flex flex-col items-center select-none">
               <p className="font-medium">
-                Claim L2 Decentralized Identity
+                Enter L2 Decentralized Identity
               </p>
 
               <div className="flex-col flex mt-3">

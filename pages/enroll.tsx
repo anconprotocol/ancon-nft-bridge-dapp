@@ -28,6 +28,7 @@ function Enroll() {
 
   //custom hooks
   const provider = useProvider();
+  
   // step 0 //
   // check if domain already exists
   const getDomainName = async () => {
@@ -87,7 +88,7 @@ function Enroll() {
           setError(true);
         }
       } else {
-          setErrorModal(['This Domain already exists please try again or procced to create a NFT', "Try again", "Create NFT"])
+          setErrorModal(['This Domain already exists please try again or procced to create a NFT', "Try again",'/enroll', "Create NFT", "/create"])
       }
     } catch (error) {
       console.log("error", error);
