@@ -1,24 +1,49 @@
+import { ethers } from "ethers";
 import { useRecoilState } from "recoil";
 import { errorState } from "../atoms/errorAtom";
-
+declare let window: any;
 // get transaction
-const getTransaction = async (setStep:React.Dispatch<React.SetStateAction<number>>, address:string, setErrorModal:React.Dispatch<React.SetStateAction<string[]>>, setMessage:React.Dispatch<React.SetStateAction<string>>) => {
+const getTransaction = async (
+  setStep: React.Dispatch<React.SetStateAction<number>>,
+  address: string,
+  setErrorModal: React.Dispatch<React.SetStateAction<string[]>>,
+  setMessage: React.Dispatch<React.SetStateAction<string>>,
+  provider: any
+) => {
   // const [errorModal, setErrorModal] = useRecoilState(errorState);
-  console.log("getting transaction");
+  console.log("getting transaction from address", address);
+
+  const prov = new ethers.providers.Web3Provider(provider);
+  const network = await prov.getNetwork();
+  console.log(network);
   try {
-    const rawList = await fetch(
-      `https://api.etherscan.io/api?module=account&action=txlist&address=${"0xf4b935043eb0700af49ed94e13d4d5c6988984f1"}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${
-        process.env.NEXT_PUBLIC_ETHER_KEY
-      }`
-    );
+    let rawList;
+    switch (network.chainId) {
+      case 97:
+        rawList = await fetch(
+          `https://api-testnet.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=1&endblock=99999999&sort=asc&apikey=${process.env.NEXT_PUBLIC_BSC_KEY}`
+        );
+        break;
+      case 56:
+        // bsc main
+        rawList = await fetch(
+          `https://api-testnet.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=1&endblock=99999999&sort=asc&apikey=${process.env.NEXT_PUBLIC_BSC_KEY}`
+        );
+        break;
+      default:
+        rawList = await fetch(
+          `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_ETHER_KEY}`
+        );
+        break;
+    }
     const list = await rawList.json();
+    console.log('list', list)
     let item;
+    setMessage("Obtaining public key...");
     for (item of list.result) {
       if (
-        item.from == "0xf4b935043eb0700af49ed94e13d4d5c6988984f1" ||
-        item.from == address
+        item.from.toLowerCase() == address.toLowerCase()
       ) {
-        setMessage("Obtaining public key...")
         return item.hash;
       }
       continue;

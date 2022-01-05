@@ -17,10 +17,10 @@ function Enroll() {
   const [error, setError] = useState(false);
   const [transactionHash, setTransactionHash] = useState({
     transaction: "",
-    name: "sfgf",
+    name: "",
   });
   const [message, setMessage] = useState("");
-  const [DIDCid, setDIDCid] = useState("sfdg");
+  const [DIDCid, setDIDCid] = useState("");
 
   // atoms
   const address = useRecoilValue(addressState);
@@ -57,16 +57,19 @@ function Enroll() {
       setStep(1);
       const domain = await getDomainName();
       if (domain === false) {
-        const provider = ethers.getDefaultProvider();
+       
         // check if the user has made any transaction
         const trans = await getTransaction(
           setStep,
           address,
           setErrorModal,
-          setMessage
-        );
-        const transaction: any = await provider.getTransaction(trans);
-
+          setMessage,
+          provider,
+        ); 
+        console.log('transaction', trans)
+        const prov = new ethers.providers.Web3Provider(provider)
+        const transaction: any = await prov.getTransaction(trans);
+        console.log('transaction2', transaction)
         // join the signature
         const sig = ethers.utils.joinSignature({
           r: transaction.r,
@@ -78,7 +81,7 @@ function Enroll() {
         const getPublicKey = await GetPublicKey(
           transaction,
           sig,
-          provider
+          prov
         );
         const pubkey = getPublicKey[1];
         const recoveredAddress = getPublicKey[0];

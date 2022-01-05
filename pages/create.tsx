@@ -82,8 +82,8 @@ function Create() {
           "Enroll Account",
           "/enroll",
         ]);
-      } else{
-        setStep(1)
+      } else {
+        setStep(1);
       }
     } catch (error) {
       console.log("error", error);
@@ -102,12 +102,23 @@ function Create() {
   };
 
   //get the cid and the proof
-  const handleProof = (pubkey: string) => {
+  const handleProof = async (pubkey: string) => {
     const base58Encode = ethers.utils.base58.encode(pubkey);
     //post to get the did
+    const prov = new ethers.providers.Web3Provider(provider)
+    const signer = prov.getSigner()
+    const signature = await signer.signMessage(
+      ethers.utils.arrayify(
+        ethers.utils.toUtf8Bytes(
+          "signin this message to verify my public key"
+        )
+      )
+    );
     const payload = {
       domainName: transactionHash.name,
       pub: base58Encode,
+      signature,
+      message: "signin this message to verify my public key"
     };
     const requestOptions = {
       method: "POST",
