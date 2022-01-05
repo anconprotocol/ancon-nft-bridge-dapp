@@ -24,7 +24,7 @@ function ErrorModal() {
             </div>
 
             <p>{state?.[0]}</p>
-            {state?.[1] != "" ? (
+            {state?.length > 1 ? (
               <div className="flex justify-center space-x-10 pt-4">
                 <button
                   onClick={() => {

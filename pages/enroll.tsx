@@ -17,10 +17,10 @@ function Enroll() {
   const [error, setError] = useState(false);
   const [transactionHash, setTransactionHash] = useState({
     transaction: "",
-    name: "",
+    name: "sfgf",
   });
   const [message, setMessage] = useState("");
-  const [DIDCid, setDIDCid] = useState("");
+  const [DIDCid, setDIDCid] = useState("sfdg");
 
   // atoms
   const address = useRecoilValue(addressState);
@@ -28,7 +28,7 @@ function Enroll() {
 
   //custom hooks
   const provider = useProvider();
-  
+
   // step 0 //
   // check if domain already exists
   const getDomainName = async () => {
@@ -75,7 +75,11 @@ function Enroll() {
         });
 
         // get publicKey
-        const getPublicKey = await GetPublicKey(transaction, sig, provider);
+        const getPublicKey = await GetPublicKey(
+          transaction,
+          sig,
+          provider
+        );
         const pubkey = getPublicKey[1];
         const recoveredAddress = getPublicKey[0];
         setMessage("Validating proof...");
@@ -88,7 +92,13 @@ function Enroll() {
           setError(true);
         }
       } else {
-          setErrorModal(['This Domain already exists please try again or procced to create a NFT', "Try again",'/enroll', "Create NFT", "/create"])
+        setErrorModal([
+          "This Domain already exists please try again or procced to create a NFT",
+          "Try again",
+          "/enroll",
+          "Create NFT",
+          "/create",
+        ]);
       }
     } catch (error) {
       console.log("error", error);
@@ -100,17 +110,21 @@ function Enroll() {
     const base58Encode = ethers.utils.base58.encode(pubkey);
     const prov = new ethers.providers.Web3Provider(provider);
     const signer = prov.getSigner();
-    const signature = await signer.signMessage(ethers.utils.arrayify(
-      ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes('signin this message to verify my public key')
+    const signature = await signer.signMessage(
+      ethers.utils.arrayify(
+        ethers.utils.keccak256(
+          ethers.utils.toUtf8Bytes(
+            "signin this message to verify my public key"
+          )
+        )
       )
-    ));
+    );
     //post to get the did
     const payload = {
       domainName: transactionHash.name,
       pub: base58Encode,
       signature: signature,
-      message: 'signin this message to verify my public key'
+      message: "signin this message to verify my public key",
     };
     const requestOptions = {
       method: "POST",
@@ -151,7 +165,9 @@ function Enroll() {
 
         // enroll to L2
         let enroll;
-        setMessage("Preparing to enroll account... this proccess can take up to 1 minute");
+        setMessage(
+          "Preparing to enroll account... this proccess can take up to 1 minute"
+        );
         setTimeout(async () => {
           enroll = await EnrollL2Account(
             cid,
@@ -167,7 +183,7 @@ function Enroll() {
       };
 
       getDid();
-      // setStep(1)
+      // setStep(3)
     } catch (error) {
       console.log("err", error);
     }
@@ -178,7 +194,7 @@ function Enroll() {
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
         <div className="bg-white shadow-xl rounded-lg px-3 py-4">
           <span className="text-black font-bold text-xl">
-            {step === 4 ? "" : "Enroll Account"}
+            {step === 3 ? "Account enrolled" : "Enroll Account"}
           </span>
           {step === 0 ? (
             <div className="mt-4 flex flex-col items-center select-none">
@@ -225,6 +241,47 @@ function Enroll() {
           ) : null}
 
           {/* step 3 account enrolled create nft */}
+          {step === 3 ? (
+            <div className="">
+              <div className="flex flex-col items-start mt-3">
+                <a className="text-gray-600 text-sm">Domain Name</a>
+                <span className="text-lg font-medium mb-2">
+                  {transactionHash.name}
+                </span>
+
+                <a className="text-gray-600 text-sm">DID Cid</a>
+                <span className="text-lg font-medium mb-2">
+                  {DIDCid}
+                </span>
+
+                {/* <a className="text-gray-600 text-sm">Image CID</a>
+                <span className="text-lg font-medium mb-2">
+                  {tokenData.imageCid}
+                </span>
+
+                <a className="text-gray-600 text-sm">Metada CID</a>
+                <span className="text-lg font-medium mb-2">
+                  {tokenData.tokenCid}
+                </span> */}
+
+                {/* <a className="text-gray-600 text-sm">OWNER</a>
+              <span className="text-lg font-medium mb-2">
+                {address}
+              </span> */}
+
+                <div className="flex items-center justify-center mt-3 w-full">
+                  <div>
+                    <p
+                      onClick={() => setStep(5)}
+                      className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+                    >
+                      Close
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

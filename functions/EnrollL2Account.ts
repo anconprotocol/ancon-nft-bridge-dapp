@@ -56,12 +56,16 @@ async function EnrollL2Account(
       UTF8_cid,
       z
     );
-    setStep(2);
+    setStep(3);
     console.log("enroll==>", enroll);
   } catch (error) {
     setStep(0);
     setErrorModal([
       "We could not procces your transaction please try again",
+      "Try again",
+      "/enroll",
+      "Create NFT",
+      "/create",
     ]);
     console.log("error", error);
   }
