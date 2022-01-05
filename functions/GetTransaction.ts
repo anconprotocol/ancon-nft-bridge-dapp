@@ -25,9 +25,8 @@ const getTransaction = async (
         );
         break;
       case 56:
-        // bsc main
         rawList = await fetch(
-          `https://api-testnet.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=1&endblock=99999999&sort=asc&apikey=${process.env.NEXT_PUBLIC_BSC_KEY}`
+          `https://api.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_BSC_KEY}`
         );
         break;
       default:
@@ -37,13 +36,11 @@ const getTransaction = async (
         break;
     }
     const list = await rawList.json();
-    console.log('list', list)
+    console.log("list", list);
     let item;
     setMessage("Obtaining public key...");
     for (item of list.result) {
-      if (
-        item.from.toLowerCase() == address.toLowerCase()
-      ) {
+      if (item.from.toLowerCase() == address.toLowerCase()) {
         return item.hash;
       }
       continue;

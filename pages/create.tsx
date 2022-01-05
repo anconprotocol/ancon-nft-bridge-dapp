@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import React from "react";
 import { useState, useEffect } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 // components
 import Header from "../components/Header";
@@ -23,6 +23,7 @@ import getTransaction from "../functions/GetTransaction";
 import GetPublicKey from "../functions/GetPublicKey";
 import { XDVNFT__factory } from "../types/ethers-contracts";
 import Web3 from "web3";
+import { DidState } from "../atoms/DIDAtom";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -38,7 +39,6 @@ function Create() {
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
   const [message, setMessage] = useState("");
-  const [DIDcid, setDIDCid] = useState<string>("");
   const [tokenData, setTokenData] = useState({
     name: "",
     description: "",
@@ -52,7 +52,8 @@ function Create() {
 
   // atoms
   const [address, setAddress] = useRecoilState(addressState);
-  const [errorModal, setErrorModal] = useRecoilState(errorState);
+  const setErrorModal = useSetRecoilState(errorState);
+  const DIDcid = useRecoilValue(DidState)
 
   // hooks
   const router = useRouter();
@@ -99,86 +100,6 @@ function Create() {
       return false;
     }
     return true;
-  };
-
-  //get the cid and the proof
-  const handleProof = async (pubkey: string) => {
-    const base58Encode = ethers.utils.base58.encode(pubkey);
-    //post to get the did
-    const prov = new ethers.providers.Web3Provider(provider)
-    const signer = prov.getSigner()
-    const signature = await signer.signMessage(
-      ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(
-          "signin this message to verify my public key"
-        )
-      )
-    );
-    const payload = {
-      domainName: transactionHash.name,
-      pub: base58Encode,
-      signature,
-      message: "signin this message to verify my public key"
-    };
-    const requestOptions = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    };
-    try {
-      const getDid = async () => {
-        const rawdata = await fetch(
-          "https://api.ancon.did.pa/v0/did/web",
-          requestOptions
-        );
-        const data = await rawdata.json();
-        const proofCID: any = await Object?.values(data.proof)[0];
-        const cid: any = await Object?.values(data.cid)[0];
-        setDIDCid(cid);
-        console.log("get /did/web ==>>", data);
-
-        const rawGetReq = await fetch(
-          `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
-        );
-        const getReqParse = await rawGetReq.json();
-        const getReq = await JSON.parse(getReqParse);
-        console.log("get user/domain/did.json ==>>", getReq);
-
-        // // another way to request the did
-        // const rawDidRequest = await fetch(
-        //   `https://api.ancon.did.pa/v0/did/${getReq.id}`
-        // );
-        // const didRequest = await rawDidRequest.json()
-        // console.log('did',JSON.parse(didRequest))
-        const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${proofCID}/`
-        );
-        const GetProof = await rawGetProof.json();
-        console.log("proof==>", {
-          ...GetProof.proof?.proofs[0].Proof,
-        });
-
-        // calling to abi proof
-        const z = toAbiProof({
-          ...GetProof.proof?.proofs[0].Proof.exist,
-        });
-
-        // enroll to L2
-        let enroll;
-        setMessage("Preparing to enroll account");
-        // setTimeout(async () => {
-        //   enroll = await enrollL2Account(cid, z, setStep, provider, setErrorModal);
-        // }, 30000);
-        setStep(1);
-        // console.log("post /proofs ===>", Postproof);
-        console.log("get /proofs/key ===>", GetProof);
-      };
-
-      getDid();
-      // setStep(1)
-    } catch (error) {
-      console.log("err", error);
-    }
   };
 
   // step 1 //
@@ -438,48 +359,6 @@ function Create() {
     }
   };
 
-  // contract
-
-  // const handleClickOpen = () => {
-  //   const _web3 = new Web3(provider);
-  //   _web3.eth.defaultAccount = address;
-  //   //setWeb3(_web3);
-  //   bindContracts(_web3);
-  // };
-
-  // async function bindContracts(web3: any) {
-  //   console.log("Beginning of BINDCONTRACTS()", web3);
-  //   const ethersInstance = new ethers.providers.Web3Provider(
-  //     web3.currentProvider
-  //   );
-  // const anconNFTContractAddress: any =
-  //   process.env.NEXT_PUBLIC_AnconTestNFTAddress;
-  // const anconTokenContractAddress: any =
-  //   process.env.NEXT_PUBLIC_AnconTokenAddress;
-  //   console.log(
-  //     "contracts ==>",
-  //     anconNFTContractAddress,
-  //     anconTokenContractAddress
-  //   );
-  //   // // const marketplateContractAddress = env.MarketplaceAddress;
-  //   const nftContract = new web3.eth.Contract(
-  //     AnconNFT.abi,
-  //     anconNFTContractAddress
-  //   );
-  //   const anconTokenContract = new web3.eth.Contract(
-  //     AnconToken.abi,
-  //     anconTokenContractAddress
-  //   );
-  //   const ethersContract = new ethers.Contract(
-  //     anconNFTContractAddress,
-  //     AnconNFT.abi,
-  //     ethersInstance.getSigner(0)
-  //   );
-  //   console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
-  // }
-  // useEffect(() => {
-  //   handleClickOpen();
-  // }, []);
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />

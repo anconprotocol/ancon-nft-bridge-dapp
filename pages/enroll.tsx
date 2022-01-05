@@ -1,8 +1,9 @@
 import { ethers } from "ethers";
 import { get } from "http";
 import { useState } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { addressState } from "../atoms/addressAtom";
+import { DidState } from "../atoms/DIDAtom";
 import { errorState } from "../atoms/errorAtom";
 import ErrorMessage from "../components/ErrorMessage";
 import Header from "../components/Header";
@@ -25,6 +26,7 @@ function Enroll() {
   // atoms
   const address = useRecoilValue(addressState);
   const [errorModal, setErrorModal] = useRecoilState(errorState);
+  const setDIDcid = useSetRecoilState(DidState) 
 
   //custom hooks
   const provider = useProvider();
@@ -115,10 +117,8 @@ function Enroll() {
     const signer = prov.getSigner();
     const signature = await signer.signMessage(
       ethers.utils.arrayify(
-        ethers.utils.keccak256(
-          ethers.utils.toUtf8Bytes(
-            "signin this message to verify my public key"
-          )
+        ethers.utils.toUtf8Bytes(
+          "signin this message to verify my public key"
         )
       )
     );
@@ -144,6 +144,7 @@ function Enroll() {
         const proofCID: any = await Object?.values(data.proof)[0];
         const cid: any = await Object?.values(data.cid)[0];
         setDIDCid(cid);
+        setDIDcid(cid)
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
