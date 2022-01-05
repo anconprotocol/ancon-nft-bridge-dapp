@@ -22,7 +22,8 @@ type transaction = {
   value: BigNumber;
   wait: any;
 };
-async function GetPublicKey(transaction:transaction, sig: string) {
+
+async function GetPublicKey(transaction:transaction, sig: string, provider: any) {
   // get the txData
   console.log(transaction);
   const txData = {
@@ -44,6 +45,7 @@ async function GetPublicKey(transaction:transaction, sig: string) {
   const msgBytes = ethers.utils.arrayify(msgHash);
 
   const pubkey = ethers.utils.recoverPublicKey(msgBytes, sig);
+  
   const recoveredAddress = ethers.utils.recoverAddress(msgBytes, sig);
   console.log(
     "addresses are equal ==>",

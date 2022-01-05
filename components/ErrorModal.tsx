@@ -18,6 +18,7 @@ function ErrorModal() {
 
             
             <p>{state?.[0]}</p>
+            {state?.[1] != '' ? <button></button> : null}
           </div>
         </div>
       ) : null}

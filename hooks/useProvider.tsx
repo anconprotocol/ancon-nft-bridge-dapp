@@ -1,8 +1,8 @@
 declare let window: any;
 //custom hook that check the provider
 function useProvider() {
+  let provider;
   if (typeof window !== "undefined") {
-    let provider;
     if (window.ethereum) {
       provider = window.ethereum;
       // console.log("provider", provider);

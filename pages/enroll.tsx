@@ -74,7 +74,7 @@ function Enroll() {
         });
 
         // get publicKey
-        const getPublicKey = await GetPublicKey(transaction, sig);
+        const getPublicKey = await GetPublicKey(transaction, sig, provider);
         const pubkey = getPublicKey[1];
         const recoveredAddress = getPublicKey[0];
         setMessage("Validating proof...");
@@ -95,12 +95,21 @@ function Enroll() {
   };
 
   //get the cid and the proof
-  const handleProof = (pubkey: string) => {
+  const handleProof = async (pubkey: string) => {
     const base58Encode = ethers.utils.base58.encode(pubkey);
+    const prov = new ethers.providers.Web3Provider(provider);
+    const signer = prov.getSigner();
+    const signature = await signer.signMessage(ethers.utils.arrayify(
+      ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes('signin this message to verify my public key')
+      )
+    ));
     //post to get the did
     const payload = {
       domainName: transactionHash.name,
       pub: base58Encode,
+      signature: signature,
+      message: 'signin this message to verify my public key'
     };
     const requestOptions = {
       method: "POST",
@@ -141,7 +150,7 @@ function Enroll() {
 
         // enroll to L2
         let enroll;
-        setMessage("Preparing to enroll account");
+        setMessage("Preparing to enroll account... this proccess can take up to 1 minute");
         setTimeout(async () => {
           enroll = await EnrollL2Account(
             cid,

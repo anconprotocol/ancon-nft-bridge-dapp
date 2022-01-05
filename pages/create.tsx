@@ -56,7 +56,7 @@ function Create() {
 
   // hooks
   const router = useRouter();
-  const provider = useProvider();
+  const provider:any = useProvider();
   const clickInput = () => document.getElementById("nft-img").click();
 
   //step 0 //
@@ -91,7 +91,7 @@ function Create() {
       });
 
       // get publicKey
-      const getPublicKey = await GetPublicKey(transaction, sig);
+      const getPublicKey = await GetPublicKey(transaction, sig, provider);
       const pubkey = getPublicKey[1];
       const recoveredAddress = getPublicKey[0];
       setMessage("Validating proof...");

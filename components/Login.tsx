@@ -1,3 +1,4 @@
+import { connect } from "http2";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
@@ -7,34 +8,53 @@ import { buttonState, showState } from "../atoms/modalAtom";
 import useProvider from "../hooks/useProvider";
 import Modal from "./Modal";
 
-
 declare let window: any;
+let provider: any;
 function Login() {
-  const [accounts, setAccounts] = useState<string[]| null>();
-  const provider = useProvider();
+  const [accounts, setAccounts] = useState<string[] | null>();
+  // provider = useProvider();
   const [show, setShow] = useRecoilState(showState);
   const [butState, setButState] = useRecoilState(buttonState);
   const [address, setAddress] = useRecoilState(addressState);
   const [connected, setConnected] = useState(false);
-  const router = useRouter()
+  const router = useRouter();
+  provider = useProvider();
   // creates the web3 object and request the accounts
-  let changed = ''
-  const onLogin = async (provider:any) => {
+  let changed = "";
+  const onLogin = async (provider: any) => {
     console.log("calling the provider");
     const web3 = new Web3(provider);
     const accounts = await web3.eth.getAccounts();
+    if (accounts.length === 0) {
+      console.log("error");
+      return true;
+    }
+    console.log("out of if");
     setAccounts(accounts);
-    changed = accounts[0]
-    setAddress(accounts[0])
+    changed = accounts[0];
+    setAddress(accounts[0]);
     // console.log("accounts", accounts[0]);
   };
 
   // handles the usual Login every time a user refreshes
   const handleUsualLogin = async () => {
-    console.log(provider._state.accounts.length);
-    if (provider._state.isUnlocked === false || provider._state.accounts.length === 0) {
-      setShow(true);
+    // console.log(provider._state.accounts)
+    if (
+      provider._state.isUnlocked === false ||
+      provider._state.isConnected === false
+    ) {
+      // console.log("outside try");
+      try {
+        const notConnected: any = onLogin(provider);
+        if (notConnected) {
+          throw "not connected";
+        }
+      } catch (error) {
+        
+        setShow(true);
+      }
     } else {
+      // console.log("else prov");
       if (provider) {
         if (provider !== window.ethereum) {
           window.alert("no provided");
@@ -71,13 +91,13 @@ function Login() {
   }
   if (typeof window !== "undefined") {
     // browser code
-    window.ethereum.on('accountsChanged', function (accounts:any) {
-      console.log('changed')
-    setAddress(accounts[0])
-    router.reload()
-  })
+    window.ethereum.on("accountsChanged", function (accounts: any) {
+      console.log("changed");
+      setAddress(accounts[0]);
+      router.reload();
+    });
   }
-  
+
   async function getAccount() {
     const accounts = await window.ethereum.enable();
     const account = accounts[0];
@@ -90,10 +110,18 @@ function Login() {
   return (
     <>
       {accounts && (
-        <span className="select-none">{accounts?.[0]?.substring(0, 5)}...{accounts?.[0]?.substring(accounts[0].length - 4)}</span>
+        <span className="select-none">
+          {accounts?.[0]?.substring(0, 5)}...
+          {accounts?.[0]?.substring(accounts[0].length - 4)}
+        </span>
       )}
       {accounts == null && (
-        <span onClick={handleUsualLogin} className="cursor-pointer animated-underline select-none">Connect</span>
+        <span
+          onClick={handleUsualLogin}
+          className="cursor-pointer animated-underline select-none"
+        >
+          Connect
+        </span>
       )}
     </>
   );
