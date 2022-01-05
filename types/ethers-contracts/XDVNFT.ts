@@ -17,8 +17,70 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
+export type LeafOpStruct = {
+  valid: boolean;
+  hash: BigNumberish;
+  prehash_key: BigNumberish;
+  prehash_value: BigNumberish;
+  len: BigNumberish;
+  prefix: BytesLike;
+};
+
+export type LeafOpStructOutput = [
+  boolean,
+  number,
+  number,
+  number,
+  number,
+  string
+] & {
+  valid: boolean;
+  hash: number;
+  prehash_key: number;
+  prehash_value: number;
+  len: number;
+  prefix: string;
+};
+
+export type InnerOpStruct = {
+  valid: boolean;
+  hash: BigNumberish;
+  prefix: BytesLike;
+  suffix: BytesLike;
+};
+
+export type InnerOpStructOutput = [boolean, number, string, string] & {
+  valid: boolean;
+  hash: number;
+  prefix: string;
+  suffix: string;
+};
+
+export type ExistenceProofStruct = {
+  valid: boolean;
+  key: BytesLike;
+  value: BytesLike;
+  leaf: LeafOpStruct;
+  path: InnerOpStruct[];
+};
+
+export type ExistenceProofStructOutput = [
+  boolean,
+  string,
+  string,
+  LeafOpStructOutput,
+  InnerOpStructOutput[]
+] & {
+  valid: boolean;
+  key: string;
+  value: string;
+  leaf: LeafOpStructOutput;
+  path: InnerOpStructOutput[];
+};
+
 export interface XDVNFTInterface extends utils.Interface {
   functions: {
+    "anconprotocol()": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "burn(uint256)": FunctionFragment;
@@ -46,14 +108,18 @@ export interface XDVNFTInterface extends utils.Interface {
     "setServiceFeeForPaymentAddress(uint256)": FunctionFragment;
     "setServiceFeeForContract(uint256)": FunctionFragment;
     "transferURI(address,uint256)": FunctionFragment;
+    "mint(address,uint256)": FunctionFragment;
     "transferMetadataOwnership(string,address,uint256)": FunctionFragment;
-    "submitPacketWithProof(uint256[],bytes,bytes[][],uint256,bytes,bytes,bytes)": FunctionFragment;
-    "mint(address,string)": FunctionFragment;
+    "mintWithProof(bytes,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
     "onERC721Received(address,address,uint256,bytes)": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
     "withdrawBalance(address)": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "anconprotocol",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "approve",
     values: [string, BigNumberish]
@@ -133,24 +199,16 @@ export interface XDVNFTInterface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "mint",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "transferMetadataOwnership",
     values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "submitPacketWithProof",
-    values: [
-      BigNumberish[],
-      BytesLike,
-      BytesLike[][],
-      BigNumberish,
-      BytesLike,
-      BytesLike,
-      BytesLike
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mint",
-    values: [string, string]
+    functionFragment: "mintWithProof",
+    values: [BytesLike, BytesLike, ExistenceProofStruct, ExistenceProofStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "onERC721Received",
@@ -165,6 +223,10 @@ export interface XDVNFTInterface extends utils.Interface {
     values: [string]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "anconprotocol",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
@@ -234,15 +296,15 @@ export interface XDVNFTInterface extends utils.Interface {
     functionFragment: "transferURI",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferMetadataOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "submitPacketWithProof",
+    functionFragment: "mintWithProof",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "onERC721Received",
     data: BytesLike
@@ -361,6 +423,8 @@ export interface XDVNFT extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    anconprotocol(overrides?: CallOverrides): Promise<[string]>;
+
     /**
      * See {IERC721-approve}.
      */
@@ -534,6 +598,12 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    mint(
+      toAddress: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     /**
      * Requests a DAG contract offchain execution
      */
@@ -544,23 +614,11 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    submitPacketWithProof(
-      leafOpUint: BigNumberish[],
-      prefix: BytesLike,
-      existenceProofInnerOp: BytesLike[][],
-      existenceProofInnerOpHash: BigNumberish,
+    mintWithProof(
       key: BytesLike,
-      value: BytesLike,
       packet: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    /**
-     * Mints a XDV Data Token
-     */
-    mint(
-      user: string,
-      uri: string,
+      userProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -588,6 +646,8 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
+
+  anconprotocol(overrides?: CallOverrides): Promise<string>;
 
   /**
    * See {IERC721-approve}.
@@ -757,6 +817,12 @@ export interface XDVNFT extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  mint(
+    toAddress: string,
+    tokenId: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   /**
    * Requests a DAG contract offchain execution
    */
@@ -767,23 +833,11 @@ export interface XDVNFT extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  submitPacketWithProof(
-    leafOpUint: BigNumberish[],
-    prefix: BytesLike,
-    existenceProofInnerOp: BytesLike[][],
-    existenceProofInnerOpHash: BigNumberish,
+  mintWithProof(
     key: BytesLike,
-    value: BytesLike,
     packet: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  /**
-   * Mints a XDV Data Token
-   */
-  mint(
-    user: string,
-    uri: string,
+    userProof: ExistenceProofStruct,
+    proof: ExistenceProofStruct,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -809,6 +863,8 @@ export interface XDVNFT extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    anconprotocol(overrides?: CallOverrides): Promise<string>;
+
     /**
      * See {IERC721-approve}.
      */
@@ -966,6 +1022,12 @@ export interface XDVNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    mint(
+      toAddress: string,
+      tokenId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
     /**
      * Requests a DAG contract offchain execution
      */
@@ -976,23 +1038,11 @@ export interface XDVNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    submitPacketWithProof(
-      leafOpUint: BigNumberish[],
-      prefix: BytesLike,
-      existenceProofInnerOp: BytesLike[][],
-      existenceProofInnerOpHash: BigNumberish,
+    mintWithProof(
       key: BytesLike,
-      value: BytesLike,
       packet: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    /**
-     * Mints a XDV Data Token
-     */
-    mint(
-      user: string,
-      uri: string,
+      userProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1095,6 +1145,8 @@ export interface XDVNFT extends BaseContract {
   };
 
   estimateGas: {
+    anconprotocol(overrides?: CallOverrides): Promise<BigNumber>;
+
     /**
      * See {IERC721-approve}.
      */
@@ -1266,6 +1318,12 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    mint(
+      toAddress: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     /**
      * Requests a DAG contract offchain execution
      */
@@ -1276,23 +1334,11 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    submitPacketWithProof(
-      leafOpUint: BigNumberish[],
-      prefix: BytesLike,
-      existenceProofInnerOp: BytesLike[][],
-      existenceProofInnerOpHash: BigNumberish,
+    mintWithProof(
       key: BytesLike,
-      value: BytesLike,
       packet: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    /**
-     * Mints a XDV Data Token
-     */
-    mint(
-      user: string,
-      uri: string,
+      userProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1322,6 +1368,8 @@ export interface XDVNFT extends BaseContract {
   };
 
   populateTransaction: {
+    anconprotocol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     /**
      * See {IERC721-approve}.
      */
@@ -1502,6 +1550,12 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    mint(
+      toAddress: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     /**
      * Requests a DAG contract offchain execution
      */
@@ -1512,23 +1566,11 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    submitPacketWithProof(
-      leafOpUint: BigNumberish[],
-      prefix: BytesLike,
-      existenceProofInnerOp: BytesLike[][],
-      existenceProofInnerOpHash: BigNumberish,
+    mintWithProof(
       key: BytesLike,
-      value: BytesLike,
       packet: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    /**
-     * Mints a XDV Data Token
-     */
-    mint(
-      user: string,
-      uri: string,
+      userProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

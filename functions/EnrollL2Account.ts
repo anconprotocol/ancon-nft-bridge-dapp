@@ -32,7 +32,6 @@ async function EnrollL2Account(
     if (getProof !== "0x") {
       return "proof already exist";
     }
-
     console.log(
       "proof key",
       Web3.utils.hexToString(z.key),

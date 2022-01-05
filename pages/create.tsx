@@ -1,7 +1,11 @@
 import { useRouter } from "next/router";
 import React from "react";
 import { useState, useEffect } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  useRecoilState,
+  useRecoilValue,
+  useSetRecoilState,
+} from "recoil";
 
 // components
 import Header from "../components/Header";
@@ -24,6 +28,7 @@ import GetPublicKey from "../functions/GetPublicKey";
 import { XDVNFT__factory } from "../types/ethers-contracts";
 import Web3 from "web3";
 import { DidState } from "../atoms/DIDAtom";
+import { FetchEvent } from "next/dist/server/web/spec-compliant/fetch-event";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -44,6 +49,7 @@ function Create() {
     description: "",
     imageCid: "",
     tokenCid: "",
+    proofKey: "",
   });
   const [transactionHash, setTransactionHash] = useState({
     transaction: "",
@@ -53,7 +59,7 @@ function Create() {
   // atoms
   const [address, setAddress] = useRecoilState(addressState);
   const setErrorModal = useSetRecoilState(errorState);
-  const DIDcid = useRecoilValue(DidState)
+  // const DIDcid = useRecoilValue(DidState)
 
   // hooks
   const router = useRouter();
@@ -175,6 +181,8 @@ function Create() {
         )
       )
     );
+    const DIDcid = localStorage.getItem("DIDCid");
+    console.log("did", DIDcid);
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -183,8 +191,13 @@ function Create() {
         from: DIDcid,
         signature,
         data: payload,
+        pin:'true'
       }),
     };
+    // ethers.utils.defaultAbiCoder.encode(
+    //   ["address", "string"],
+    //   [address]
+    // );
     try {
       // creates the metadata
       const PostRequest = async () => {
@@ -207,11 +220,34 @@ function Create() {
         );
         const dag = await dagRequest.json();
         let metadataCid: any;
+        let proofKey: any;
         if (dag !== null) {
           metadataCid = await Object?.values(dag.content)[0];
-          setTokenData({ ...tokenData, tokenCid: metadataCid });
+          proofKey = await Object?.values(dag.proof)[0];
+          setTokenData({
+            ...tokenData,
+            tokenCid: metadataCid,
+            proofKey,
+          });
         }
         console.log("dag", dag, metadataCid);
+        const rawPostProof = await fetch(
+          "https://api.ancon.did.pa/v0/dagjson",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: DIDcid,
+              signature,
+              data: ethers.utils.defaultAbiCoder.encode(
+                ["address", "string"],
+                [address, metadataCid]
+              ),
+            }),
+          }
+        );
+        const postProof = await rawPostProof.json();
+        console.log("date", postProof);
         setMessage("Minting NFT...");
         setStep(4);
       };
@@ -228,14 +264,13 @@ function Create() {
   let anconTokenContract: any;
   let ethersContract;
   let transactionAddress;
-
+  let signer;
   const mintNft = async () => {
     setStep(5);
     const _web3 = new Web3(provider);
     _web3.eth.defaultAccount = address;
     //setWeb3(_web3);
     web3 = _web3;
-
     bindContracts(web3);
   };
 
@@ -244,31 +279,48 @@ function Create() {
     ethersInstance = new ethers.providers.Web3Provider(
       web3.currentProvider
     );
-    const anconNFTContractAddress: any =
-      process.env.NEXT_PUBLIC_AnconTestNFTAddress;
-    const AnconTokenContractAddress: any =
-      process.env.NEXT_PUBLIC_AnconTokenAddress;
+    signer = ethersInstance.getSigner();
 
-    nftContract = new web3.eth.Contract(
-      AnconNFT.abi,
-      anconNFTContractAddress
+    const contract1 = XDVNFT__factory.connect(
+      "0x15Ce2363E747c3357a7Ecd9BB672940495Db7670",
+      ethersInstance
     );
-    anconTokenContract = new web3.eth.Contract(
-      AnconToken.abi,
-      AnconTokenContractAddress
+    const contract2 = XDVNFT__factory.connect(
+      "0x15Ce2363E747c3357a7Ecd9BB672940495Db7670",
+      signer
     );
-    ethersContract = new ethers.Contract(
-      anconNFTContractAddress,
-      AnconNFT.abi,
-      ethersInstance.getSigner(0)
-    );
-    console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
+
+    // const mint = contract2.mintWithProof(tokenData.proofKey);
+
+    // const anconNFTContractAddress: any =
+    //   process.env.NEXT_PUBLIC_AnconTestNFTAddress;
+    // const AnconTokenContractAddress: any =
+    //   process.env.NEXT_PUBLIC_AnconTokenAddress;
+
+    // nftContract = new web3.eth.Contract(
+    //   AnconNFT.abi,
+    //   anconNFTContractAddress
+    // );
+    // anconTokenContract = new web3.eth.Contract(
+    //   AnconToken.abi,
+    //   AnconTokenContractAddress
+    // );
+    // ethersContract = new ethers.Contract(
+    //   anconNFTContractAddress,
+    //   AnconNFT.abi,
+    //   ethersInstance.getSigner(0)
+    // );
+    // console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
     createDocumentNode(web3);
   }
 
   async function createDocumentNode(web3: any) {
     console.log("Beginning of CREATEDOCUMENTNODE()");
     console.log("Local Account Address", nftContract.defaultAccount);
+    const encoding = ethers.utils.defaultAbiCoder.encode(
+      ["address", "string"],
+      [address]
+    );
     try {
       const bob = nftContract.defaultAccount;
 

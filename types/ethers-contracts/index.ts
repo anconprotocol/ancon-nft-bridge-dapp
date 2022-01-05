@@ -21,6 +21,7 @@ export type { ERC721URIStorage } from "./ERC721URIStorage";
 export type { Faucet } from "./Faucet";
 export type { IAccessControl } from "./IAccessControl";
 export type { IAccessControlEnumerable } from "./IAccessControlEnumerable";
+export type { IAnconProtocol } from "./IAnconProtocol";
 export type { IClaimsVerifier } from "./IClaimsVerifier";
 export type { ICredentialRegistry } from "./ICredentialRegistry";
 export type { ICS23 } from "./ICS23";
@@ -61,6 +62,7 @@ export { ERC721URIStorage__factory } from "./factories/ERC721URIStorage__factory
 export { Faucet__factory } from "./factories/Faucet__factory";
 export { IAccessControl__factory } from "./factories/IAccessControl__factory";
 export { IAccessControlEnumerable__factory } from "./factories/IAccessControlEnumerable__factory";
+export { IAnconProtocol__factory } from "./factories/IAnconProtocol__factory";
 export { IClaimsVerifier__factory } from "./factories/IClaimsVerifier__factory";
 export { ICredentialRegistry__factory } from "./factories/ICredentialRegistry__factory";
 export { ICS23__factory } from "./factories/ICS23__factory";
