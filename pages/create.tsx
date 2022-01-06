@@ -55,7 +55,7 @@ function Create() {
     transaction: "",
     name: "",
   });
-
+  const [packet, setPacket] = useState({ proof: "", packet: "" });
   // atoms
   const [address, setAddress] = useRecoilState(addressState);
   const setErrorModal = useSetRecoilState(errorState);
@@ -191,7 +191,7 @@ function Create() {
         from: DIDcid,
         signature,
         data: payload,
-        pin:'true'
+        pin: "true",
       }),
     };
     // ethers.utils.defaultAbiCoder.encode(
@@ -237,6 +237,7 @@ function Create() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              path: "/",
               from: DIDcid,
               signature,
               data: ethers.utils.defaultAbiCoder.encode(
@@ -247,7 +248,23 @@ function Create() {
           }
         );
         const postProof = await rawPostProof.json();
-        console.log("date", postProof);
+        const key = await Object?.values(postProof.cid)[0];
+        console.log("date", postProof, key);
+        const rawGetProof = await fetch(
+          `https://api.ancon.did.pa/v0/dagjson/${key}/`
+        );
+        const getProof = await rawGetProof.json();
+        let packetId:any = await Object?.values(getProof.content)[0];
+        const rawPacket = await fetch(
+          `https://api.ancon.did.pa/v0/dagjson/${packetId}/`
+        );
+        const packet = await rawPacket.json();
+        packetId = await Object?.values(packet)[0];
+         
+        packetId = ethers.utils.base64.decode(packetId.bytes)
+        console.log('packet', packet, packetId)
+        setPacket({ proof: getProof.proof, packet: packetId });
+        console.log("fetch", getProof, getProof.proof);
         setMessage("Minting NFT...");
         setStep(4);
       };
@@ -282,15 +299,23 @@ function Create() {
     signer = ethersInstance.getSigner();
 
     const contract1 = XDVNFT__factory.connect(
-      "0x15Ce2363E747c3357a7Ecd9BB672940495Db7670",
+      "0x46d890d9e9BdB91bD7d31a5D8262586baD6A9399",
       ethersInstance
     );
     const contract2 = XDVNFT__factory.connect(
-      "0x15Ce2363E747c3357a7Ecd9BB672940495Db7670",
+      "0x46d890d9e9BdB91bD7d31a5D8262586baD6A9399",
       signer
     );
-
-    // const mint = contract2.mintWithProof(tokenData.proofKey);
+    const abi = await toAbiProof(packet.proof);
+    console.log(tokenData.proofKey, packet.packet, "0x", abi);
+    const userProof: any = "0x";
+    const mint = await contract2.mintWithProof(
+      abi.key,
+      packet.packet,
+      abi,
+      abi
+    );
+    console.log(mint);
 
     // const anconNFTContractAddress: any =
     //   process.env.NEXT_PUBLIC_AnconTestNFTAddress;
@@ -311,7 +336,7 @@ function Create() {
     //   ethersInstance.getSigner(0)
     // );
     // console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
-    createDocumentNode(web3);
+    // createDocumentNode(web3);
   }
 
   async function createDocumentNode(web3: any) {
@@ -491,8 +516,11 @@ function Create() {
                 id="nft-img"
                 style={{ display: "none" }}
               ></input>
-              <div className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer">
-                <p onClick={handleUpdloadImage}>Upload image</p>
+              <div
+                onClick={handleUpdloadImage}
+                className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer"
+              >
+                <p>Upload image</p>
               </div>
             </div>
           ) : null}

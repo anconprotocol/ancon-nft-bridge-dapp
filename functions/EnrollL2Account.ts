@@ -3,13 +3,14 @@ import { useRecoilValue, useRecoilState } from "recoil";
 import Web3 from "web3";
 import { errorState } from "../atoms/errorAtom";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
-
+const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 async function EnrollL2Account(
   cid: string,
   z: any,
   setStep: React.Dispatch<React.SetStateAction<number>>,
   provider: any,
-  setErrorModal: React.Dispatch<React.SetStateAction<string[]>>
+  setErrorModal: React.Dispatch<React.SetStateAction<string[]>>,
+  address:string
 ) {
   // const [errorModal, setErrorModal] = useRecoilState(errorState);
   console.log("enrolling to L2");
@@ -18,11 +19,11 @@ async function EnrollL2Account(
     const signer = prov.getSigner();
 
     const contract1 = AnconProtocol__factory.connect(
-      "0x3AD9090a3E3af4e288805d8c020F4CCd20212036",
+      "0xA7a01C71269Abafdc8166cc9E0DEBa27EcAB283A",
       prov
     );
     const contract2 = AnconProtocol__factory.connect(
-      "0x3AD9090a3E3af4e288805d8c020F4CCd20212036",
+      "0xA7a01C71269Abafdc8166cc9E0DEBa27EcAB283A",
       signer
     );
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
@@ -50,6 +51,32 @@ async function EnrollL2Account(
     );
     console.log("relay hash", relayHash);
 
+    // const checkPolling = async () => {
+    //   console.log('polling')
+    //   const header = await contract1.getProtocolHeader();
+    //   if (header === lasthash) {
+    //     return true;
+    //   }
+    //   return undefined;
+    // };
+    // console.log('starting to poll')
+    // const poll = await ethers.utils.poll(checkPolling);
+    // console.log('poll ==>', poll)
+    const provi= new Web3(provider) 
+    provi.eth.defaultAccount = address;
+    const dai = new provi.eth.Contract(
+      AnconToken.abi,
+      "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
+    );
+    const allowance = await dai.methods.allowance(address, contract2.address).call()
+    if(allowance == 0){
+      await dai.methods.approve(contract2.address, '1000').send({
+        gasPrice: "22000000000",
+        gas: 400000,
+        from: address
+      })
+    }
+    console.log()
     const enroll = await contract2.enrollL2Account(
       z.key,
       UTF8_cid,
