@@ -175,12 +175,18 @@ function Create() {
       image: tokenData.imageCid,
       sources: [],
     };
+    // let hexdata = ethers.utils.defaultAbiCoder.encode(
+    //   payload
+    // );
+    // let s = await signer.signMessage(
+    //   ethers.utils.hexlify(
+    //     ethers.utils.toUtf8Bytes(JSON.stringify(payload))
+    //   )
+    // );
     // sign the message
     const signature = await signer.signMessage(
-      ethers.utils.arrayify(
-        ethers.utils.keccak256(
-          ethers.utils.toUtf8Bytes(JSON.stringify(payload))
-        )
+      ethers.utils.hexlify(
+        ethers.utils.toUtf8Bytes(JSON.stringify(payload))
       )
     );
     const DIDcid = localStorage.getItem("DIDCid");
@@ -196,10 +202,6 @@ function Create() {
         pin: "true",
       }),
     };
-    // ethers.utils.defaultAbiCoder.encode(
-    //   ["address", "string"],
-    //   [address]
-    // );
     try {
       // creates the metadata
       const PostRequest = async () => {
@@ -232,8 +234,17 @@ function Create() {
             proofKey,
           });
         }
+        let hexdata = ethers.utils.defaultAbiCoder.encode(
+          ["address", "string"],
+          [address, metadataCid]
+        );
+        let s = await signer.signMessage(
+          ethers.utils.arrayify(
+            ethers.utils.toUtf8Bytes(JSON.stringify(hexdata))
+          )
+        );
         console.log("dag", dag, metadataCid);
-        await sleep(40000)
+        await sleep(40000);
         const rawPostProof = await fetch(
           "https://api.ancon.did.pa/v0/dagjson",
           {
@@ -242,7 +253,7 @@ function Create() {
             body: JSON.stringify({
               path: "/",
               from: DIDcid,
-              signature,
+              signature: s,
               data: ethers.utils.defaultAbiCoder.encode(
                 ["address", "string"],
                 [address, metadataCid]
@@ -297,9 +308,7 @@ function Create() {
 
   async function bindContracts(web3: any) {
     console.log("Beginning of BINDCONTRACTS()");
-    ethersInstance = new ethers.providers.Web3Provider(
-      provider
-    );
+    ethersInstance = new ethers.providers.Web3Provider(provider);
     signer = ethersInstance.getSigner();
 
     const contract1 = XDVNFT__factory.connect(
