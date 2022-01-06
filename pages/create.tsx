@@ -36,7 +36,9 @@ const AnconNFT = require("../contracts/AnconNFT.sol/AnconNFT.json");
 
 // fix the type error for document in nextjs
 declare let document: any;
-
+function sleep(ms: any) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 function Create() {
   // state
   const [step, setStep] = useState(0);
@@ -231,6 +233,7 @@ function Create() {
           });
         }
         console.log("dag", dag, metadataCid);
+        await sleep(40000)
         const rawPostProof = await fetch(
           "https://api.ancon.did.pa/v0/dagjson",
           {
@@ -250,19 +253,20 @@ function Create() {
         const postProof = await rawPostProof.json();
         const key = await Object?.values(postProof.cid)[0];
         console.log("date", postProof, key);
+
         const rawGetProof = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${key}/`
         );
         const getProof = await rawGetProof.json();
-        let packetId:any = await Object?.values(getProof.content)[0];
+        let packetId: any = await Object?.values(getProof.content)[0];
         const rawPacket = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${packetId}/`
         );
         const packet = await rawPacket.json();
         packetId = await Object?.values(packet)[0];
-         
-        packetId = ethers.utils.base64.decode(packetId.bytes)
-        console.log('packet', packet, packetId)
+
+        packetId = ethers.utils.base64.decode(packetId.bytes);
+        console.log("packet", packet, packetId);
         setPacket({ proof: getProof.proof, packet: packetId });
         console.log("fetch", getProof, getProof.proof);
         setMessage("Minting NFT...");
@@ -294,7 +298,7 @@ function Create() {
   async function bindContracts(web3: any) {
     console.log("Beginning of BINDCONTRACTS()");
     ethersInstance = new ethers.providers.Web3Provider(
-      web3.currentProvider
+      provider
     );
     signer = ethersInstance.getSigner();
 
@@ -306,10 +310,45 @@ function Create() {
       "0x46d890d9e9BdB91bD7d31a5D8262586baD6A9399",
       signer
     );
+    const contract3 = AnconProtocol__factory.connect(
+      "0xA7a01C71269Abafdc8166cc9E0DEBa27EcAB283A",
+      ethersInstance
+    );
     const abi = await toAbiProof(packet.proof);
-    console.log(tokenData.proofKey, packet.packet, "0x", abi);
-    const userProof: any = "0x";
-    const mint = await contract2.mintWithProof(
+    const dai = new web3.eth.Contract(
+      AnconToken.abi,
+      "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
+    );
+
+    const allowance = await dai.methods
+      .allowance(address, contract2.address)
+      .call();
+    if (allowance == 0) {
+      await dai.methods.approve(contract2.address, "1000").send({
+        gasPrice: "22000000000",
+        gas: 400000,
+        from: address,
+      });
+    }
+    const rawLastHash = await fetch(
+      "https://api.ancon.did.pa/v0/proofs/lasthash"
+    );
+    const lasthash = await rawLastHash.json();
+    const relayHash = await contract3.getProtocolHeader();
+    console.log(
+      "last hash",
+      ethers.utils.hexlify(
+        ethers.utils.base64.decode(lasthash.lastHash.hash)
+      )
+    );
+    console.log("relay hash", relayHash);
+    console.log(abi.key, packet.packet, "0x", abi);
+    let mint;
+    // setTimeout(async () => {
+
+    // }, 60000);
+
+    mint = await contract2.mintWithProof(
       abi.key,
       packet.packet,
       abi,

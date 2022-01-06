@@ -76,7 +76,7 @@ async function EnrollL2Account(
         from: address
       })
     }
-    console.log()
+    
     const enroll = await contract2.enrollL2Account(
       z.key,
       UTF8_cid,

@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { get } from "http";
+import { Router, useRouter } from "next/router";
 import { useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { addressState } from "../atoms/addressAtom";
@@ -30,6 +31,7 @@ function Enroll() {
 
   //custom hooks
   const provider = useProvider();
+  const router = useRouter()
 
   // step 0 //
   // check if domain already exists
@@ -278,7 +280,7 @@ function Enroll() {
                 <div className="flex items-center justify-center mt-3 w-full">
                   <div>
                     <p
-                      onClick={() => setStep(5)}
+                      onClick={() => router.push("/")}
                       className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
                     >
                       Close
