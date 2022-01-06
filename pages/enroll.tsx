@@ -2,7 +2,11 @@ import { ethers } from "ethers";
 import { get } from "http";
 import { Router, useRouter } from "next/router";
 import { useState } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  useRecoilState,
+  useRecoilValue,
+  useSetRecoilState,
+} from "recoil";
 import { addressState } from "../atoms/addressAtom";
 import { DidState } from "../atoms/DIDAtom";
 import { errorState } from "../atoms/errorAtom";
@@ -27,11 +31,11 @@ function Enroll() {
   // atoms
   const address = useRecoilValue(addressState);
   const [errorModal, setErrorModal] = useRecoilState(errorState);
-  const setDIDcid = useSetRecoilState(DidState) 
+  const setDIDcid = useSetRecoilState(DidState);
 
   //custom hooks
   const provider = useProvider();
-  const router = useRouter()
+  const router = useRouter();
 
   // step 0 //
   // check if domain already exists
@@ -61,19 +65,18 @@ function Enroll() {
       setStep(1);
       const domain = await getDomainName();
       if (domain === false) {
-       
         // check if the user has made any transaction
         const trans = await getTransaction(
           setStep,
           address,
           setErrorModal,
           setMessage,
-          provider,
-        ); 
-        console.log('transaction', trans)
-        const prov = new ethers.providers.Web3Provider(provider)
+          provider
+        );
+        console.log("transaction", trans);
+        const prov = new ethers.providers.Web3Provider(provider);
         const transaction: any = await prov.getTransaction(trans);
-        console.log('transaction2', transaction)
+        console.log("transaction2", transaction);
         // join the signature
         const sig = ethers.utils.joinSignature({
           r: transaction.r,
@@ -146,8 +149,8 @@ function Enroll() {
         const proofCID: any = await Object?.values(data.proof)[0];
         const cid: any = await Object?.values(data.cid)[0];
         setDIDCid(cid);
-        setDIDcid(cid)
-        localStorage.setItem('DIDCid',cid)
+        setDIDcid(cid);
+        localStorage.setItem("DIDCid", cid);
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
@@ -200,9 +203,13 @@ function Enroll() {
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
-        <div className="bg-white shadow-xl rounded-lg px-3 py-4">
+        <div className="bg-white shadow-xl rounded-lg px-3 py-4 mx-2">
           <span className="text-black font-bold text-xl">
-            {step === 3 ? "Account enrolled" : "Enroll Account"}
+            {step === 3
+              ? "Account enrolled"
+              : step === 1
+              ? "Enrollment Proccess"
+              : "Enroll Account"}
           </span>
           {step === 0 ? (
             <div className="mt-4 flex flex-col items-center select-none">
@@ -250,32 +257,23 @@ function Enroll() {
 
           {/* step 3 account enrolled create nft */}
           {step === 3 ? (
-            <div className="">
-              <div className="flex flex-col items-start mt-3">
+            <div className="flex items-center justify-center mt-3">
+              <div className="grid grid-cols-1">
                 <a className="text-gray-600 text-sm">Domain Name</a>
                 <span className="text-lg font-medium mb-2">
                   {transactionHash.name}
                 </span>
 
                 <a className="text-gray-600 text-sm">DID Cid</a>
-                <span className="text-lg font-medium mb-2">
+                <p className="hidden md:inline text-lg font-medium mb-2">
                   {DIDCid}
-                </span>
-
-                {/* <a className="text-gray-600 text-sm">Image CID</a>
-                <span className="text-lg font-medium mb-2">
-                  {tokenData.imageCid}
-                </span>
-
-                <a className="text-gray-600 text-sm">Metada CID</a>
-                <span className="text-lg font-medium mb-2">
-                  {tokenData.tokenCid}
-                </span> */}
-
-                {/* <a className="text-gray-600 text-sm">OWNER</a>
-              <span className="text-lg font-medium mb-2">
-                {address}
-              </span> */}
+                </p>
+                <p className="md:hidden text-lg">
+                  {DIDCid.substring(0, 30)}...
+                </p>
+                <p className="md:hidden text-lg">
+                  ...{DIDCid.substring(30)}
+                </p>
 
                 <div className="flex items-center justify-center mt-3 w-full">
                   <div>
