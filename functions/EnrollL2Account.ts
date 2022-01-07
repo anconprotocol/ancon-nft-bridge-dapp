@@ -19,11 +19,11 @@ async function EnrollL2Account(
     const signer = prov.getSigner();
 
     const contract1 = AnconProtocol__factory.connect(
-      "0xA7a01C71269Abafdc8166cc9E0DEBa27EcAB283A",
+      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB",
       prov
     );
     const contract2 = AnconProtocol__factory.connect(
-      "0xA7a01C71269Abafdc8166cc9E0DEBa27EcAB283A",
+      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB",
       signer
     );
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
@@ -69,13 +69,13 @@ async function EnrollL2Account(
       "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
     );
     const allowance = await dai.methods.allowance(address, contract2.address).call()
-    if(allowance == 0){
-      await dai.methods.approve(contract2.address, '1000').send({
+    // if(allowance == 0){
+      await dai.methods.approve(contract2.address, '1000000000000000000000').send({
         gasPrice: "22000000000",
         gas: 400000,
         from: address
       })
-    }
+    // }
     
     const enroll = await contract2.enrollL2Account(
       z.key,

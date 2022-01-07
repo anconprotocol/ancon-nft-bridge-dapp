@@ -151,6 +151,7 @@ function Enroll() {
         setDIDCid(cid);
         setDIDcid(cid);
         localStorage.setItem("DIDCid", cid);
+        localStorage.setItem("ProofCid", proofCID);
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
@@ -187,7 +188,7 @@ function Enroll() {
             setErrorModal,
             address
           );
-        }, 30000);
+        }, 40000);
         // setStep(1);
         // console.log("post /proofs ===>", Postproof);
         console.log("get /proofs/key ===>", GetProof);

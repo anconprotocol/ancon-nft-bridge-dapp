@@ -175,17 +175,9 @@ function Create() {
       image: tokenData.imageCid,
       sources: [],
     };
-    // let hexdata = ethers.utils.defaultAbiCoder.encode(
-    //   payload
-    // );
-    // let s = await signer.signMessage(
-    //   ethers.utils.hexlify(
-    //     ethers.utils.toUtf8Bytes(JSON.stringify(payload))
-    //   )
-    // );
     // sign the message
     const signature = await signer.signMessage(
-      ethers.utils.hexlify(
+      ethers.utils.arrayify(
         ethers.utils.toUtf8Bytes(JSON.stringify(payload))
       )
     );
@@ -238,13 +230,21 @@ function Create() {
           ["address", "string"],
           [address, metadataCid]
         );
+        // let hexdata = Web3.utils.stringToHex(metadataCid)
+        
         let s = await signer.signMessage(
           ethers.utils.arrayify(
-            ethers.utils.toUtf8Bytes(JSON.stringify(hexdata))
+            ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
           )
         );
+        // let s = await signer.signMessage(hexdata)
+        
         console.log("dag", dag, metadataCid);
-        await sleep(40000);
+        console.log('61 seconds')
+        setMessage("Creating Offchain Metadata...")
+        setStep(-1)
+        await sleep(61000);
+
         const rawPostProof = await fetch(
           "https://api.ancon.did.pa/v0/dagjson",
           {
@@ -254,10 +254,7 @@ function Create() {
               path: "/",
               from: DIDcid,
               signature: s,
-              data: ethers.utils.defaultAbiCoder.encode(
-                ["address", "string"],
-                [address, metadataCid]
-              ),
+              data: [hexdata]
             }),
           }
         );
@@ -274,11 +271,13 @@ function Create() {
           `https://api.ancon.did.pa/v0/dagjson/${packetId}/`
         );
         const packet = await rawPacket.json();
-        packetId = await Object?.values(packet)[0];
-
-        packetId = ethers.utils.base64.decode(packetId.bytes);
-        console.log("packet", packet, packetId);
-        setPacket({ proof: getProof.proof, packet: packetId });
+        // packetId = await packet[0][0];
+        // console.log('packetid', packetId, packet)
+        // packetId = ethers.utils.base64.decode(packetId.bytes);
+        // console.log("packet", packet, packetId);
+        setPacket({ proof: getProof.proof, packet: hexdata });
+        console.log('31 seconds')
+        await sleep(31000);
         console.log("fetch", getProof, getProof.proof);
         setMessage("Minting NFT...");
         setStep(4);
@@ -312,33 +311,39 @@ function Create() {
     signer = ethersInstance.getSigner();
 
     const contract1 = XDVNFT__factory.connect(
-      "0x46d890d9e9BdB91bD7d31a5D8262586baD6A9399",
+      "0x47434D6164AD6d067359EA276Ba79059D3cfFa0c",
       ethersInstance
     );
     const contract2 = XDVNFT__factory.connect(
-      "0x46d890d9e9BdB91bD7d31a5D8262586baD6A9399",
+      "0x47434D6164AD6d067359EA276Ba79059D3cfFa0c",
       signer
     );
     const contract3 = AnconProtocol__factory.connect(
-      "0xA7a01C71269Abafdc8166cc9E0DEBa27EcAB283A",
+      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB",
       ethersInstance
     );
     const abi = await toAbiProof(packet.proof);
     const dai = new web3.eth.Contract(
       AnconToken.abi,
-      "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
+      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB"
     );
 
     const allowance = await dai.methods
       .allowance(address, contract2.address)
       .call();
-    if (allowance == 0) {
-      await dai.methods.approve(contract2.address, "1000").send({
+    // if (allowance == 0) {
+      await dai.methods.approve(contract2.address, "1000000000000000000000").send({
         gasPrice: "22000000000",
         gas: 400000,
         from: address,
       });
-    }
+      await dai.methods.approve(contract3.address, "1000000000000000000000").send({
+        gasPrice: "22000000000",
+        gas: 400000,
+        from: address,
+      });
+    // }
+    await sleep(7000)
     const rawLastHash = await fetch(
       "https://api.ancon.did.pa/v0/proofs/lasthash"
     );
@@ -351,17 +356,16 @@ function Create() {
       )
     );
     console.log("relay hash", relayHash);
-    console.log(abi.key, packet.packet, "0x", abi);
+    console.log(abi.key, packet.packet, abi);
+    const proof:any = localStorage.getItem('ProofCid')
+    const hash = ethers.utils.keccak256(packet.packet)
     let mint;
-    // setTimeout(async () => {
-
-    // }, 60000);
-
     mint = await contract2.mintWithProof(
       abi.key,
       packet.packet,
+      proof,
       abi,
-      abi
+      hash
     );
     console.log(mint);
 
