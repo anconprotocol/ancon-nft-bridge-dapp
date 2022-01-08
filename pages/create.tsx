@@ -17,7 +17,7 @@ import { ethers } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
-import { base64 } from "ethers/lib/utils";
+import { base64, keccak256 } from "ethers/lib/utils";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 
 // functions
@@ -61,11 +61,11 @@ function Create() {
     name: "",
   });
   const [packet, setPacket] = useState({ proof: "", packet: "" });
+  const [user, setUser] = useState({ key: "", height: "" });
   // atoms
   const [address, setAddress] = useRecoilState(addressState);
   const setErrorModal = useSetRecoilState(errorState);
   // const DIDcid = useRecoilValue(DidState)
-
   // hooks
   const router = useRouter();
   const provider: any = useProvider();
@@ -220,13 +220,12 @@ function Create() {
         const dag = await dagRequest.json();
         let metadataCid: any;
         let proofKey: any;
+        console.log("dag", dag);
         if (dag !== null) {
           metadataCid = await Object?.values(dag.content)[0];
-          proofKey = await Object?.values(dag.proof)[0];
           setTokenData({
             ...tokenData,
             tokenCid: metadataCid,
-            proofKey,
           });
         }
         let hexdata = ethers.utils.defaultAbiCoder.encode(
@@ -270,17 +269,19 @@ function Create() {
         );
         const getProof = await rawGetProof.json();
         let packetId: any = await Object?.values(getProof.content)[0];
+        setUser({ key: getProof.key, height: getProof.height });
         const rawPacket = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${packetId}/`
         );
         const packet = await rawPacket.json();
+
         // packetId = await packet[0][0];
         // console.log('packetid', packetId, packet)
         // packetId = ethers.utils.base64.decode(packetId.bytes);
         // console.log("packet", packet, packetId);
         setPacket({ proof: getProof.proof, packet: hexdata });
         console.log("31 seconds");
-        await sleep(31000);
+        await sleep(61000);
         console.log("fetch", getProof, getProof.proof);
         setMessage("Minting NFT...");
         setStep(4);
@@ -329,7 +330,7 @@ function Create() {
       "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
       signer
     );
-    const packetProof = await toAbiProof(packet.proof);
+
     const dai = new web3.eth.Contract(
       AnconToken.abi,
       "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
@@ -355,6 +356,8 @@ function Create() {
       });
     // }
     await sleep(7000);
+
+    // checking hashes
     const rawLastHash = await fetch(
       "https://api.ancon.did.pa/v0/proofs/lasthash"
     );
@@ -368,16 +371,40 @@ function Create() {
     );
     console.log("relay hash", relayHash);
 
-    let userProof: any = localStorage.getItem("ProofCid");
-    const rawproof = await fetch(
-      `https://api.ancon.did.pa/v0/dagjson/${userProof}/`
+    // get the key and height
+    const key = localStorage.getItem("proofKey");
+    const height = localStorage.getItem("proofHeight");
+
+    // prepare packet proof
+    const rawPacketProof = await fetch(
+      `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
     );
+    let packetProof = await rawPacketProof.json();
+    packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
-    userProof = await rawproof.json();
+    // prepare user proof
+    const rawUserProof = await fetch(
+      `https://api.ancon.did.pa/v0/proof/${key}?height=${user.height}`
+    );
+    let userProof = await rawUserProof.json();
+    userProof = toAbiProof({ ...userProof[0].Proof.exist });
 
-    userProof = toAbiProof(userProof.proof.proofs[0].Proof.exist);
+    // let userProof: any = localStorage.getItem("ProofCid");
+    // const rawproof = await fetch(
+    //   `https://api.ancon.did.pa/v0/dagjson/${userProof}/`
+    // );
+
+    // userProof = await rawproof.json();
+
+    // userProof = toAbiProof(userProof.proof.proofs[0].Proof.exist);
     // fetch with proof key
-    const hash = ethers.utils.keccak256(packet.packet);
+    const hexData = packet.packet;
+
+    const hash = ethers.utils.solidityKeccak256(
+      ["address", "string"],
+      [address, tokenData.tokenCid]
+    );
+    console.log("hash", hash, "packet", hexData);
     let mint;
     console.log(
       packetProof.key,
@@ -386,13 +413,13 @@ function Create() {
       packetProof,
       hash
     );
-    // mint = await contract2.mintWithProof(
-    //   packetProof.key,
-    //   packet.packet,
-    //   userProof,
-    //   packetProof,
-    //   hash
-    // );
+    mint = await contract2.mintWithProof(
+      packetProof.key,
+      hexData,
+      userProof,
+      packetProof,
+      hash
+    );
     // mint = await contract4.submitPacketWithProof(
     //   address,
     //   userProof,
@@ -400,13 +427,34 @@ function Create() {
     //   packet.packet,
     //   packetProof
     // );
-    mint = await contract4.verifyProofWithKV(
-      packetProof.key,
-      packetProof.value,
-      packetProof
+    console.log(
+      "userProof",
+      base64.decode(userProof.value),
+      "packetProof",
+      base64.decode(packetProof.value)
     );
-    console.log(mint);
+    let mint2;
+    try {
+      mint2 = await contract4.verifyProofWithKV(
+        packetProof.key,
+        packetProof.value,
+        packetProof
+      );
+    } catch (error) {
+      console.log("error", error);
+    }
+    // try {
+    //   mint = await contract4.verifyProofWithKV(
+    //     userProof.key,
+    //     userProof.value,
+    //     userProof
+    //   );
+    // } catch (error) {
+    //   console.log("error", error);
+    // }
 
+    console.log("user", mint);
+    console.log("packet", mint2);
 
     // createDocumentNode(web3);
   }

@@ -150,7 +150,8 @@ function Enroll() {
         setDIDCid(cid);
         setDIDcid(cid);
         localStorage.setItem("DIDCid", cid);
-        localStorage.setItem("ProofCid", data.key);
+        localStorage.setItem("proofKey", data.key);
+        localStorage.setItem("proofHeight", data.height);
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
@@ -176,7 +177,7 @@ function Enroll() {
         // enroll to L2
         let enroll;
         setMessage(
-          "Preparing to enroll account, this proccess can take several minutes"
+          "Preparing to enroll the account, please wait this proccess can take several minutes"
         );
         setTimeout(async () => {
           enroll = await EnrollL2Account(
