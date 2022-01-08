@@ -243,7 +243,7 @@ function Create() {
 
         console.log("dag", dag, metadataCid);
         console.log("61 seconds");
-        setMessage("Creating Offchain Metadata...");
+        setMessage("Creating Offchain Metadata, please wait this process can take several minutes.");
         setStep(-1);
         await sleep(61000);
 
