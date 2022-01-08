@@ -146,12 +146,11 @@ function Enroll() {
           requestOptions
         );
         const data = await rawdata.json();
-        const proofCID: any = await Object?.values(data.proof)[0];
         const cid: any = await Object?.values(data.cid)[0];
         setDIDCid(cid);
         setDIDcid(cid);
         localStorage.setItem("DIDCid", cid);
-        localStorage.setItem("ProofCid", proofCID);
+        localStorage.setItem("ProofCid", data.key);
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
@@ -162,16 +161,16 @@ function Enroll() {
         console.log("get user/domain/did.json ==>>", getReq);
 
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${proofCID}/`
+          `https://api.ancon.did.pa/v0/proof/${data.key}?height=${data.height}`
         );
         const GetProof = await rawGetProof.json();
         console.log("proof==>", {
-          ...GetProof.proof?.proofs[0].Proof,
+          ...GetProof[0].Proof,
         });
 
         // calling to abi proof
         const z = toAbiProof({
-          ...GetProof.proof?.proofs[0].Proof.exist,
+          ...GetProof[0].Proof.exist,
         });
 
         // enroll to L2
