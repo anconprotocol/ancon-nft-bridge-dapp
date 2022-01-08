@@ -187,7 +187,7 @@ function Enroll() {
             setErrorModal,
             address
           );
-        }, 40000);
+        }, 30000);
         // setStep(1);
         // console.log("post /proofs ===>", Postproof);
         console.log("get /proofs/key ===>", GetProof);

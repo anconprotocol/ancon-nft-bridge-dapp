@@ -19,11 +19,11 @@ async function EnrollL2Account(
     const signer = prov.getSigner();
 
     const contract1 = AnconProtocol__factory.connect(
-      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB",
+      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
       prov
     );
     const contract2 = AnconProtocol__factory.connect(
-      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB",
+      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
       signer
     );
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
