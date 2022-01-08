@@ -20,7 +20,7 @@ function Modal() {
         <div className="fixed w-full h-full bg-black flex items-center justify-center bg-opacity-75 z-50 select-none">
           {/* white container */}
           <div className="bg-white py-4 px-4 rounded-lg opacity-100 z-50">
-            <h1 className="font-ligh text-red-500 pb-2 font-mono">
+            <h1 className="font-ligh text-red-500 pb-2 font-mono ">
               This is project is a fully functional beta with some
               minor bugs
             </h1>

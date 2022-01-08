@@ -301,7 +301,7 @@ function Create() {
   let transactionAddress;
   let signer;
   const mintNft = async () => {
-    // setStep(5);
+    setStep(5);
     const _web3 = new Web3(provider);
     _web3.eth.defaultAccount = address;
     //setWeb3(_web3);
@@ -455,6 +455,7 @@ function Create() {
 
     console.log("user", mint);
     console.log("packet", mint2);
+    setStep(6)
 
     // createDocumentNode(web3);
   }
@@ -562,7 +563,7 @@ function Create() {
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
         <div className="bg-white shadow-xl rounded-lg px-3 py-4">
           <span className="text-black font-bold text-xl">
-            {step === 4 ? "NFT Created" : "Create NFT"}
+            {step === 6 ? "NFT Created" : "Create NFT"}
           </span>
           {step == 0 ? (
             <div className="mt-4 flex flex-col items-center select-none">
