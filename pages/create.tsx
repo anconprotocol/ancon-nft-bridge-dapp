@@ -25,7 +25,10 @@ import enrollL2Account from "../functions/EnrollL2Account";
 import toAbiProof from "../functions/ToAbiProof";
 import getTransaction from "../functions/GetTransaction";
 import GetPublicKey from "../functions/GetPublicKey";
-import { XDVNFT__factory } from "../types/ethers-contracts";
+import {
+  AnconVerifier__factory,
+  XDVNFT__factory,
+} from "../types/ethers-contracts";
 import Web3 from "web3";
 import { DidState } from "../atoms/DIDAtom";
 import { FetchEvent } from "next/dist/server/web/spec-compliant/fetch-event";
@@ -231,18 +234,18 @@ function Create() {
           [address, metadataCid]
         );
         // let hexdata = Web3.utils.stringToHex(metadataCid)
-        
+
         let s = await signer.signMessage(
           ethers.utils.arrayify(
             ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
           )
         );
         // let s = await signer.signMessage(hexdata)
-        
+
         console.log("dag", dag, metadataCid);
-        console.log('61 seconds')
-        setMessage("Creating Offchain Metadata...")
-        setStep(-1)
+        console.log("61 seconds");
+        setMessage("Creating Offchain Metadata...");
+        setStep(-1);
         await sleep(61000);
 
         const rawPostProof = await fetch(
@@ -254,7 +257,7 @@ function Create() {
               path: "/",
               from: DIDcid,
               signature: s,
-              data: [hexdata]
+              data: [hexdata],
             }),
           }
         );
@@ -276,7 +279,7 @@ function Create() {
         // packetId = ethers.utils.base64.decode(packetId.bytes);
         // console.log("packet", packet, packetId);
         setPacket({ proof: getProof.proof, packet: hexdata });
-        console.log('31 seconds')
+        console.log("31 seconds");
         await sleep(31000);
         console.log("fetch", getProof, getProof.proof);
         setMessage("Minting NFT...");
@@ -297,7 +300,7 @@ function Create() {
   let transactionAddress;
   let signer;
   const mintNft = async () => {
-    setStep(5);
+    // setStep(5);
     const _web3 = new Web3(provider);
     _web3.eth.defaultAccount = address;
     //setWeb3(_web3);
@@ -322,28 +325,36 @@ function Create() {
       "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB",
       ethersInstance
     );
-    const abi = await toAbiProof(packet.proof);
+    const contract4 = AnconProtocol__factory.connect(
+      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB",
+      signer
+    );
+    const packetProof = await toAbiProof(packet.proof);
     const dai = new web3.eth.Contract(
       AnconToken.abi,
-      "0x929367ff7A02B36f616cA4752F2b097CaD5f5FFB"
+      "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
     );
 
-    const allowance = await dai.methods
-      .allowance(address, contract2.address)
-      .call();
+    // const allowance = await dai.methods
+    //   .allowance(address, contract2.address)
+    //   .call();
     // if (allowance == 0) {
-      await dai.methods.approve(contract2.address, "1000000000000000000000").send({
+    await dai.methods
+      .approve(contract2.address, "1000000000000000000")
+      .send({
         gasPrice: "22000000000",
         gas: 400000,
         from: address,
       });
-      await dai.methods.approve(contract3.address, "1000000000000000000000").send({
+    await dai.methods
+      .approve(contract3.address, "1000000000000000000")
+      .send({
         gasPrice: "22000000000",
         gas: 400000,
         from: address,
       });
     // }
-    await sleep(7000)
+    await sleep(7000);
     const rawLastHash = await fetch(
       "https://api.ancon.did.pa/v0/proofs/lasthash"
     );
@@ -356,38 +367,47 @@ function Create() {
       )
     );
     console.log("relay hash", relayHash);
-    console.log(abi.key, packet.packet, abi);
-    const proof:any = localStorage.getItem('ProofCid')
-    const hash = ethers.utils.keccak256(packet.packet)
+
+    let userProof: any = localStorage.getItem("ProofCid");
+    const rawproof = await fetch(
+      `https://api.ancon.did.pa/v0/dagjson/${userProof}/`
+    );
+
+    userProof = await rawproof.json();
+
+    userProof = toAbiProof(userProof.proof.proofs[0].Proof.exist);
+    // fetch with proof key
+    const hash = ethers.utils.keccak256(packet.packet);
     let mint;
-    mint = await contract2.mintWithProof(
-      abi.key,
+    console.log(
+      packetProof.key,
       packet.packet,
-      proof,
-      abi,
+      userProof,
+      packetProof,
       hash
+    );
+    // mint = await contract2.mintWithProof(
+    //   packetProof.key,
+    //   packet.packet,
+    //   userProof,
+    //   packetProof,
+    //   hash
+    // );
+    // mint = await contract4.submitPacketWithProof(
+    //   address,
+    //   userProof,
+    //   packetProof.key,
+    //   packet.packet,
+    //   packetProof
+    // );
+    mint = await contract4.verifyProofWithKV(
+      packetProof.key,
+      packetProof.value,
+      packetProof
     );
     console.log(mint);
 
-    // const anconNFTContractAddress: any =
-    //   process.env.NEXT_PUBLIC_AnconTestNFTAddress;
-    // const AnconTokenContractAddress: any =
-    //   process.env.NEXT_PUBLIC_AnconTokenAddress;
 
-    // nftContract = new web3.eth.Contract(
-    //   AnconNFT.abi,
-    //   anconNFTContractAddress
-    // );
-    // anconTokenContract = new web3.eth.Contract(
-    //   AnconToken.abi,
-    //   AnconTokenContractAddress
-    // );
-    // ethersContract = new ethers.Contract(
-    //   anconNFTContractAddress,
-    //   AnconNFT.abi,
-    //   ethersInstance.getSigner(0)
-    // );
-    // console.log("End of BINDCONTRACTS()", nftContract.defaultAccount);
     // createDocumentNode(web3);
   }
 

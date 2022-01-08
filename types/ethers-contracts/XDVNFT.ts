@@ -82,6 +82,7 @@ export interface XDVNFTInterface extends utils.Interface {
   functions: {
     "anconprotocol()": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
+    "authenticate(bytes32,bytes)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "burn(uint256)": FunctionFragment;
     "dagContractOperator()": FunctionFragment;
@@ -110,7 +111,7 @@ export interface XDVNFTInterface extends utils.Interface {
     "transferURI(address,uint256)": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "transferMetadataOwnership(string,address,uint256)": FunctionFragment;
-    "mintWithProof(bytes,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
+    "mintWithProof(bytes,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),bytes32)": FunctionFragment;
     "onERC721Received(address,address,uint256,bytes)": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
     "withdrawBalance(address)": FunctionFragment;
@@ -123,6 +124,10 @@ export interface XDVNFTInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "approve",
     values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "authenticate",
+    values: [BytesLike, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
   encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
@@ -208,7 +213,13 @@ export interface XDVNFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "mintWithProof",
-    values: [BytesLike, BytesLike, ExistenceProofStruct, ExistenceProofStruct]
+    values: [
+      BytesLike,
+      BytesLike,
+      ExistenceProofStruct,
+      ExistenceProofStruct,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "onERC721Received",
@@ -228,6 +239,10 @@ export interface XDVNFTInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "authenticate",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(
@@ -434,6 +449,12 @@ export interface XDVNFT extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    authenticate(
+      digest: BytesLike,
+      signature: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     /**
      * See {IERC721-balanceOf}.
      */
@@ -619,6 +640,7 @@ export interface XDVNFT extends BaseContract {
       packet: BytesLike,
       userProof: ExistenceProofStruct,
       proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -655,6 +677,12 @@ export interface XDVNFT extends BaseContract {
   approve(
     to: string,
     tokenId: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  authenticate(
+    digest: BytesLike,
+    signature: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -838,6 +866,7 @@ export interface XDVNFT extends BaseContract {
     packet: BytesLike,
     userProof: ExistenceProofStruct,
     proof: ExistenceProofStruct,
+    hash: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -873,6 +902,12 @@ export interface XDVNFT extends BaseContract {
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    authenticate(
+      digest: BytesLike,
+      signature: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     /**
      * See {IERC721-balanceOf}.
@@ -1043,6 +1078,7 @@ export interface XDVNFT extends BaseContract {
       packet: BytesLike,
       userProof: ExistenceProofStruct,
       proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1153,6 +1189,12 @@ export interface XDVNFT extends BaseContract {
     approve(
       to: string,
       tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    authenticate(
+      digest: BytesLike,
+      signature: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1339,6 +1381,7 @@ export interface XDVNFT extends BaseContract {
       packet: BytesLike,
       userProof: ExistenceProofStruct,
       proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1376,6 +1419,12 @@ export interface XDVNFT extends BaseContract {
     approve(
       to: string,
       tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    authenticate(
+      digest: BytesLike,
+      signature: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1571,6 +1620,7 @@ export interface XDVNFT extends BaseContract {
       packet: BytesLike,
       userProof: ExistenceProofStruct,
       proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
