@@ -420,6 +420,7 @@ function Create() {
       packetProof,
       hash
     );
+
     // mint = await contract4.submitPacketWithProof(
     //   address,
     //   userProof,
@@ -427,22 +428,22 @@ function Create() {
     //   packet.packet,
     //   packetProof
     // );
-    console.log(
-      "userProof",
-      base64.decode(userProof.value),
-      "packetProof",
-      base64.decode(packetProof.value)
-    );
-    let mint2;
-    try {
-      mint2 = await contract4.verifyProofWithKV(
-        packetProof.key,
-        packetProof.value,
-        packetProof
-      );
-    } catch (error) {
-      console.log("error", error);
-    }
+    // console.log(
+    //   "userProof",
+    //   base64.decode(userProof.value),
+    //   "packetProof",
+    //   base64.decode(packetProof.value)
+    // );
+    // let mint2;
+    // try {
+    //   mint2 = await contract4.verifyProofWithKV(
+    //     packetProof.key,
+    //     packetProof.value,
+    //     packetProof
+    //   );
+    // } catch (error) {
+    //   console.log("error", error);
+    // }
     // try {
     //   mint = await contract4.verifyProofWithKV(
     //     userProof.key,
@@ -454,7 +455,7 @@ function Create() {
     // }
 
     console.log("user", mint);
-    console.log("packet", mint2);
+    // console.log("packet", mint2);
     setStep(6)
 
     // createDocumentNode(web3);
@@ -744,10 +745,10 @@ function Create() {
                   {tokenData.tokenCid}
                 </span>
 
-                {/* <a className="text-gray-600 text-sm">OWNER</a>
+                <a className="text-gray-600 text-sm">Transaction Hash</a>
                 <span className="text-lg font-medium mb-2">
-                  {address}
-                </span> */}
+                  {transactionHash.transaction}
+                </span>
 
                 <div className="flex items-center justify-center mt-3 w-full">
                   <div>
