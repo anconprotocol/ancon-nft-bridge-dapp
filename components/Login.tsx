@@ -50,7 +50,7 @@ function Login() {
           throw "not connected";
         }
       } catch (error) {
-        
+        console.log("out cat");
         setShow(true);
       }
     } else {
@@ -96,6 +96,9 @@ function Login() {
       setAddress(accounts[0]);
       router.reload();
     });
+    useEffect(() => {
+      handleUsualLogin();
+    }, []);
   }
 
   async function getAccount() {
@@ -103,9 +106,6 @@ function Login() {
     const account = accounts[0];
     // do something with new account here
   }
-  useEffect(() => {
-    handleUsualLogin();
-  }, []);
 
   return (
     <>
