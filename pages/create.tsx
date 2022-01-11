@@ -31,7 +31,6 @@ import {
 } from "../types/ethers-contracts";
 import Web3 from "web3";
 import { DidState } from "../atoms/DIDAtom";
-import { FetchEvent } from "next/dist/server/web/spec-compliant/fetch-event";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -44,7 +43,7 @@ function sleep(ms: any) {
 }
 function Create() {
   // state
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(3);
   const [localImage, setLocalImage] = useState<any | null>(null);
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
@@ -102,8 +101,9 @@ function Create() {
     }
   };
   const getDomainName = async () => {
+    const NoHexAddress = address.substring(2);
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
+      `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -114,17 +114,58 @@ function Create() {
   };
 
   // step 1 //
-  // checks if the user has selected the image, if so the it continue
-  const handleUpdloadImage = () => {
-    if (image === null) {
-      setError(true);
-    } else {
-      setStep(2);
-      handleUpload();
-      setError(false);
-    }
-  };
 
+  const getPastEvents = async () => {
+    const prov = new ethers.providers.Web3Provider(provider);
+
+    const contract1 = AnconProtocol__factory.connect(
+      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
+      prov
+    );
+    const filter = contract1.filters.HeaderUpdated();
+    const from = (await prov.getBlockNumber()) - 10;
+    let result = await contract1.queryFilter(filter, from);
+    let i: number = 0;
+    const interval = (resolve: any, reject: any) => {
+      let initial = true;
+      const cancelation = setInterval(async () => {
+        if (i > 8) {
+          reject();
+        } else if (result.length > 0) {
+          reject();
+        }
+        result = await contract1.queryFilter(filter, from);
+        console.log(result);
+        i++;
+        if (initial) {
+          initial = false;
+        } else {
+          if (result.length > 0) {
+            resolve(clearInterval(cancelation));
+          }
+        }
+      }, 15000);
+    };
+    const myPromise = new Promise((resolve, reject) => {
+      interval(resolve, reject);
+    });
+    try {
+      await myPromise;
+    } catch (error) {
+      console.log("error===>", error);
+    }
+
+    // while (time < maxTime) {
+    //   result = await contract1.queryFilter(filter, from);
+    //   if (result.length > 0) {
+    //     break;
+    //   }
+    //   time = Date.now();
+    //   console.log(result);
+    //   await sleep(3000);
+    // }
+    return true;
+  };
   // step 2 //
   // loading screen
 
@@ -137,31 +178,43 @@ function Create() {
   // uploads the file to the ipfs
   const handleUpload = async () => {
     try {
-      // make the client
-      const storage = new Web3Storage({
-        token: getAccessToken(),
-      });
-      // show the root cid as soon as it's ready
-      const onRootCidReady = (cid: string) => {
-        console.log("uploading files with cid:", cid);
-      };
+      // check if user if enrolled
+      const domain = await getDomainName();
+      if (domain === false) {
+        setErrorModal([
+          "This Domain does not match the records please try again or procced to create a NFT",
+          "Try again",
+          "/create",
+          "Enroll Account",
+          "/enroll",
+        ]);
+      } else {
+        // make the client
+        const storage = new Web3Storage({
+          token: getAccessToken(),
+        });
+        // show the root cid as soon as it's ready
+        const onRootCidReady = (cid: string) => {
+          console.log("uploading files with cid:", cid);
+        };
 
-      // when each chunk is stored, update the percentage complete and display
-      const totalSize = image.size;
-      let uploaded = 0;
+        // when each chunk is stored, update the percentage complete and display
+        const totalSize = image.size;
+        let uploaded = 0;
 
-      const onStoredChunk = (size: number) => {
-        uploaded += size;
-        const pct = totalSize / uploaded;
-        console.log(`Uploading... ${pct.toFixed(2)}% complete`);
-      };
+        const onStoredChunk = (size: number) => {
+          uploaded += size;
+          const pct = totalSize / uploaded;
+          console.log(`Uploading... ${pct.toFixed(2)}% complete`);
+        };
 
-      const imageCid: string = await storage.put([image], {
-        onRootCidReady,
-        onStoredChunk,
-      });
-      setTokenData({ ...tokenData, imageCid });
-      setStep(3);
+        const imageCid: string = await storage.put([image], {
+          onRootCidReady,
+          onStoredChunk,
+        });
+        setTokenData({ ...tokenData, imageCid });
+        return imageCid;
+      }
     } catch (error) {
       console.log("err", error);
     }
@@ -169,15 +222,17 @@ function Create() {
 
   // step4 //
   // creates the metadata
-  const createMetadata = async () => {
+  const createMetadata = async (cidI: string) => {
     const prov = new ethers.providers.Web3Provider(provider);
+    const NoHexAddress = address.substring(2);
     const signer = prov.getSigner();
     const payload = {
       name: tokenData.name,
       description: tokenData.description,
-      image: tokenData.imageCid,
+      image: cidI,
       sources: [],
     };
+
     // sign the message
     const signature = await signer.signMessage(
       ethers.utils.arrayify(
@@ -191,7 +246,7 @@ function Create() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         path: "/",
-        from: DIDcid,
+        from: address,
         signature,
         data: payload,
         pin: "true",
@@ -207,13 +262,10 @@ function Create() {
         const metadata = await rawMetadata.json();
         // returns the metadata cid
         console.log("metadata", metadata);
-        let id: any;
-        if (metadata !== null) {
-          id = await Object?.values(metadata.cid)[0];
-        }
+        const id = await metadata.cid;
 
         setTokenData({ ...tokenData, tokenCid: id });
-        console.log("didCID", DIDcid);
+        console.log("didCID", id);
         const dagRequest = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${id}/`
         );
@@ -223,10 +275,6 @@ function Create() {
         console.log("dag", dag);
         if (dag !== null) {
           metadataCid = await Object?.values(dag.content)[0];
-          setTokenData({
-            ...tokenData,
-            tokenCid: metadataCid,
-          });
         }
         let hexdata = ethers.utils.defaultAbiCoder.encode(
           ["address", "string"],
@@ -243,9 +291,14 @@ function Create() {
 
         console.log("dag", dag, metadataCid);
         console.log("61 seconds");
-        setMessage("Creating Offchain Metadata, please wait this process can take several minutes.");
+        setMessage(
+          "Creating Offchain Metadata, please wait this process can take several minutes."
+        );
         setStep(-1);
-        await sleep(61000);
+        let eventWaiter = await getPastEvents();
+        console.log("event", eventWaiter);
+
+        // await sleep(61000);
 
         const rawPostProof = await fetch(
           "https://api.ancon.did.pa/v0/dagjson",
@@ -254,14 +307,14 @@ function Create() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               path: "/",
-              from: DIDcid,
+              from: address,
               signature: s,
               data: [hexdata],
             }),
           }
         );
         const postProof = await rawPostProof.json();
-        const key = await Object?.values(postProof.cid)[0];
+        const key = await postProof.cid;
         console.log("date", postProof, key);
 
         const rawGetProof = await fetch(
@@ -281,24 +334,29 @@ function Create() {
         // console.log("packet", packet, packetId);
         setPacket({ proof: getProof.proof, packet: hexdata });
         console.log("31 seconds");
-        await sleep(61000);
-        console.log("fetch", getProof, getProof.proof);
+        eventWaiter = await getPastEvents();
+        console.log("event", eventWaiter);
+
+        console.log("fetch", getProof);
         setMessage("Minting NFT...");
+        setTokenData({
+          ...tokenData,
+          imageCid: cidI,
+          tokenCid: metadataCid,
+        });
         setStep(4);
       };
       PostRequest();
     } catch (error) {
       console.log("err", error);
+      console.log("error");
+      setStep(3);
     }
   };
 
   // step 5 //
   let web3;
   let ethersInstance;
-  let nftContract: any;
-  let anconTokenContract: any;
-  let ethersContract;
-  let transactionAddress;
   let signer;
   const mintNft = async () => {
     setStep(5);
@@ -336,25 +394,25 @@ function Create() {
       "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
     );
 
-    // const allowance = await dai.methods
-    //   .allowance(address, contract2.address)
-    //   .call();
-    // if (allowance == 0) {
-    await dai.methods
-      .approve(contract2.address, "1000000000000000000")
-      .send({
-        gasPrice: "22000000000",
-        gas: 400000,
-        from: address,
-      });
-    await dai.methods
-      .approve(contract3.address, "1000000000000000000")
-      .send({
-        gasPrice: "22000000000",
-        gas: 400000,
-        from: address,
-      });
-    // }
+    const allowance = await dai.methods
+      .allowance(address, contract2.address)
+      .call();
+    if (allowance == 0) {
+      await dai.methods
+        .approve(contract2.address, "1000000000000000000")
+        .send({
+          gasPrice: "22000000000",
+          gas: 400000,
+          from: address,
+        });
+      await dai.methods
+        .approve(contract3.address, "1000000000000000000")
+        .send({
+          gasPrice: "22000000000",
+          gas: 400000,
+          from: address,
+        });
+    }
     await sleep(7000);
 
     // checking hashes
@@ -456,82 +514,11 @@ function Create() {
 
     console.log("user", mint);
     // console.log("packet", mint2);
-    setStep(6)
+    setStep(6);
 
     // createDocumentNode(web3);
   }
 
-  async function createDocumentNode(web3: any) {
-    console.log("Beginning of CREATEDOCUMENTNODE()");
-    console.log("Local Account Address", nftContract.defaultAccount);
-    const encoding = ethers.utils.defaultAbiCoder.encode(
-      ["address", "string"],
-      [address]
-    );
-    try {
-      const bob = nftContract.defaultAccount;
-
-      setMessage("Sign the transaction to mint your NFTs...");
-      await anconTokenContract.methods
-        .approve(nftContract._address, "1000000000000000000")
-        .send({
-          gasPrice: "22000000000",
-          gas: 400000,
-          from: nftContract.defaultAccount,
-        });
-
-      const txmint = await nftContract.methods
-        .mint(
-          bob, //user address
-          tokenData.imageCid //token uri/cid
-          // wallet.address, // send wallet address instead of did
-          // web3.utils.fromUtf8(indexes),
-          // false, // encrypted
-          // values.title,
-          // "address"
-        )
-        .send({
-          gasPrice: "22000000000",
-          gas: 4000000,
-          from: address,
-        });
-
-      setMessage("Wrapping up...");
-      //await txmint.wait(1);
-      // const response = await nftContract.getPastEvents("Transfer", {
-      //   toBlock: "latest",
-      //   fromBlock: // latest blocknumber
-      //   filter: { user: address },
-      // });
-      // console.log('address', address)
-      // console.log('response', response?.reverse()[0])
-      // console.log('response', response?.[0])
-      // console.log('response', response)
-      // const blockItem = response.reverse()[0];
-      // const root = await ipfs.getObject(
-      //   web3.utils.hexToUtf8(blockItem.returnValues.documentURI)
-      // );
-      // console.log("url", root);
-      console.log("TXMINT", txmint);
-      // console.log("Blockitem", blockItem);
-      // this.showTransactionCancelBtn = true;
-      transactionAddress = txmint.transactionHash;
-      //ipfsId = indexes;
-      // let urlVideo = "https://ipfs.io/ipfs/" + root.videoUrl;
-      // setIPFSLink(urlVideo);
-      setTransactionHash({
-        transaction: transactionAddress,
-        name: "https://testnet.bscscan.com/tx/" + transactionAddress,
-      });
-      //await this.fetchDocuments();
-      // this.instanceVideoPlayer(
-      //     "https://ipfs.io/ipfs/" + root.value.metadata.videourl.toString()
-      // );
-    } catch (e) {
-      // setStep(true)
-      console.log("confirmation error", e);
-    }
-  }
   //
   // handles the change of the image
   const onImageChange = (
@@ -549,15 +536,17 @@ function Create() {
   };
 
   // checks if the user has written a name, if so the it continue
-  const handleSetMessageUpload = () => {
-    if (tokenData.name === null) {
+  const handleSetMessageUpload = async () => {
+    if (tokenData.name === "" || image === null) {
       setError(true);
     } else {
-      createMetadata();
+      setStep(2);
+      const cid: any = await handleUpload();
+      await createMetadata(cid);
       setError(false);
     }
   };
-
+  console.log("image", tokenData);
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
@@ -566,40 +555,6 @@ function Create() {
           <span className="text-black font-bold text-xl">
             {step === 6 ? "NFT Created" : "Create NFT"}
           </span>
-          {step == 0 ? (
-            <div className="mt-4 flex flex-col items-center select-none">
-              <p className="font-medium">
-                Enter L2 Decentralized Identity
-              </p>
-
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold mt-4">
-                  Name
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTransactionHash({
-                      ...transactionHash,
-                      name: e.target.value,
-                    });
-                  }}
-                  value={transactionHash.name}
-                ></input>
-                <ErrorMessage
-                  message="Please provide a Domain Name"
-                  show={error}
-                />
-              </div>
-              <div
-                onClick={getDid}
-                className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer"
-              >
-                <p>Continue</p>
-              </div>
-            </div>
-          ) : null}
           {step === -1 ? (
             <div className="flex flex-col items-center">
               <div
@@ -638,10 +593,7 @@ function Create() {
                 id="nft-img"
                 style={{ display: "none" }}
               ></input>
-              <div
-                onClick={handleUpdloadImage}
-                className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer"
-              >
+              <div className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer">
                 <p>Upload image</p>
               </div>
             </div>
@@ -672,13 +624,10 @@ function Create() {
                       name: e.target.value,
                     });
                   }}
+                  value={tokenData.name}
                 ></input>
               </div>
 
-              <ErrorMessage
-                message="Please provide a Name"
-                show={error}
-              />
               <div className="flex-col flex mt-3">
                 <a className="text-gray-600 text-sm font-bold">
                   Description
@@ -692,17 +641,40 @@ function Create() {
                       description: e.target.value,
                     });
                   }}
+                  value={tokenData.description}
                 ></input>
               </div>
-              <div className="flex items-center justify-center mt-3">
-                <div>
+              <div
+                onClick={clickInput}
+                className="p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out mt-3"
+              >
+                <p className="flex justify-center items-center">
+                  Select Image
+                </p>
+              </div>
+              <ErrorMessage
+                message="Please fill the blanks and select an Image"
+                show={error}
+              />
+              {localImage != null ? (
+                <div className="flex items-center justify-center pt-3">
                   <img
-                    className="border-2 p-2 rounded-lg border-primary-500 drop-shadow-xl shadow-primary-500 mt-2"
+                    className="border-2 p-2 rounded-lg border-primary-500 drop-shadow-xl shadow-primary-500"
                     src={`data:image/jpeg;base64,${localImage}`}
                     style={{ maxWidth: "100px" }}
-                    alt="finalLocal"
+                    alt="local"
                   />
-
+                </div>
+              ) : null}
+              <input
+                type="file"
+                onChange={onImageChange}
+                className="filetype"
+                id="nft-img"
+                style={{ display: "none" }}
+              ></input>
+              <div className="flex items-center justify-center mt-3">
+                <div>
                   <p
                     onClick={handleSetMessageUpload}
                     className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
@@ -743,11 +715,6 @@ function Create() {
                 <a className="text-gray-600 text-sm">Metada CID</a>
                 <span className="text-lg font-medium mb-2">
                   {tokenData.tokenCid}
-                </span>
-
-                <a className="text-gray-600 text-sm">Transaction Hash</a>
-                <span className="text-lg font-medium mb-2">
-                  {transactionHash.transaction}
                 </span>
 
                 <div className="flex items-center justify-center mt-3 w-full">

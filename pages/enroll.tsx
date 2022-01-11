@@ -30,6 +30,8 @@ function Enroll() {
 
   // atoms
   const address = useRecoilValue(addressState);
+  
+  
   const [errorModal, setErrorModal] = useRecoilState(errorState);
   const setDIDcid = useSetRecoilState(DidState);
 
@@ -40,8 +42,9 @@ function Enroll() {
   // step 0 //
   // check if domain already exists
   const getDomainName = async () => {
+    const NoHexAddress = address.substring(2)
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
+      `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -54,18 +57,12 @@ function Enroll() {
   //get the public key
   const getDid = async () => {
     // check if theres a name written
-    if (transactionHash.name === "") {
-      setError(true);
-      return;
-    } else {
-      setStep(1);
-      setMessage("Getting a valid transaction...");
-    }
     try {
       setStep(1);
       const domain = await getDomainName();
       if (domain === false) {
         // check if the user has made any transaction
+        
         const trans = await getTransaction(
           setStep,
           address,
@@ -103,7 +100,7 @@ function Enroll() {
         }
       } else {
         setErrorModal([
-          "This Domain already exists please try again or procced to create a NFT",
+          "This Domain already exists please try again with another one or procced to create a NFT",
           "Try again",
           "/enroll",
           "Create NFT",
@@ -119,6 +116,7 @@ function Enroll() {
   const handleProof = async (pubkey: string) => {
     const base58Encode = ethers.utils.base58.encode(pubkey);
     const prov = new ethers.providers.Web3Provider(provider);
+    const NoHexAddress = address.substring(2)
     const signer = prov.getSigner();
     const signature = await signer.signMessage(
       ethers.utils.arrayify(
@@ -129,7 +127,7 @@ function Enroll() {
     );
     //post to get the did
     const payload = {
-      domainName: transactionHash.name,
+      domainName: NoHexAddress,
       pub: base58Encode,
       signature: signature,
       message: "signin this message to verify my public key",
@@ -155,7 +153,7 @@ function Enroll() {
         console.log("get /did/web ==>>", data);
 
         const rawGetReq = await fetch(
-          `https://api.ancon.did.pa/user/${transactionHash.name}/did.json`
+          `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
         );
         const getReqParse = await rawGetReq.json();
         const getReq = await JSON.parse(getReqParse);
@@ -217,32 +215,11 @@ function Enroll() {
               <p className="font-medium">
                 Claim L2 Decentralized Identity
               </p>
-
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold mt-4">
-                  Name
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTransactionHash({
-                      ...transactionHash,
-                      name: e.target.value,
-                    });
-                  }}
-                  value={transactionHash.name}
-                ></input>
-                <ErrorMessage
-                  message="Please provide a Domain Name"
-                  show={error}
-                />
-              </div>
               <div
                 onClick={getDid}
                 className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer"
               >
-                <p>Continue</p>
+                <p>Claim</p>
               </div>
             </div>
           ) : null}
@@ -262,7 +239,7 @@ function Enroll() {
               <div className="grid grid-cols-1">
                 <a className="text-gray-600 text-sm">Domain Name</a>
                 <span className="text-lg font-medium mb-2">
-                  {transactionHash.name}
+                  {address}
                 </span>
 
                 <a className="text-gray-600 text-sm">DID Cid</a>

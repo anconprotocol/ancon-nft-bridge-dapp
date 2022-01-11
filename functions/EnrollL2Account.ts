@@ -50,7 +50,6 @@ async function EnrollL2Account(
       )
     );
     console.log("relay hash", relayHash);
-
     // const checkPolling = async () => {
     //   console.log('polling')
     //   const header = await contract1.getProtocolHeader();
@@ -69,13 +68,13 @@ async function EnrollL2Account(
       "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
     );
     const allowance = await dai.methods.allowance(address, contract2.address).call()
-    // if(allowance == 0){
+    if(allowance == 0){
       await dai.methods.approve(contract2.address, '1000000000000000000000').send({
         gasPrice: "22000000000",
         gas: 400000,
         from: address
       })
-    // }
+    }
     
     const enroll = await contract2.enrollL2Account(
       z.key,
