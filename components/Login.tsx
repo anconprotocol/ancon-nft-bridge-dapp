@@ -96,16 +96,17 @@ function Login() {
       setAddress(accounts[0]);
       router.reload();
     });
-    useEffect(() => {
-      handleUsualLogin();
-    }, []);
   }
-
-  async function getAccount() {
-    const accounts = await window.ethereum.enable();
-    const account = accounts[0];
-    // do something with new account here
-  }
+  useEffect(() => {
+    setTimeout(() => {
+      handleUsualLogin()
+    }, 1000);
+  }, []);
+  // async function getAccount() {
+  //   const accounts = await window.ethereum.enable();
+  //   const account = accounts[0];
+  //   // do something with new account here
+  // }
 
   return (
     <>
