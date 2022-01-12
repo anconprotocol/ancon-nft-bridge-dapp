@@ -18,14 +18,35 @@ async function EnrollL2Account(
   console.log("enrolling to L2");
   try {
     const prov = new ethers.providers.Web3Provider(provider);
-    const signer = prov.getSigner();
+    const signer = await prov.getSigner();
+    const network = await prov.getNetwork();
 
+    const getAddress = async () => {
+      let contractAddress: any;
+      let daiAddress: any;
+      switch (network.chainId) {
+        case 97:
+          contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
+          daiAddress = process.env.NEXT_PUBLIC_DAI_bnbt;
+          break;
+        case 56:
+          contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
+          break;
+        case 42:
+          contractAddress = process.env.NEXT_PUBLIC_ANCON_kovan;
+          daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
+          break;
+      }
+      return [contractAddress, daiAddress];
+    };
+    const contractAddress: any = await getAddress();
+    console.log("asdd", contractAddress);
     const contract1 = AnconProtocol__factory.connect(
-      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
+      contractAddress[0],
       prov
     );
     const contract2 = AnconProtocol__factory.connect(
-      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
+      contractAddress[0],
       signer
     );
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
@@ -51,7 +72,7 @@ async function EnrollL2Account(
     provi.eth.defaultAccount = address;
     const dai = new provi.eth.Contract(
       AnconToken.abi,
-      "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
+      contractAddress[1]
     );
 
     const getHeight = async () => {
@@ -99,10 +120,15 @@ async function EnrollL2Account(
     const enroll = await contract2.enrollL2Account(
       z.key,
       UTF8_cid,
-      z
+      z,
+      { gasPrice: "451000000000", gasLimit: 50000 }
+    );
+    const waitFortransaction = await prov.waitForTransaction(
+      enroll.hash
     );
     setStep(3);
-    console.log("enroll==>", enroll);
+    console.log("enroll==>", enroll, waitFortransaction);
+    console.log('waiting', waitFortransaction)
   } catch (error) {
     setStep(0);
     setErrorModal([

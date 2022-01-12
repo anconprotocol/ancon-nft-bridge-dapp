@@ -493,12 +493,7 @@ function Create() {
     //   packet.packet,
     //   packetProof
     // );
-    console.log(
-      "userProof",
-      base64.decode(userProof.value),
-      "packetProof",
-      base64.decode(packetProof.value)
-    );
+  
     // let mint2;
     // try {
     //   mint2 = await contract4.verifyProofWithKV(
