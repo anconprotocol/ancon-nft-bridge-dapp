@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { get } from "http";
 import { Router, useRouter } from "next/router";
+import { EthrDID } from "ethr-did";
 import { useState } from "react";
 import {
   useRecoilState,
@@ -17,6 +18,7 @@ import GetPublicKey from "../functions/GetPublicKey";
 import getTransaction from "../functions/GetTransaction";
 import toAbiProof from "../functions/ToAbiProof";
 import useProvider from "../hooks/useProvider";
+import GetDid from "../functions/GetDid";
 
 function Enroll() {
   const [step, setStep] = useState(0);
@@ -29,9 +31,8 @@ function Enroll() {
   const [DIDCid, setDIDCid] = useState("");
 
   // atoms
-  const address = useRecoilValue(addressState);
-  
-  
+  const address: any = useRecoilValue(addressState);
+
   const [errorModal, setErrorModal] = useRecoilState(errorState);
   const setDIDcid = useSetRecoilState(DidState);
 
@@ -42,7 +43,7 @@ function Enroll() {
   // step 0 //
   // check if domain already exists
   const getDomainName = async () => {
-    const NoHexAddress = address.substring(2)
+    const NoHexAddress = address.substring(2);
     const rawResponse = await fetch(
       `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
     );
@@ -51,8 +52,9 @@ function Enroll() {
     if (rawResponse.status === 400) {
       return false;
     }
-    return true;
+    return false;
   };
+
   // STEP 1  gets the public key and handle the get did//
   //get the public key
   const getDid = async () => {
@@ -62,7 +64,7 @@ function Enroll() {
       const domain = await getDomainName();
       if (domain === false) {
         // check if the user has made any transaction
-        
+
         const trans = await getTransaction(
           setStep,
           address,
@@ -70,6 +72,7 @@ function Enroll() {
           setMessage,
           provider
         );
+
         console.log("transaction", trans);
         const prov = new ethers.providers.Web3Provider(provider);
         const transaction: any = await prov.getTransaction(trans);
@@ -116,8 +119,9 @@ function Enroll() {
   const handleProof = async (pubkey: string) => {
     const base58Encode = ethers.utils.base58.encode(pubkey);
     const prov = new ethers.providers.Web3Provider(provider);
-    const NoHexAddress = address.substring(2)
+    const NoHexAddress = address.substring(2);
     const signer = prov.getSigner();
+    const network = await prov.getNetwork();
     const signature = await signer.signMessage(
       ethers.utils.arrayify(
         ethers.utils.toUtf8Bytes(
@@ -125,6 +129,12 @@ function Enroll() {
         )
       )
     );
+    const etherDid = new EthrDID({
+      identifier: address,
+      provider: prov,
+      chainNameOrId: network.name,
+    });
+    console.log(etherDid.did);
     //post to get the did
     const payload = {
       domainName: NoHexAddress,
@@ -144,23 +154,35 @@ function Enroll() {
           requestOptions
         );
         const data = await rawdata.json();
-        const cid: any = await Object?.values(data.cid)[0];
+        const cid: any = data.cid;
         setDIDCid(cid);
         setDIDcid(cid);
         localStorage.setItem("DIDCid", cid);
-        localStorage.setItem("proofKey", data.key);
-        localStorage.setItem("proofHeight", data.height);
-        console.log("get /did/web ==>>", data);
+        console.log("get /did/web ==>>", data, cid);
+        // etherDid.did.substring(9)
+        // const rawGetReq = await fetch(
+        //   `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
+        // );
+        // const getReqParse = await rawGetReq.json();
+        // const getReq = await JSON.parse(getReqParse);
+        // console.log("get user/domain/did.json ==>>", getReq);
 
-        const rawGetReq = await fetch(
-          `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
-        );
-        const getReqParse = await rawGetReq.json();
-        const getReq = await JSON.parse(getReqParse);
-        console.log("get user/domain/did.json ==>>", getReq);
+        // const rawDid = await fetch(
+        //   `https://api.ancon.did.pa/v0/did/raw:${address}`
+        // );
+        // const encodedDid = await rawDid.json();
+        // const decodedDid = await ethers.utils.toUtf8String(ethers.utils.base64.decode(encodedDid.data))
+        // const did = await JSON.parse(decodedDid)
+        // console.log("get ==>", did);
+        const did = await GetDid(address);
 
+        // const rawLastHash = await fetch(
+        //   "https://api.ancon.did.pa/v0/proofs/lasthash"
+        // );
+        // const lasthash = await rawLastHash.json();
+        // console.log("last hash", lasthash);
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/proof/${data.key}?height=${data.height}`
+          `https://api.ancon.did.pa/v0/proof/${did.key}?height=${did.height}`
         );
         const GetProof = await rawGetProof.json();
         console.log("proof==>", {

@@ -31,6 +31,7 @@ import {
 } from "../types/ethers-contracts";
 import Web3 from "web3";
 import { DidState } from "../atoms/DIDAtom";
+import GetDid from "../functions/GetDid";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -38,7 +39,7 @@ const AnconNFT = require("../contracts/AnconNFT.sol/AnconNFT.json");
 
 // fix the type error for document in nextjs
 declare let document: any;
-function sleep(ms: any) {
+export function sleep(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 function Create() {
@@ -123,47 +124,49 @@ function Create() {
       prov
     );
     const filter = contract1.filters.HeaderUpdated();
-    const from = (await prov.getBlockNumber()) - 10;
+    const from = await prov.getBlockNumber()
     let result = await contract1.queryFilter(filter, from);
-    let i: number = 0;
-    const interval = (resolve: any, reject: any) => {
-      let initial = true;
-      const cancelation = setInterval(async () => {
-        if (i > 8) {
-          reject();
-        } else if (result.length > 0) {
-          reject();
-        }
-        result = await contract1.queryFilter(filter, from);
-        console.log(result);
-        i++;
-        if (initial) {
-          initial = false;
-        } else {
-          if (result.length > 0) {
-            resolve(clearInterval(cancelation));
-          }
-        }
-      }, 15000);
-    };
-    const myPromise = new Promise((resolve, reject) => {
-      interval(resolve, reject);
-    });
-    try {
-      await myPromise;
-    } catch (error) {
-      console.log("error===>", error);
-    }
-
-    // while (time < maxTime) {
-    //   result = await contract1.queryFilter(filter, from);
-    //   if (result.length > 0) {
-    //     break;
-    //   }
-    //   time = Date.now();
-    //   console.log(result);
-    //   await sleep(3000);
+    // let i: number = 0;
+    // const interval = (resolve: any, reject: any) => {
+    //   let initial = true;
+    //   const cancelation = setInterval(async () => {
+    //     if (i > 8) {
+    //       reject();
+    //     } else if (result.length > 0) {
+    //       reject();
+    //     }
+    //     result = await contract1.queryFilter(filter, from);
+    //     console.log(result);
+    //     i++;
+    //     if (initial) {
+    //       initial = false;
+    //     } else {
+    //       if (result.length > 0) {
+    //         clearInterval(cancelation)
+    //         resolve(true);
+    //       }
+    //     }
+    //   }, 15000);
+    // };
+    // const myPromise = new Promise((resolve, reject) => {
+    //   return interval(resolve, reject);
+    // });
+    // try {
+    //   return await myPromise;
+    // } catch (error) {
+    //   console.log("error===>", error);
     // }
+    let time = Date.now();
+    const maxTime = Date.now() + 120000;
+    while (time < maxTime) {
+      result = await contract1.queryFilter(filter, from);
+      console.log(result);
+      if (result.length > 0) {
+        break;
+      }
+      time = Date.now();
+      await sleep(10000);
+    }
     return true;
   };
   // step 2 //
@@ -269,8 +272,10 @@ function Create() {
         const dagRequest = await fetch(
           `https://api.ancon.did.pa/v0/dagjson/${id}/`
         );
+
         const dag = await dagRequest.json();
         let metadataCid: any;
+        console.log(dag);
         let proofKey: any;
         console.log("dag", dag);
         if (dag !== null) {
@@ -430,8 +435,9 @@ function Create() {
     console.log("relay hash", relayHash);
 
     // get the key and height
-    const key = localStorage.getItem("proofKey");
-    const height = localStorage.getItem("proofHeight");
+    const Did = await GetDid(address);
+    const key = Did.key;
+    const height = Did.height;
 
     // prepare packet proof
     const rawPacketProof = await fetch(
@@ -446,15 +452,6 @@ function Create() {
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });
-
-    // let userProof: any = localStorage.getItem("ProofCid");
-    // const rawproof = await fetch(
-    //   `https://api.ancon.did.pa/v0/dagjson/${userProof}/`
-    // );
-
-    // userProof = await rawproof.json();
-
-    // userProof = toAbiProof(userProof.proof.proofs[0].Proof.exist);
     // fetch with proof key
     const hexData = packet.packet;
 
@@ -471,13 +468,23 @@ function Create() {
       packetProof,
       hash
     );
-    mint = await contract2.mintWithProof(
-      packetProof.key,
-      hexData,
-      userProof,
-      packetProof,
-      hash
-    );
+    try {
+      mint = await contract2.mintWithProof(
+        packetProof.key,
+        hexData,
+        userProof,
+        packetProof,
+        hash
+      );
+    } catch (error) {
+      mint = await contract2.mintWithProof(
+        packetProof.key,
+        hexData,
+        userProof,
+        packetProof,
+        hash
+      );
+    }
 
     // mint = await contract4.submitPacketWithProof(
     //   address,
@@ -486,12 +493,12 @@ function Create() {
     //   packet.packet,
     //   packetProof
     // );
-    // console.log(
-    //   "userProof",
-    //   base64.decode(userProof.value),
-    //   "packetProof",
-    //   base64.decode(packetProof.value)
-    // );
+    console.log(
+      "userProof",
+      base64.decode(userProof.value),
+      "packetProof",
+      base64.decode(packetProof.value)
+    );
     // let mint2;
     // try {
     //   mint2 = await contract4.verifyProofWithKV(
@@ -773,7 +780,7 @@ function Create() {
                       alt="readyLocal"
                     />
                     <p
-                      onClick={() => setStep(5)}
+                      onClick={() => router.push("/")}
                       className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
                     >
                       Close

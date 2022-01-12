@@ -2,7 +2,9 @@ import { ethers } from "ethers";
 import { useRecoilValue, useRecoilState } from "recoil";
 import Web3 from "web3";
 import { errorState } from "../atoms/errorAtom";
+import { sleep } from "../pages/create";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
+import GetDid from "./GetDid";
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 async function EnrollL2Account(
   cid: string,
@@ -10,7 +12,7 @@ async function EnrollL2Account(
   setStep: React.Dispatch<React.SetStateAction<number>>,
   provider: any,
   setErrorModal: React.Dispatch<React.SetStateAction<string[]>>,
-  address:string
+  address: string
 ) {
   // const [errorModal, setErrorModal] = useRecoilState(errorState);
   console.log("enrolling to L2");
@@ -43,39 +45,57 @@ async function EnrollL2Account(
     );
     const lasthash = await rawLastHash.json();
     const relayHash = await contract1.getProtocolHeader();
-    console.log(
-      "last hash",
-      ethers.utils.hexlify(
-        ethers.utils.base64.decode(lasthash.lastHash.hash)
-      )
-    );
-    console.log("relay hash", relayHash);
-    // const checkPolling = async () => {
-    //   console.log('polling')
-    //   const header = await contract1.getProtocolHeader();
-    //   if (header === lasthash) {
-    //     return true;
-    //   }
-    //   return undefined;
-    // };
-    // console.log('starting to poll')
-    // const poll = await ethers.utils.poll(checkPolling);
-    // console.log('poll ==>', poll)
-    const provi= new Web3(provider) 
+    const version = lasthash.lastHash.version;
+
+    const provi = new Web3(provider);
     provi.eth.defaultAccount = address;
     const dai = new provi.eth.Contract(
       AnconToken.abi,
       "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
     );
-    const allowance = await dai.methods.allowance(address, contract2.address).call()
-    if(allowance == 0){
-      await dai.methods.approve(contract2.address, '1000000000000000000000').send({
-        gasPrice: "22000000000",
-        gas: 400000,
-        from: address
-      })
+
+    const getHeight = async () => {
+      const did = await GetDid(address);
+      return did.height;
+    };
+    let height = await getHeight();
+    const hash = ethers.utils.hexlify(
+      ethers.utils.base64.decode(lasthash.lastHash.hash)
+    );
+    const filter = contract1.filters.HeaderUpdated();
+    const from = await prov.getBlockNumber();
+    let result = await contract1.queryFilter(filter, from);
+    console.log("hash", hash);
+    console.log("relay", relayHash);
+    console.log("equal", hash === relayHash);
+    console.log(typeof hash, typeof relayHash);
+    let time = Date.now();
+    const maxTime = Date.now() + 180000;
+    if (hash !== relayHash) {
+      console.log("hashes differ", height, version);
+      while (time < maxTime) {
+        result = await contract1.queryFilter(filter, from);
+        console.log(result);
+        if (result.length > 0) {
+          break;
+        }
+        time = Date.now();
+        await sleep(10000);
+      }
     }
-    
+
+    const allowance = await dai.methods
+      .allowance(address, contract2.address)
+      .call();
+    if (allowance == 0) {
+      await dai.methods
+        .approve(contract2.address, "1000000000000000000000")
+        .send({
+          gasPrice: "22000000000",
+          gas: 400000,
+          from: address,
+        });
+    }
     const enroll = await contract2.enrollL2Account(
       z.key,
       UTF8_cid,

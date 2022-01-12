@@ -72,7 +72,7 @@ function Login() {
   const handleFisrtLogin = async () => {
     if (provider) {
       if (provider !== window.ethereum) {
-        window.alert("no provided");
+        setShow(true);
       }
       //   call the provider
       await provider.request({

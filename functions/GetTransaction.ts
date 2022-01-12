@@ -29,6 +29,11 @@ const getTransaction = async (
           `https://api.bscscan.com/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_BSC_KEY}`
         );
         break;
+      case 42:
+        rawList = await fetch(
+          `https://api-kovan.etherscan.com/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_BSC_KEY}`
+        );
+        break;
       default:
         rawList = await fetch(
           `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_ETHER_KEY}`
