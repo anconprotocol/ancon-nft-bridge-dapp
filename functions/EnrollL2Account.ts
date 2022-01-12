@@ -121,7 +121,7 @@ async function EnrollL2Account(
       z.key,
       UTF8_cid,
       z,
-      { gasPrice: "451000000000", gasLimit: 50000 }
+      { gasPrice: "22000000000", gasLimit: 400000 }
     );
     const waitFortransaction = await prov.waitForTransaction(
       enroll.hash
