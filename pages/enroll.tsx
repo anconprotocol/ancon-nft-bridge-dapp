@@ -19,6 +19,7 @@ import getTransaction from "../functions/GetTransaction";
 import toAbiProof from "../functions/ToAbiProof";
 import useProvider from "../hooks/useProvider";
 import GetDid from "../functions/GetDid";
+import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 
 function Enroll() {
   const [step, setStep] = useState(0);
@@ -137,7 +138,7 @@ function Enroll() {
     console.log(etherDid.did);
     //post to get the did
     const payload = {
-      domainName: 'menottin',
+      domainName: "menottin",
       pub: base58Encode,
       signature: signature,
       message: "signin this message to verify my public key",
@@ -167,27 +168,67 @@ function Enroll() {
         // const getReq = await JSON.parse(getReqParse);
         // console.log("get user/domain/did.json ==>>", getReq);
 
-        
+        // update header
+        const rawLastHash = await fetch(
+          "https://api.ancon.did.pa/v0/proofs/lasthash"
+        );
+        const lasthash = await rawLastHash.json();
+        const prov = new ethers.providers.Web3Provider(provider);
+        const signer = await prov.getSigner();
+        const network = await prov.getNetwork();
+
+        const getAddress = async () => {
+          let contractAddress: any;
+          let daiAddress: any;
+          switch (network.chainId) {
+            case 97:
+              contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
+              daiAddress = process.env.NEXT_PUBLIC_DAI_bnbt;
+              break;
+            case 56:
+              contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
+              break;
+            case 42:
+              contractAddress = process.env.NEXT_PUBLIC_ANCON_kovan;
+              daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
+              break;
+          }
+          return [contractAddress, daiAddress];
+        };
+        const contractAddress: any = await getAddress();
+        console.log("asdd", contractAddress);
+        const contract1 = AnconProtocol__factory.connect(
+          contractAddress[0],
+          signer
+        );
+        await contract1.updateProtocolHeader(
+          ethers.utils.hexlify(
+            ethers.utils.base64.decode(lasthash.lastHash.hash)
+          )
+        );
+
         const did = await GetDid(address);
-        cid = await Object?.values(did.content)[0]
-        const rawCid = await fetch(`https://api.ancon.did.pa/v0/did/${cid}`)
-        const Cid = await rawCid.json()
-        console.log('cid',Cid)
+        cid = await Object?.values(did.content)[0];
+        const rawCid = await fetch(
+          `https://api.ancon.did.pa/v0/did/${cid}`
+        );
+        const Cid = await rawCid.json();
+        console.log("cid", Cid);
         // const rawLastHash = await fetch(
         //   "https://api.ancon.did.pa/v0/proofs/lasthash"
         // );
         // const lasthash = await rawLastHash.json();
         // console.log("last hash", lasthash);
-      
+
         const rawGetProof = await fetch(
           `https://api.ancon.did.pa/v0/proof/${did.key}?height=${did.height}`
         );
         const GetProof = await rawGetProof.json();
-        console.log(GetProof)
+        console.log(GetProof);
         console.log("proof==>", {
           ...GetProof[0].Proof,
         });
-  // const rawCidReq = 
+        // const rawCidReq =
         // calling to abi proof
         const z = toAbiProof({
           ...GetProof[0].Proof.exist,
