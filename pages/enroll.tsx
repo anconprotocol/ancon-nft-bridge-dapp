@@ -138,7 +138,7 @@ function Enroll() {
     console.log(etherDid.did);
     //post to get the did
     const payload = {
-      domainName: "menottin",
+      domainName: NoHexAddress,
       pub: base58Encode,
       signature: signature,
       message: "signin this message to verify my public key",
