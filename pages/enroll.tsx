@@ -137,7 +137,7 @@ function Enroll() {
     console.log(etherDid.did);
     //post to get the did
     const payload = {
-      domainName: NoHexAddress,
+      domainName: 'menottin',
       pub: base58Encode,
       signature: signature,
       message: "signin this message to verify my public key",
@@ -154,7 +154,7 @@ function Enroll() {
           requestOptions
         );
         const data = await rawdata.json();
-        const cid: any = data.cid;
+        let cid: any = data.cid;
         setDIDCid(cid);
         setDIDcid(cid);
         localStorage.setItem("DIDCid", cid);
@@ -167,28 +167,27 @@ function Enroll() {
         // const getReq = await JSON.parse(getReqParse);
         // console.log("get user/domain/did.json ==>>", getReq);
 
-        // const rawDid = await fetch(
-        //   `https://api.ancon.did.pa/v0/did/raw:${address}`
-        // );
-        // const encodedDid = await rawDid.json();
-        // const decodedDid = await ethers.utils.toUtf8String(ethers.utils.base64.decode(encodedDid.data))
-        // const did = await JSON.parse(decodedDid)
-        // console.log("get ==>", did);
+        
         const did = await GetDid(address);
-
+        cid = await Object?.values(did.content)[0]
+        const rawCid = await fetch(`https://api.ancon.did.pa/v0/did/${cid}`)
+        const Cid = await rawCid.json()
+        console.log('cid',Cid)
         // const rawLastHash = await fetch(
         //   "https://api.ancon.did.pa/v0/proofs/lasthash"
         // );
         // const lasthash = await rawLastHash.json();
         // console.log("last hash", lasthash);
+      
         const rawGetProof = await fetch(
           `https://api.ancon.did.pa/v0/proof/${did.key}?height=${did.height}`
         );
         const GetProof = await rawGetProof.json();
+        console.log(GetProof)
         console.log("proof==>", {
           ...GetProof[0].Proof,
         });
-
+  // const rawCidReq = 
         // calling to abi proof
         const z = toAbiProof({
           ...GetProof[0].Proof.exist,

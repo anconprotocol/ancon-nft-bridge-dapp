@@ -5,12 +5,13 @@ async function GetDid(address:string) {
     `https://api.ancon.did.pa/v0/did/raw:${address}`
   );
   const encodedDid = await rawDid.json();
-  const decodedDid = await ethers.utils.toUtf8String(
-    ethers.utils.base64.decode(encodedDid.data)
-  );
-  const did = await JSON.parse(decodedDid);
-  console.log('did',did)
-  return did
+  console.log(encodedDid)
+  // const decodedDid = await ethers.utils.toUtf8String(
+  //   ethers.utils.base64.decode(encodedDid)
+  // );
+  // const did = await JSON.parse(decodedDid);
+  // console.log('did',did)
+  return encodedDid
 }
 
 export default GetDid;

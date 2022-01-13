@@ -117,18 +117,29 @@ async function EnrollL2Account(
           from: address,
         });
     }
+    console.log(
+      ethers.utils.keccak256(z.key) == ethers.utils.keccak256(z.key)
+    );
+    console.log(
+      ethers.utils.keccak256(z.key) == ethers.utils.keccak256(z.key)
+    );
     const enroll = await contract2.enrollL2Account(
       z.key,
       UTF8_cid,
       z,
       { gasPrice: "22000000000", gasLimit: 400000 }
     );
-    const waitFortransaction = await prov.waitForTransaction(
-      enroll.hash
+    const enrolled = await contract1.verifyProofWithKV(
+      z.key,
+      z.value,
+      z
     );
+    // const waitFortransaction = await prov.waitForTransaction(
+    //   enroll
+    // );
     setStep(3);
-    console.log("enroll==>", enroll, waitFortransaction);
-    console.log('waiting', waitFortransaction)
+    console.log("enroll==>", enroll, enrolled);
+    // console.log("waiting", waitFortransaction);
   } catch (error) {
     setStep(0);
     setErrorModal([
