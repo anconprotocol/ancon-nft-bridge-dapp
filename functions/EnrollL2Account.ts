@@ -123,12 +123,25 @@ async function EnrollL2Account(
     console.log(
       ethers.utils.keccak256(z.key) == ethers.utils.keccak256(z.key)
     );
-    const enroll = await contract2.enrollL2Account(
-      z.key,
-      UTF8_cid,
-      z,
-      { gasPrice: "22000000000", gasLimit: 400000 }
-    );
+    let enroll;
+    switch (network.chainId) {
+      case 97:
+        enroll = await contract2.enrollL2Account(z.key, UTF8_cid, z, {
+          gasPrice: "22000000000",
+          gasLimit: 400000,
+        });
+        break;
+      case 42:
+        enroll = await contract2.enrollL2Account(z.key, UTF8_cid, z, {
+          gasPrice: "22000000000",
+          gasLimit: 400000,
+        });
+        break;
+    }
+    // enroll = await contract2.enrollL2Account(z.key, UTF8_cid, z, {
+    //   gasPrice: "22000000000",
+    //   gasLimit: 400000,
+    // });
     const enrolled = await contract1.verifyProofWithKV(
       z.key,
       z.value,

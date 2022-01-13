@@ -182,16 +182,16 @@ function Create() {
   const handleUpload = async () => {
     try {
       // check if user if enrolled
-      const domain = await getDomainName();
-      if (domain === false) {
-        setErrorModal([
-          "This Domain does not match the records please try again or procced to create a NFT",
-          "Try again",
-          "/create",
-          "Enroll Account",
-          "/enroll",
-        ]);
-      } else {
+      // const domain = await getDomainName();
+      // if (domain === false) {
+      //   setErrorModal([
+      //     "This Domain does not match the records please try again or procced to create a NFT",
+      //     "Try again",
+      //     "/create",
+      //     "Enroll Account",
+      //     "/enroll",
+      //   ]);
+      // } else {
         // make the client
         const storage = new Web3Storage({
           token: getAccessToken(),
@@ -217,7 +217,7 @@ function Create() {
         });
         setTokenData({ ...tokenData, imageCid });
         return imageCid;
-      }
+      // }
     } catch (error) {
       console.log("err", error);
     }
@@ -378,19 +378,19 @@ function Create() {
     signer = ethersInstance.getSigner();
 
     const contract1 = XDVNFT__factory.connect(
-      "0x8f5198c0C4FC8c425528237f7B1adF7480Fd681e",
+      "0x7aA3DF5fadd20599eE351493a177C228f9fb0785",
       ethersInstance
     );
     const contract2 = XDVNFT__factory.connect(
-      "0x8f5198c0C4FC8c425528237f7B1adF7480Fd681e",
+      "0x7aA3DF5fadd20599eE351493a177C228f9fb0785",
       signer
     );
     const contract3 = AnconProtocol__factory.connect(
-      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
+      "0xDB37c3D3316455d16D7788d47805e1458c8cdbBa",
       ethersInstance
     );
     const contract4 = AnconProtocol__factory.connect(
-      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
+      "0xDB37c3D3316455d16D7788d47805e1458c8cdbBa",
       signer
     );
 

@@ -169,43 +169,43 @@ function Enroll() {
         // console.log("get user/domain/did.json ==>>", getReq);
 
         // update header
-        const rawLastHash = await fetch(
-          "https://api.ancon.did.pa/v0/proofs/lasthash"
-        );
-        const lasthash = await rawLastHash.json();
-        const prov = new ethers.providers.Web3Provider(provider);
-        const signer = await prov.getSigner();
-        const network = await prov.getNetwork();
+        // const rawLastHash = await fetch(
+        //   "https://api.ancon.did.pa/v0/proofs/lasthash"
+        // );
+        // const lasthash = await rawLastHash.json();
+        // const prov = new ethers.providers.Web3Provider(provider);
+        // const signer = await prov.getSigner();
+        // const network = await prov.getNetwork();
 
-        const getAddress = async () => {
-          let contractAddress: any;
-          let daiAddress: any;
-          switch (network.chainId) {
-            case 97:
-              contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
-              daiAddress = process.env.NEXT_PUBLIC_DAI_bnbt;
-              break;
-            case 56:
-              contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
-              break;
-            case 42:
-              contractAddress = process.env.NEXT_PUBLIC_ANCON_kovan;
-              daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
-              break;
-          }
-          return [contractAddress, daiAddress];
-        };
-        const contractAddress: any = await getAddress();
-        console.log("asdd", contractAddress);
-        const contract1 = AnconProtocol__factory.connect(
-          contractAddress[0],
-          signer
-        );
-        await contract1.updateProtocolHeader(
-          ethers.utils.hexlify(
-            ethers.utils.base64.decode(lasthash.lastHash.hash)
-          )
-        );
+        // const getAddress = async () => {
+        //   let contractAddress: any;
+        //   let daiAddress: any;
+        //   switch (network.chainId) {
+        //     case 97:
+        //       contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
+        //       daiAddress = process.env.NEXT_PUBLIC_DAI_bnbt;
+        //       break;
+        //     case 56:
+        //       contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
+        //       break;
+        //     case 42:
+        //       contractAddress = process.env.NEXT_PUBLIC_ANCON_kovan;
+        //       daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
+        //       break;
+        //   }
+        //   return [contractAddress, daiAddress];
+        // };
+        // const contractAddress: any = await getAddress();
+        // console.log("asdd", contractAddress);
+        // const contract1 = AnconProtocol__factory.connect(
+        //   contractAddress[0],
+        //   signer
+        // );
+        // await contract1.updateProtocolHeader(
+        //   ethers.utils.hexlify(
+        //     ethers.utils.base64.decode(lasthash.lastHash.hash)
+        //   )
+        // );
 
         const did = await GetDid(address);
         cid = await Object?.values(did.content)[0];
