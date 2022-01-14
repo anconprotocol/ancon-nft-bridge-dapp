@@ -392,10 +392,6 @@ function Create() {
       contractAddress.ancon,
       ethersInstance
     );
-    const contract4 = AnconProtocol__factory.connect(
-      contractAddress.ancon,
-      signer
-    );
 
     const dai = new web3.eth.Contract(
       AnconToken.abi,

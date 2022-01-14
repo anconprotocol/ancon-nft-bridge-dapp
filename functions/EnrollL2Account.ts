@@ -22,7 +22,6 @@ async function EnrollL2Account(
     const signer = await prov.getSigner();
     const network = await prov.getNetwork();
 
-   
     const contractAddress: any = await GetChain(network);
     console.log("asdd", contractAddress);
     const contract1 = AnconProtocol__factory.connect(
@@ -92,27 +91,37 @@ async function EnrollL2Account(
     const allowance = await dai.methods
       .allowance(address, contract2.address)
       .call();
-    if (allowance == 0) {
-      await dai.methods
-        .approve(contract2.address, "1000000000000000000000")
-        .send({
-          gasPrice: "22000000000",
-          gas: 400000,
-          from: address,
-        });
-    }
+
     let enroll;
     switch (network.chainId) {
       case 97:
+        if (allowance == 0) {
+          await dai.methods
+            .approve(contract2.address, "1000000000000000000000")
+            .send({
+              gasPrice: "22000000000",
+              gas: 400000,
+              from: address,
+            });
+        }
         enroll = await contract2.enrollL2Account(z.key, UTF8_cid, z, {
           gasPrice: "22000000000",
           gasLimit: 400000,
         });
         break;
       case 42:
+        // if (allowance == 0) {
+        await dai.methods
+          .approve(contract2.address, "1000000000000000000000")
+          .send({
+            gasPrice: "400000000000",
+            gas: 200000,
+            from: address,
+          });
+        // }
         enroll = await contract2.enrollL2Account(z.key, UTF8_cid, z, {
-          gasPrice: "22000000000",
-          gasLimit: 400000,
+          gasPrice: "400000000000",
+          gasLimit: 200000,
         });
         break;
     }
