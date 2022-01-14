@@ -10,7 +10,7 @@ const progress = new ProgressBar({
   size: 4,
   className: "z-50",
   delay: 100,
-  color:"#B926A7"
+  color: "#B926A7",
 });
 Router.events.on("routeChangeStart", progress.start);
 Router.events.on("routeChangeComplete", progress.finish);

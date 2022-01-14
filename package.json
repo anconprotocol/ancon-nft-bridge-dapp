@@ -18,8 +18,10 @@
     "react-dom": "17.0.2",
     "react-google-login": "^5.2.2",
     "react-qr-code": "^2.0.3",
+    "react-web-share": "^1.1.1",
     "recoil": "^0.5.2",
     "secure-pin": "^1.0.14",
+    "share-api-polyfill": "^1.0.21",
     "web3": "^1.6.1",
     "web3.storage": "3.5.2"
   },
