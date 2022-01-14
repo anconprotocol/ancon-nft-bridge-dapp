@@ -32,6 +32,7 @@ import {
 import Web3 from "web3";
 import { DidState } from "../atoms/DIDAtom";
 import GetDid from "../functions/GetDid";
+import GetChain from "../functions/GetChain";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -124,7 +125,7 @@ function Create() {
       prov
     );
     const filter = contract1.filters.HeaderUpdated();
-    const from = await prov.getBlockNumber()
+    const from = await prov.getBlockNumber();
     let result = await contract1.queryFilter(filter, from);
     // let i: number = 0;
     // const interval = (resolve: any, reject: any) => {
@@ -192,31 +193,31 @@ function Create() {
       //     "/enroll",
       //   ]);
       // } else {
-        // make the client
-        const storage = new Web3Storage({
-          token: getAccessToken(),
-        });
-        // show the root cid as soon as it's ready
-        const onRootCidReady = (cid: string) => {
-          console.log("uploading files with cid:", cid);
-        };
+      // make the client
+      const storage = new Web3Storage({
+        token: getAccessToken(),
+      });
+      // show the root cid as soon as it's ready
+      const onRootCidReady = (cid: string) => {
+        console.log("uploading files with cid:", cid);
+      };
 
-        // when each chunk is stored, update the percentage complete and display
-        const totalSize = image.size;
-        let uploaded = 0;
+      // when each chunk is stored, update the percentage complete and display
+      const totalSize = image.size;
+      let uploaded = 0;
 
-        const onStoredChunk = (size: number) => {
-          uploaded += size;
-          const pct = totalSize / uploaded;
-          console.log(`Uploading... ${pct.toFixed(2)}% complete`);
-        };
+      const onStoredChunk = (size: number) => {
+        uploaded += size;
+        const pct = totalSize / uploaded;
+        console.log(`Uploading... ${pct.toFixed(2)}% complete`);
+      };
 
-        const imageCid: string = await storage.put([image], {
-          onRootCidReady,
-          onStoredChunk,
-        });
-        setTokenData({ ...tokenData, imageCid });
-        return imageCid;
+      const imageCid: string = await storage.put([image], {
+        onRootCidReady,
+        onStoredChunk,
+      });
+      setTokenData({ ...tokenData, imageCid });
+      return imageCid;
       // }
     } catch (error) {
       console.log("err", error);
@@ -376,27 +377,29 @@ function Create() {
     console.log("Beginning of BINDCONTRACTS()");
     ethersInstance = new ethers.providers.Web3Provider(provider);
     signer = ethersInstance.getSigner();
+    const network = await ethersInstance.getNetwork();
 
+    const contractAddress: any = await GetChain(network);
     const contract1 = XDVNFT__factory.connect(
-      "0x7aA3DF5fadd20599eE351493a177C228f9fb0785",
+      contractAddress.xdv,
       ethersInstance
     );
     const contract2 = XDVNFT__factory.connect(
-      "0x7aA3DF5fadd20599eE351493a177C228f9fb0785",
+      contractAddress.xdv,
       signer
     );
     const contract3 = AnconProtocol__factory.connect(
-      "0xDB37c3D3316455d16D7788d47805e1458c8cdbBa",
+      contractAddress.ancon,
       ethersInstance
     );
     const contract4 = AnconProtocol__factory.connect(
-      "0xDB37c3D3316455d16D7788d47805e1458c8cdbBa",
+      contractAddress.ancon,
       signer
     );
 
     const dai = new web3.eth.Contract(
       AnconToken.abi,
-      "0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867"
+      contractAddress.dai
     );
 
     const allowance = await dai.methods
@@ -493,7 +496,7 @@ function Create() {
     //   packet.packet,
     //   packetProof
     // );
-  
+
     // let mint2;
     // try {
     //   mint2 = await contract4.verifyProofWithKV(

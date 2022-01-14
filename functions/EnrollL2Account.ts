@@ -4,6 +4,7 @@ import Web3 from "web3";
 import { errorState } from "../atoms/errorAtom";
 import { sleep } from "../pages/create";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
+import GetChain from "./GetChain";
 import GetDid from "./GetDid";
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 async function EnrollL2Account(
@@ -21,32 +22,15 @@ async function EnrollL2Account(
     const signer = await prov.getSigner();
     const network = await prov.getNetwork();
 
-    const getAddress = async () => {
-      let contractAddress: any;
-      let daiAddress: any;
-      switch (network.chainId) {
-        case 97:
-          contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
-          daiAddress = process.env.NEXT_PUBLIC_DAI_bnbt;
-          break;
-        case 56:
-          contractAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
-          break;
-        case 42:
-          contractAddress = process.env.NEXT_PUBLIC_ANCON_kovan;
-          daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
-          break;
-      }
-      return [contractAddress, daiAddress];
-    };
-    const contractAddress: any = await getAddress();
+   
+    const contractAddress: any = await GetChain(network);
     console.log("asdd", contractAddress);
     const contract1 = AnconProtocol__factory.connect(
-      contractAddress[0],
+      contractAddress.ancon,
       prov
     );
     const contract2 = AnconProtocol__factory.connect(
-      contractAddress[0],
+      contractAddress.ancon,
       signer
     );
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
@@ -72,7 +56,7 @@ async function EnrollL2Account(
     provi.eth.defaultAccount = address;
     const dai = new provi.eth.Contract(
       AnconToken.abi,
-      contractAddress[1]
+      contractAddress.dai
     );
 
     const getHeight = async () => {
@@ -117,12 +101,6 @@ async function EnrollL2Account(
           from: address,
         });
     }
-    console.log(
-      ethers.utils.keccak256(z.key) == ethers.utils.keccak256(z.key)
-    );
-    console.log(
-      ethers.utils.keccak256(z.key) == ethers.utils.keccak256(z.key)
-    );
     let enroll;
     switch (network.chainId) {
       case 97:
