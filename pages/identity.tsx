@@ -21,6 +21,8 @@ function identity() {
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
   const provider = useProvider();
+  const [displayPin, setDisplayPin] = useState<string | null>(null);
+
   // handles the change of the image
   const onImageChange = (event: React.ChangeEvent<HTMLInputElement> | any) => {
     setImage(event.target.files[0]);
@@ -118,7 +120,8 @@ function identity() {
           )
         )
       );
-
+      debugger;
+      setDisplayPin(pin);
       return pin;
     });
     // cid,pin
@@ -188,9 +191,14 @@ function identity() {
               ) : null}
             </div>
           ) : null}
-          {qrcode != null ? (
-            <div className="flex items-center justify-center pt-3">
-              <QRCode value={qrcode} />
+          {qrcode != null && displayPin != null ? (
+            <div>
+              <div className="flex items-center justify-center pt-3">
+                <QRCode value={qrcode} />
+              </div>
+              <div className="flex items-center justify-center pt-3">
+                <a className="text-gray-600 text-sm font-bold">{`Pin: ${displayPin}`}</a>
+              </div>
             </div>
           ) : null}
           {!areFieldsEmpty() && qrcode != null ? (
@@ -210,6 +218,13 @@ function identity() {
             </div>
           ) : null}
         </div>
+        {/* <div className="bg-white shadow-xl rounded-lg px-3 py-4">
+          <span className="text-black font-bold text-xl">
+            {step === 6
+              ? "NFT Created"
+              : "Solicitud de Verificación de identidad"}
+          </span>
+        </div> */}
       </div>
     </main>
   );
