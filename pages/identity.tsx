@@ -47,6 +47,12 @@ function identity() {
     }
     return true;
   };
+  const isDesencryptionScreen = () => {
+    // if () {
+    //   return true;
+    // }
+    return false;
+  };
   const createDid = async () => {
     const wallet = ethers.Wallet.createRandom();
     const pubKey = wallet.publicKey;
@@ -130,101 +136,112 @@ function identity() {
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
-        <div className="bg-white shadow-xl rounded-lg px-3 py-4">
-          <span className="text-black font-bold text-xl">
-            {step === 6
-              ? "NFT Created"
-              : "Solicitud de Verificación de identidad"}
-          </span>
-          {step === 0 ? (
+        {!isDesencryptionScreen() ? (
+          <div className="bg-white shadow-xl rounded-lg px-3 py-4">
+            <span className="text-black font-bold text-xl">
+              {step === 6
+                ? "NFT Created"
+                : "Solicitud de Verificación de identidad"}
+            </span>
+            {step === 0 ? (
+              <div>
+                <div className="flex-col flex mt-3">
+                  <a className="text-gray-600 text-sm font-bold">
+                    Nombre completo
+                  </a>
+                  <input
+                    type="text"
+                    className="bg-gray-100 rounded-sm h-10 pl-2"
+                    onChange={(e) => {
+                      setIdentityData({
+                        ...identityData,
+                        fullname: e.target.value,
+                      });
+                    }}
+                    value={identityData.fullname}
+                  ></input>
+                </div>
+                <div
+                  onClick={clickInput}
+                  className="p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out mt-3"
+                >
+                  <p className="flex justify-center items-center">
+                    Foto de Cedula
+                  </p>
+                </div>
+                {localImage != null ? (
+                  <div className="flex items-center justify-center pt-3">
+                    <img
+                      className="border-2 p-2 rounded-lg border-primary-500 drop-shadow-xl shadow-primary-500"
+                      src={`data:image/jpeg;base64,${localImage}`}
+                      style={{ maxWidth: "100px" }}
+                      alt="local"
+                    />
+                  </div>
+                ) : null}
+                <input
+                  type="file"
+                  onChange={onImageChange}
+                  className="filetype"
+                  id="nft-img"
+                  style={{ display: "none" }}
+                ></input>
+                {!areFieldsEmpty() ? (
+                  <div>
+                    <p
+                      onClick={createDid}
+                      className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+                    >
+                      Crear
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {qrcode != null && displayPin != null ? (
+              <div>
+                <div className="flex items-center justify-center pt-3">
+                  <QRCode value={qrcode} />
+                </div>
+                <div className="flex items-center justify-center pt-3">
+                  <a className="text-gray-600 text-sm font-bold">{`Pin: ${displayPin}`}</a>
+                </div>
+              </div>
+            ) : null}
+            {!areFieldsEmpty() && qrcode != null ? (
+              <div>
+                <RWebShare
+                  data={{
+                    text: "AnconProtocol Did Panama, identity verification request",
+                    url: `${location.href}?code=${qrcode}`,
+                    title: "Identity verification request",
+                  }}
+                  onClick={() => console.log("shared successfully!")}
+                >
+                  <p className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4">
+                    Compartir
+                  </p>
+                </RWebShare>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="bg-white shadow-xl rounded-lg px-3 py-4">
+            <span className="text-black font-bold text-xl">
+              Desencripción con pin
+            </span>
             <div>
               <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  Nombre completo
-                </a>
+                <a className="text-gray-600 text-sm font-bold">Pin secreto</a>
                 <input
                   type="text"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setIdentityData({
-                      ...identityData,
-                      fullname: e.target.value,
-                    });
-                  }}
-                  value={identityData.fullname}
+                  onChange={(e) => {}}
                 ></input>
               </div>
-              <div
-                onClick={clickInput}
-                className="p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out mt-3"
-              >
-                <p className="flex justify-center items-center">
-                  Foto de Cedula
-                </p>
-              </div>
-              {localImage != null ? (
-                <div className="flex items-center justify-center pt-3">
-                  <img
-                    className="border-2 p-2 rounded-lg border-primary-500 drop-shadow-xl shadow-primary-500"
-                    src={`data:image/jpeg;base64,${localImage}`}
-                    style={{ maxWidth: "100px" }}
-                    alt="local"
-                  />
-                </div>
-              ) : null}
-              <input
-                type="file"
-                onChange={onImageChange}
-                className="filetype"
-                id="nft-img"
-                style={{ display: "none" }}
-              ></input>
-              {!areFieldsEmpty() ? (
-                <div>
-                  <p
-                    onClick={createDid}
-                    className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
-                  >
-                    Crear
-                  </p>
-                </div>
-              ) : null}
             </div>
-          ) : null}
-          {qrcode != null && displayPin != null ? (
-            <div>
-              <div className="flex items-center justify-center pt-3">
-                <QRCode value={qrcode} />
-              </div>
-              <div className="flex items-center justify-center pt-3">
-                <a className="text-gray-600 text-sm font-bold">{`Pin: ${displayPin}`}</a>
-              </div>
-            </div>
-          ) : null}
-          {!areFieldsEmpty() && qrcode != null ? (
-            <div>
-              <RWebShare
-                data={{
-                  text: "AnconProtocol Did Panama, identity verification request",
-                  url: `${location.href}?code=${qrcode}`,
-                  title: "Identity verification request",
-                }}
-                onClick={() => console.log("shared successfully!")}
-              >
-                <p className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4">
-                  Compartir
-                </p>
-              </RWebShare>
-            </div>
-          ) : null}
-        </div>
-        {/* <div className="bg-white shadow-xl rounded-lg px-3 py-4">
-          <span className="text-black font-bold text-xl">
-            {step === 6
-              ? "NFT Created"
-              : "Solicitud de Verificación de identidad"}
-          </span>
-        </div> */}
+          </div>
+        )}
       </div>
     </main>
   );
