@@ -7,18 +7,16 @@ import QRCode from "react-qr-code";
 import { ethers, Signer } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { encrypt } from "eciesjs";
-import { base64 } from "ethers/lib/utils";
+import { base64, sha256 } from "ethers/lib/utils";
 
 declare let document: any;
 function identity() {
   const [step, setStep] = useState(0);
   const [identityData, setIdentityData] = useState({
-    address: "",
-    name: "",
-    lastName: "",
-    email: "",
+    fullname: "",
   });
   const [localImage, setLocalImage] = useState<any | null>(null);
+  const [qrcode, setQRCode] = useState<any | null>(null);
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
   const provider = useProvider();
@@ -37,73 +35,47 @@ function identity() {
     }
   };
   const clickInput = () => document.getElementById("nft-img").click();
-  const responseGoogle = (response: any) => {
-    setIdentityData({
-      ...identityData,
-      name: response.profileObj.givenName,
-      email: response.profileObj.email,
-      lastName: response.profileObj.familyName,
-    });
-  };
+
 
   const createDid = async () => {
     const wallet = ethers.Wallet.createRandom();
     const pubKey = wallet.publicKey;
-    const walletAddress = wallet.address;
     console.log("pub", pubKey);
-    // const sign = wallet.signMessage(
-    //   ethers.utils.hashMessage(
-    //     ethers.utils.keccak256(
-    //       ethers.utils.arrayify(
-    //         "signin this message to verify my public key"
-    //       )
-    //     )
-    //   )
-    // );
-    // // name, lastname, email, cedula, oauth provsider
-    // const payload = {
-    //   domainName: walletAddress.substring(2),
-    //   pub: ethers.utils.base58.encode(pubKey),
-    //   signature: sign,
-    //   message: "signin this message to verify my public key",
-    // };
-
-    // const requestOptions = {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(payload),
-    // };
-    // const rawdata = await fetch(
-    //   "https://api.ancon.did.pa/v0/did/web",
-    //   requestOptions
-    // );
-    // const data = await rawdata.json();
-    // console.log("did web", data);
     const prov = new ethers.providers.Web3Provider(provider);
     const signer = prov.getSigner();
-    let Data: any;
-    let content: any;
-    if (image instanceof File) {
-    content = Buffer.from((await image.arrayBuffer()));
-    } else {
-        throw new Error('addSignedObject: must be a file object');
+    let payload: any;
+    const walletAddress = await signer.getAddress()
+    let content = Buffer.from((await image.arrayBuffer()));
+
+   let encData = encrypt(pubKey, content);
+   const formData  = new FormData();
+   const f = new File([encData],  image.name)
+   formData.append("file", f);
+   const upload = await fetch(
+    "https://api.ancon.did.pa/v0/file",
+    {
+      method: "POST",
+      body: formData,
     }
-    console.log(content)
-    Data = {
-      name: identityData.name,
-      lastName: identityData.lastName,
-      email: identityData.email,
-      image: content.toString("base64"),
-    };
-    Data = encrypt(pubKey, Data);
+  );
+  const res = await upload.json()
+  payload =   {
+    fullname: identityData.fullname,
+    image: res.cid,
+  };
+
     const s = await signer.signMessage(
       ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(JSON.stringify(Data))
+        ethers.utils.toUtf8Bytes((JSON.stringify(payload)))
       )
     );
 
+    // const did = await fetch(
+    //   `http://localhost:7788/v0/did/${walletAddress.replace('0x','raw:0x')}`
+    // )
+
     const rawDagPost = await fetch(
-      "https://api.ancon.did.pa/v0/dagson/",
+      "https://api.ancon.did.pa/v0/dagjson",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -111,20 +83,44 @@ function identity() {
           path: "/",
           from: walletAddress,
           signature: s,
-          data: Data,
-          encrypt: true,
-          authorizeRecipients: walletAddress,
+          data: payload,
         }),
       }
     );
-    const DagPost = await rawDagPost.json();
-    console.log("dagPost", DagPost);
-    const id = await DagPost.cid;
+    const contentBlock = await rawDagPost.json();
+    
 
-    const generatePin = securePin.generatePin(6, (pin) => {
+    securePin.generatePin(6,async (pin) => {
+      const creds = await  wallet.encrypt(pin.toString());
+      const s = await signer.signMessage(
+        ethers.utils.arrayify(
+          ethers.utils.toUtf8Bytes(creds)
+        )
+      );
+  
+      const rawDagPost = await fetch(
+        "https://api.ancon.did.pa/v0/dagjson",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            path: "/",
+            from: walletAddress,
+            signature: s,
+            data: JSON.parse(creds),
+          }),
+        }
+      );
+
+    const resp = await rawDagPost.json();
+
+    setQRCode(JSON.stringify({
+      creds: resp.cid,
+      content: contentBlock.cid,
+    }));
+    
       return pin;
     });
-    console.log("pin", generatePin);
     // cid,pin
   };
   return (
@@ -137,44 +133,9 @@ function identity() {
           </span>
           {step === 0 ? (
             <div>
-              {/* Oauth  */}
-              {identityData.name === "" ? (
-                <div className="w-full flex items-center justify-center py-3 select-none">
-                  <GoogleLogin
-                    scope="profile email"
-                    clientId="779014570531-bvmnb5bq69uov2cc1vkr4jhh03pgdrvj.apps.googleusercontent.com"
-                    render={(renderProps) => (
-                      <div
-                        onClick={renderProps.onClick}
-                        className="relative w-10 h-10 cursor-pointer active:scale-105 transfrom transition-all"
-                      >
-                        <Image
-                          src={"/google-icon.png"}
-                          alt="google-icon"
-                          layout="fill"
-                          className="hover:shadow-xl"
-                        />
-                      </div>
-                    )}
-                    buttonText="Login"
-                    onSuccess={responseGoogle}
-                    onFailure={responseGoogle}
-                    cookiePolicy={"single_host_origin"}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <h2 className="my-2 font-medium">
-                    {identityData.name} {identityData.lastName}
-                  </h2>
-                  <h2 className="font-medium">
-                    {identityData.email}
-                  </h2>
-                </div>
-              )}
               <div className="flex-col flex mt-3">
                 <a className="text-gray-600 text-sm font-bold">
-                  Pin de Validacion
+                  Nombre completo
                 </a>
                 <input
                   type="text"
@@ -182,10 +143,10 @@ function identity() {
                   onChange={(e) => {
                     setIdentityData({
                       ...identityData,
-                      address: e.target.value,
+                      fullname: e.target.value,
                     });
                   }}
-                  value={identityData.address}
+                  value={identityData.fullname}
                 ></input>
               </div>
               <div
@@ -223,6 +184,19 @@ function identity() {
               </div>
             </div>
           ) : null}
+          {qrcode != null ? (
+                <div className="flex items-center justify-center pt-3">
+                 <QRCode value={qrcode} />
+                </div>
+              ) : null}
+              <div>
+                <p
+                  onClick={createDid}
+                  className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+                >
+                  Compartir
+                </p>
+              </div>
         </div>
       </div>
     </main>
