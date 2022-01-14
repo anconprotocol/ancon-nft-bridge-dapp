@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import GoogleLogin from "react-google-login";
 import * as securePin from "secure-pin";
@@ -8,11 +8,16 @@ import QRCode from "react-qr-code";
 import { ethers, Signer } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { encrypt } from "eciesjs";
-import { base64, sha256, toUtf8Bytes } from "ethers/lib/utils";
+import { base64, sha256, toUtf8Bytes, toUtf8String } from "ethers/lib/utils";
 import { RWebShare } from "react-web-share";
+import { useRouter } from "next/router";
 
 declare let document: any;
 function identity() {
+  useEffect(() => {
+    isDesencryptionScreen();
+  }, []);
+
   const [step, setStep] = useState(0);
   const [identityData, setIdentityData] = useState({
     fullname: "",
@@ -23,6 +28,13 @@ function identity() {
   const [error, setError] = useState(false);
   const provider = useProvider();
   const [displayPin, setDisplayPin] = useState<string | null>(null);
+  const router = useRouter();
+  const [credentialsResponse, setCredentialsResponse] = useState<any | null>(
+    null
+  );
+  const [inputPin, setInputPin] = useState<any | null>(null);
+  let validationRequest: any;
+  const [screenType, setScreenType] = useState<any | null>(null);
 
   // handles the change of the image
   const onImageChange = (event: React.ChangeEvent<HTMLInputElement> | any) => {
@@ -37,8 +49,23 @@ function identity() {
     }
   };
 
-  const shareTo = () => {
-    const url = `${location.href}?code=${qrcode}`;
+  const unlockEncryption = async () => {
+    try {
+      debugger;
+      const response = await fetch(
+        "https://api.ancon.did.pa/v0/file/" + validationRequest.creds + "/"
+      );
+      debugger;
+      setCredentialsResponse(response);
+      // ethers.Wallet.fromEncryptedJson(response);
+      debugger;
+      const wallet = ethers.Wallet.fromEncryptedJson(
+        credentialsResponse,
+        inputPin
+      );
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const clickInput = () => document.getElementById("nft-img").click();
@@ -49,10 +76,19 @@ function identity() {
     return true;
   };
   const isDesencryptionScreen = () => {
-    // if () {
-    //   return true;
-    // }
-    return false;
+    try {
+      if (router.asPath.split("?code=").length == 2) {
+        setScreenType(2);
+        const code = router.asPath.split("?code=");
+        const decoded = ethers.utils.base64.decode(code[1]);
+        validationRequest = JSON.parse(ethers.utils.toUtf8String(decoded));
+        debugger;
+      } else {
+        setScreenType(1);
+      }
+    } catch (err) {
+      console.log(err);
+    }
   };
   const createDid = async () => {
     const wallet = ethers.Wallet.createRandom();
@@ -66,7 +102,8 @@ function identity() {
 
     let encData = encrypt(pubKey, content);
     const formData = new FormData();
-    const f = new File([encData], image.name);
+
+    const f = new File([new Blob([Uint8Array.from(encData)])], image.name);
     formData.append("file", f);
     const upload = await fetch("https://api.ancon.did.pa/v0/file", {
       method: "POST",
@@ -137,7 +174,7 @@ function identity() {
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
-        {!isDesencryptionScreen() ? (
+        {screenType == 1 ? (
           <div className="bg-white shadow-xl rounded-lg px-3 py-4">
             <span className="text-black font-bold text-xl">
               {step === 6
@@ -229,17 +266,35 @@ function identity() {
         ) : (
           <div className="bg-white shadow-xl rounded-lg px-3 py-4">
             <span className="text-black font-bold text-xl">
-              Desencripción con pin
+              Desbloquear con pin
             </span>
             <div>
               <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">Pin secreto</a>
+                <a className="text-gray-600 text-sm font-bold">
+                  Ingrese Pin para validar identidad
+                </a>
                 <input
                   type="text"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {}}
+                  onChange={(e) => {
+                    setInputPin(e.target.value);
+                  }}
+                  value={inputPin}
                 ></input>
               </div>
+
+              {inputPin ? (
+                <div>
+                  <p
+                    onClick={() => {
+                      unlockEncryption();
+                    }}
+                    className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+                  >
+                    Confirmar
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
         )}
