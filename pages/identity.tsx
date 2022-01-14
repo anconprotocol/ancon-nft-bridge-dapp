@@ -193,7 +193,7 @@ function identity() {
               <QRCode value={qrcode} />
             </div>
           ) : null}
-          {!areFieldsEmpty() ? (
+          {!areFieldsEmpty() && qrcode != null ? (
             <div>
               <RWebShare
                 data={{
