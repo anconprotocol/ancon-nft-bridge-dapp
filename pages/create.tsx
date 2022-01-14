@@ -556,49 +556,6 @@ function Create() {
           <span className="text-black font-bold text-xl">
             {step === 6 ? "NFT Created" : "Create NFT"}
           </span>
-          {step === -1 ? (
-            <div className="flex flex-col items-center">
-              <div
-                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
-                role="status"
-              ></div>
-              <p className="animate-pulse mt-4">
-                {message != "" ? message : "getting proof..."}
-              </p>
-            </div>
-          ) : null}
-          {step == 1 ? (
-            <div className="mt-4 flex flex-col items-center">
-              <div className="p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out">
-                <p className="" onClick={clickInput}>
-                  Select Image
-                </p>
-              </div>
-              <ErrorMessage
-                message="Please select an image"
-                show={error}
-              />
-
-              {localImage != null ? (
-                <img
-                  className="border-2 p-2 rounded-lg border-primary-500 drop-shadow-xl shadow-primary-500 mt-4"
-                  src={`data:image/jpeg;base64,${localImage}`}
-                  style={{ maxWidth: "100px" }}
-                  alt="local"
-                />
-              ) : null}
-              <input
-                type="file"
-                onChange={onImageChange}
-                className="filetype"
-                id="nft-img"
-                style={{ display: "none" }}
-              ></input>
-              <div className="mt-4 bg-purple-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer">
-                <p>Upload image</p>
-              </div>
-            </div>
-          ) : null}
           {step === 2 ? (
             <div className="flex flex-col items-center">
               <div
