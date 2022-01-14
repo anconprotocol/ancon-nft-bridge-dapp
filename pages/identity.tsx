@@ -7,6 +7,8 @@ import QRCode from "react-qr-code";
 import { ethers, Signer } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { encrypt } from "eciesjs";
+import { base64 } from "ethers/lib/utils";
+
 declare let document: any;
 function identity() {
   const [step, setStep] = useState(0);
@@ -80,12 +82,18 @@ function identity() {
     const prov = new ethers.providers.Web3Provider(provider);
     const signer = prov.getSigner();
     let Data: any;
-
+    let content: any;
+    if (image instanceof File) {
+    content = Buffer.from((await image.arrayBuffer()));
+    } else {
+        throw new Error('addSignedObject: must be a file object');
+    }
+    console.log(content)
     Data = {
       name: identityData.name,
       lastName: identityData.lastName,
       email: identityData.email,
-      image: ethers.utils.base64.encode(image),
+      image: content.toString("base64"),
     };
     Data = encrypt(pubKey, Data);
     const s = await signer.signMessage(
@@ -111,6 +119,7 @@ function identity() {
     );
     const DagPost = await rawDagPost.json();
     console.log("dagPost", DagPost);
+    const id = await DagPost.cid;
 
     const generatePin = securePin.generatePin(6, (pin) => {
       return pin;
