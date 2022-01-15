@@ -100,7 +100,7 @@ function Login() {
   useEffect(() => {
     setTimeout(() => {
       handleUsualLogin()
-    }, 1000);
+    }, 300);
   }, []);
   // async function getAccount() {
   //   const accounts = await window.ethereum.enable();
