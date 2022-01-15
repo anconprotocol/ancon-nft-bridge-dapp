@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
+import * as fs from '@tanker/file-reader';
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
@@ -7,10 +8,11 @@ import * as securePin from "secure-pin";
 import QRCode from "react-qr-code";
 import { ethers, Signer } from "ethers";
 import useProvider from "../hooks/useProvider";
-import { encrypt } from "eciesjs";
+import { decrypt, encrypt } from "eciesjs";
 import { base64, sha256, toUtf8Bytes, toUtf8String } from "ethers/lib/utils";
 import { RWebShare } from "react-web-share";
 import { useRouter } from "next/router";
+import image from "next/image";
 
 declare let document: any;
 function identity() {
@@ -32,8 +34,10 @@ function identity() {
   const [credentialsResponse, setCredentialsResponse] = useState<any | null>(
     null
   );
+  const [validationRequest, setValidationRequest] = useState<any | null>(
+    null
+  );
   const [inputPin, setInputPin] = useState<any | null>(null);
-  let validationRequest: any;
   const [screenType, setScreenType] = useState<any | null>(null);
 
   // handles the change of the image
@@ -51,18 +55,33 @@ function identity() {
 
   const unlockEncryption = async () => {
     try {
-      debugger;
       const response = await fetch(
-        "https://api.ancon.did.pa/v0/file/" + validationRequest.creds + "/"
+        "https://api.ancon.did.pa/v0/dagjson/" + validationRequest.creds + "/"
       );
-      debugger;
-      setCredentialsResponse(response);
-      // ethers.Wallet.fromEncryptedJson(response);
-      debugger;
-      const wallet = ethers.Wallet.fromEncryptedJson(
-        credentialsResponse,
+      
+      const enc = await response.json();
+      const encr = await fetch(
+        "https://api.ancon.did.pa/v0/dagjson/" + enc.content["/"] + "/"
+      );
+      const encrypted = await encr.json();
+      const wallet = await ethers.Wallet.fromEncryptedJson(
+        encrypted,
         inputPin
       );
+      const tx = await fetch(
+        "https://api.ancon.did.pa/v0/dagjson/" + validationRequest.content + "/",{
+        }
+      );
+      const txResponse = await tx.json();
+      const content = await fetch(
+        "https://api.ancon.did.pa/v0/dagjson/" + txResponse.content["/"] + "/",{
+        }
+      );
+      const payload = await content.json();
+      const bz = ethers.utils.base64.decode(payload.bytes)
+      // decrypt
+      const verifyIDCreds = decrypt(wallet.privateKey, Buffer.from(bz));
+
     } catch (error) {
       console.log(error);
     }
@@ -81,8 +100,7 @@ function identity() {
         setScreenType(2);
         const code = router.asPath.split("?code=");
         const decoded = ethers.utils.base64.decode(code[1]);
-        validationRequest = JSON.parse(ethers.utils.toUtf8String(decoded));
-        debugger;
+        setValidationRequest(JSON.parse(ethers.utils.toUtf8String(decoded)));
       } else {
         setScreenType(1);
       }
@@ -100,10 +118,16 @@ function identity() {
     const walletAddress = await signer.getAddress();
     let content = Buffer.from(await image.arrayBuffer());
 
-    let encData = encrypt(pubKey, content);
+    let encData =ethers.utils.base64.encode(encrypt(pubKey, content));
     const formData = new FormData();
 
-    const f = new File([new Blob([Uint8Array.from(encData)])], image.name);
+    const f = new File(
+      [encData],
+      'base64.txt',
+      { type: 'plain/text' }
+    );
+    
+    
     formData.append("file", f);
     const upload = await fetch("https://api.ancon.did.pa/v0/file", {
       method: "POST",
@@ -136,7 +160,7 @@ function identity() {
     const contentBlock = await rawDagPost.json();
 
     securePin.generatePin(6, async (pin) => {
-      const creds = await wallet.encrypt(pin.toString());
+      const creds = await wallet.encrypt(pin);
       const s = await signer.signMessage(
         ethers.utils.arrayify(ethers.utils.toUtf8Bytes(creds))
       );
@@ -164,7 +188,6 @@ function identity() {
           )
         )
       );
-      debugger;
       setDisplayPin(pin);
       return pin;
     });

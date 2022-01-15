@@ -10,6 +10,7 @@
   "dependencies": {
     "@badrap/bar-of-progress": "^0.1.2",
     "@heroicons/react": "^1.0.5",
+    "@tanker/file-reader": "^2.26.0",
     "eciesjs": "^0.3.12",
     "ethers": "^5.5.2",
     "ethr-did": "^2.1.5",
