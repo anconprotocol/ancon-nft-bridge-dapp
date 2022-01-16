@@ -1,6 +1,6 @@
-import { UserAddIcon } from "@heroicons/react/solid";
+
 import Link from "next/link";
-import { useRouter } from "next/router";
+
 
 interface ButtonCardProps {
   title: string;
@@ -8,7 +8,7 @@ interface ButtonCardProps {
   url: string;
 }
 function ButtonCard({ title, img, url }: ButtonCardProps) {
-  const router = useRouter();
+  
   return (
     <Link href={`/${url}`} passHref>
       <div className="card-button">

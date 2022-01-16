@@ -26,12 +26,12 @@ function Header() {
       </Link>
 
       {/* right section */}
-      <div className="header-right md:flex md:justify-end md:flex-shrink md:items-center md:space-x-3">
+      <div className="header-right flex md:justify-end md:flex-shrink items-center md:space-x-3 space-x-1">
         {/* uncomment if you want to add the home */}
         {/* <Link href={"/"}>
             <a className="text-gray-700">Home</a>
           </Link> */}
-        <p className="text-sm font-light text-gray-600">Please use BSC Testnet</p>
+        {/* <p className="text-sm font-light text-gray-600">Please use BSC Testnet</p> */}
         <UserCircleIcon
           className={`md:w-10 w-8 text-${
             address === "" ? "gray" : "blue"

@@ -36,10 +36,10 @@
   background: #9a21b3;
 }
 }
-
+ 
 @layer components {
   .card-button {
-    @apply bg-primary-500 shadow-lg md:w-72 md:h-40 rounded-lg p-2 my-2 w-60 justify-self-center cursor-pointer hover:shadow-xl hover:shadow-indigo-500/40 hover:bg-primary-600 transition-all ease-out duration-150 hover:scale-105 active:scale-110 select-none;
+    @apply bg-primary-500 shadow-2xl md:w-72 md:h-40 rounded-lg p-2 w-60 justify-self-center cursor-pointer hover:shadow-xl hover:shadow-indigo-500/40 hover:bg-primary-600 transition-all ease-out duration-150 hover:scale-105 active:scale-110 select-none mt-8;
   }
   
 

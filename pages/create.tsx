@@ -119,9 +119,10 @@ function Create() {
 
   const getPastEvents = async () => {
     const prov = new ethers.providers.Web3Provider(provider);
-
+    const network = await prov.getNetwork()
+    const chain = await GetChain(network);
     const contract1 = AnconProtocol__factory.connect(
-      "0x2B873b2897B84F72537D948f36FE312ce92A37dA",
+      chain.ancon,
       prov
     );
     const filter = contract1.filters.HeaderUpdated();
@@ -372,7 +373,7 @@ function Create() {
     web3 = _web3;
     bindContracts(web3);
   };
-
+  console.log(step);
   async function bindContracts(web3: any) {
     console.log("Beginning of BINDCONTRACTS()");
     ethersInstance = new ethers.providers.Web3Provider(provider);
@@ -565,6 +566,15 @@ function Create() {
               <p className="animate-pulse mt-4">
                 Uploading Image to IPFS
               </p>
+            </div>
+          ) : null}
+          {step === -1 ? (
+            <div className="flex flex-col items-center">
+              <div
+                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                role="status"
+              ></div>
+              <p className="animate-pulse mt-4">{message}</p>
             </div>
           ) : null}
           {step == 3 ? (

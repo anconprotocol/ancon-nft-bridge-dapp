@@ -1,6 +1,4 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import * as fs from '@tanker/file-reader';
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import GoogleLogin from "react-google-login";
@@ -37,7 +35,7 @@ function identity() {
   const [validationRequest, setValidationRequest] = useState<any | null>(
     null
   );
-  const [inputPin, setInputPin] = useState<any | null>(null);
+  const [inputPin, setInputPin] = useState<any | null>('');
   const [screenType, setScreenType] = useState<any | null>(null);
 
   // handles the change of the image
@@ -109,6 +107,7 @@ function identity() {
     }
   };
   const createDid = async () => {
+    setStep(1)
     const wallet = ethers.Wallet.createRandom();
     const pubKey = wallet.publicKey;
     console.log("pub", pubKey);
@@ -188,6 +187,7 @@ function identity() {
           )
         )
       );
+      setStep(2)
       setDisplayPin(pin);
       return pin;
     });
@@ -204,6 +204,17 @@ function identity() {
                 ? "NFT Created"
                 : "Solicitud de Verificación de identidad"}
             </span>
+            {step === 1 ? (
+            <div className="flex flex-col items-center">
+              <div
+                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                role="status"
+              ></div>
+              <p className="animate-pulse mt-4">
+                Creando Identidad, porfavor espere este proceso puede tomar varios minutos...
+              </p>
+            </div>
+          ) : null}
             {step === 0 ? (
               <div>
                 <div className="flex-col flex mt-3">
