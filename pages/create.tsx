@@ -230,11 +230,12 @@ function Create() {
   const createMetadata = async (cidI: string) => {
     const prov = new ethers.providers.Web3Provider(provider);
     const NoHexAddress = address.substring(2);
-    const signer = prov.getSigner();
+    const signer = await prov.getSigner();
     const payload = {
       name: tokenData.name,
       description: tokenData.description,
       image: cidI,
+      owner: address,
       sources: [],
     };
 

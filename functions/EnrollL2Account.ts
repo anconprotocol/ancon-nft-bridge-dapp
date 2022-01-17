@@ -7,6 +7,16 @@ import { AnconProtocol__factory } from "../types/ethers-contracts/factories/Anco
 import GetChain from "./GetChain";
 import GetDid from "./GetDid";
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
+
+/**
+ * gets the addresses from env variables
+ * @param {string} cid the network object provided from getNetwork()
+ * @param z the value returned from toAbiProof()
+ * @param setStep step setter to jump to next step
+ * @param provider web3 provider
+ * * @param setErrorModal web3 provider
+* @param address user Address
+ */
 async function EnrollL2Account(
   cid: string,
   z: any,

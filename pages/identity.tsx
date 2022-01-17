@@ -143,7 +143,7 @@ function identity() {
     );
 
     // const did = await fetch(
-    //   `http://localhost:7788/v0/did/${walletAddress.replace('0x','raw:0x')}`
+    //   `https://api.ancon.did.pa/v0/did/${walletAddress.replace('0x','raw:0x')}`
     // )
 
     const rawDagPost = await fetch("https://api.ancon.did.pa/v0/dagjson", {

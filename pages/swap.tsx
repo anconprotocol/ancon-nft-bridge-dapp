@@ -4,22 +4,31 @@
 
 import { ethers } from "ethers";
 import { useState } from "react";
+import { useRecoilValue } from "recoil";
+import { addressState } from "../atoms/addressAtom";
 import Header from "../components/Header";
+import Step0 from "../sections/swap/Step0";
 import GetChain from "../functions/GetChain";
 import useProvider from "../hooks/useProvider";
 import { XDVNFT__factory } from "../types/ethers-contracts";
+import Step1 from "../sections/swap/Step1";
+import Step3 from "../sections/swap/Step3";
 
 // swap
 function swap() {
   const provider = useProvider();
   let prov: any;
   let Network: any;
+  let signer: any;
   const [step, setStep] = useState(0);
   const [nftAddress, setNftAddress] = useState("");
+  const [owner, setOwner] = useState("");
   const [tokenId, setTokenId] = useState("");
   const [network, setNetwork] = useState("Network");
   const [showDropdown, setShowDropdown] = useState("hidden");
+  const address = useRecoilValue(addressState);
 
+  /* handles the drop function */
   const handleDrop = () => {
     switch (showDropdown) {
       case "hidden":
@@ -32,11 +41,11 @@ function swap() {
   };
   const next = async () => {
     setStep(1);
-    console.log(nftAddress, typeof tokenId, network);
   };
   const swap = async () => {
     setStep(2);
     prov = new ethers.providers.Web3Provider(provider);
+    signer = await prov.getSigner();
     Network = await prov.getNetwork();
     const contractAddresses: any = await GetChain(Network);
     // debugger
@@ -44,14 +53,46 @@ function swap() {
       contractAddresses.xdv,
       prov
     );
-    console.log(typeof tokenId)
-    const tokenUri = await contract3.tokenURI(1);
-    console.log("token uri", tokenUri);
-    let metadaUri = await fetch(
+
+    const tokenUri = await contract3.tokenURI(parseInt(tokenId));
+
+    const rawMetadaUri = await fetch(
       `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/`
     );
-     metadaUri = await metadaUri.json()
-     console.log('metada', metadaUri)
+    const metadaUri = await rawMetadaUri.json();
+    const payload = [
+      {
+        path: "owner",
+        previousValue: address,
+        nextValue: owner,
+      },
+    ];
+
+    // sign the message
+    const signature = await signer.signMessage(
+      ethers.utils.arrayify(
+        ethers.utils.toUtf8Bytes(JSON.stringify(payload))
+      )
+    );
+
+    const requestOptions = {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: "/",
+        from: address,
+        signature,
+        data: payload,
+        pin: "true",
+        cid: tokenUri,
+      }),
+    };
+    const rawPut = await fetch(
+      `https://api.ancon.did.pa/v0/dag`,
+      requestOptions
+    );
+    const put = await rawPut.json();
+    setStep(3);
   };
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
@@ -61,6 +102,37 @@ function swap() {
           <span className="text-black font-bold text-xl">
             {step === 1 ? "Target" : "Source"}
           </span>
+          
+
+          {step === 0 ? (
+            <Step0
+              handleDrop={handleDrop}
+              network={network}
+              showDropdown={showDropdown}
+              setNetwork={setNetwork}
+              setNftAddress={setNftAddress}
+              nftAddress={nftAddress}
+              next={next}
+              tokenId={tokenId}
+              setTokenId={setTokenId}
+            />
+          ) : null}
+
+          {step === 1 ? (
+            <Step1
+              handleDrop={handleDrop}
+              network={network}
+              showDropdown={showDropdown}
+              setNetwork={setNetwork}
+              setNftAddress={setNftAddress}
+              nftAddress={nftAddress}
+              swap={swap}
+              tokenId={tokenId}
+              owner={owner}
+              setOwner={setOwner}
+            />
+          ) : null}
+          {/* loading screen */}
           {step === 2 ? (
             <div className="flex flex-col items-center">
               <div
@@ -73,182 +145,14 @@ function swap() {
               </p>
             </div>
           ) : null}
-          {step === 0 ? (
-            <div>
-              {/* network */}
-              <div className="flex-col flex mt-3">
-                {/* <a className="text-gray-600 text-sm font-bold">
-                  Network
-                </a> */}
-                <div className="dropdown inline-block relative">
-                  <button
-                    className="bg-primary-500 text-white font-semibold py-2 px-4 rounded inline-flex items-center shadow-md"
-                    onClick={handleDrop}
-                  >
-                    <span className="mr-1">{network}</span>
-                    <svg
-                      className="fill-current h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />{" "}
-                    </svg>
-                  </button>
-
-                  <ul
-                    className={`dropdown-menu absolute text-white pt-1 ${showDropdown} transition-all duration-150`}
-                  >
-                    <li
-                      className=""
-                      onClick={() => (
-                        setNetwork("bnbt"), handleDrop()
-                      )}
-                    >
-                      <a
-                        className="rounded-t bg-primary-600 hover:bg-primary-500 py-2 px-4 block whitespace-no-wrap transition-all duration-250 ease-out"
-                        href="#"
-                      >
-                        Binance Smart Chain Tesnet
-                      </a>
-                    </li>
-                    <li
-                      className=""
-                      onClick={() => (
-                        setNetwork("kovan"), handleDrop()
-                      )}
-                    >
-                      <a
-                        className="bg-primary-600 hover:bg-primary-500  py-2 px-4 block whitespace-no-wrap rounded-b transition-all duration-250 ease-out"
-                        href="#"
-                      >
-                        Kovan Testnet
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              {/* nft */}
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  NFT Address
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2 shadow-sm"
-                  onChange={(e) => {
-                    setNftAddress(e.target.value);
-                  }}
-                  value={nftAddress}
-                ></input>
-              </div>
-              {/* token id */}
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  Token ID
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2 shadow-sm"
-                  onChange={(e) => {
-                    setTokenId(e.target.value);
-                  }}
-                  value={tokenId}
-                ></input>
-              </div>
-              <div>
-                <p
-                  onClick={next}
-                  className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4 select-none"
-                >
-                  Next
-                </p>
-              </div>
-            </div>
-          ) : null}
-          {step === 1 ? (
-            <div>
-              {/* network */}
-              <div className="flex-col flex mt-3">
-                {/* <a className="text-gray-600 text-sm font-bold">
-                  Network
-                </a> */}
-                <div className="dropdown inline-block relative">
-                  <button
-                    className="bg-primary-500 text-white font-semibold py-2 px-4 rounded inline-flex items-center shadow-md"
-                    onClick={handleDrop}
-                  >
-                    <span className="mr-1">{network}</span>
-                    <svg
-                      className="fill-current h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />{" "}
-                    </svg>
-                  </button>
-
-                  <ul
-                    className={`dropdown-menu absolute text-white pt-1 ${showDropdown} transition-all duration-150`}
-                  >
-                    <li
-                      className=""
-                      onClick={() => (
-                        setNetwork("bnbt"), handleDrop()
-                      )}
-                    >
-                      <a
-                        className="rounded-t bg-primary-600 hover:bg-primary-500 py-2 px-4 block whitespace-no-wrap transition-all duration-250 ease-out"
-                        href="#"
-                      >
-                        Binance Smart Chain Tesnet
-                      </a>
-                    </li>
-                    <li
-                      className=""
-                      onClick={() => (
-                        setNetwork("kovan"), handleDrop()
-                      )}
-                    >
-                      <a
-                        className="bg-primary-600 hover:bg-primary-500  py-2 px-4 block whitespace-no-wrap rounded-b transition-all duration-250 ease-out"
-                        href="#"
-                      >
-                        Kovan Testnet
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              {/* nft */}
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  NFT Address
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2 shadow-sm"
-                  onChange={(e) => {
-                    setNftAddress(e.target.value);
-                  }}
-                  value={nftAddress}
-                ></input>
-              </div>
-              {/* token id */}
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  Token ID
-                </a>
-                <p>{tokenId}</p>
-              </div>
-              <div>
-                <p
-                  onClick={swap}
-                  className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4 select-none"
-                >
-                  Swap
-                </p>
-              </div>
-            </div>
+          {step === 3 ? (
+            <Step3
+              network={network}
+              nftAddress={nftAddress}
+              address={address}
+              tokenId={tokenId}
+              owner={owner}
+            />
           ) : null}
         </div>
       </div>

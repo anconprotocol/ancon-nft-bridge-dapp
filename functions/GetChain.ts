@@ -1,3 +1,8 @@
+/**
+ * gets the addresses from env variables
+ * @param {network} network the network object provided from getNetwork()
+ * @return {object} returns ancon, dai and xdv addresses based on network
+ */
 const GetChain = async (network: any) => {
   let anconAddress: any;
   let daiAddress: any;
