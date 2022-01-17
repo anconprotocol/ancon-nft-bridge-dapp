@@ -13,18 +13,31 @@ import useProvider from "../hooks/useProvider";
 import { XDVNFT__factory } from "../types/ethers-contracts";
 import Step1 from "../sections/swap/Step1";
 import Step3 from "../sections/swap/Step3";
-
+import Web3 from "web3";
+import toAbiProof from "../functions/ToAbiProof";
+import GetDid from "../functions/GetDid";
+import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
+import { sleep } from "./create";
+const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 // swap
 function swap() {
   const provider = useProvider();
   let prov: any;
   let Network: any;
   let signer: any;
+  let web3: any;
+  let contractAddresses:any;
   const [step, setStep] = useState(0);
-  const [nftAddress, setNftAddress] = useState("");
-  const [owner, setOwner] = useState("");
+  const [nftAddress, setNftAddress] = useState("0x31388941eebad128d7eabd5d529de1a61c0f6625");
+  const [owner, setOwner] = useState("0x2a3D91a8D48C2892b391122b6c3665f52bCace23");
   const [tokenId, setTokenId] = useState("");
   const [network, setNetwork] = useState("Network");
+  const [proofs, setProofs] = useState({
+    userProof: "",
+    packetProof: "",
+    packetKey: "",
+    packetHeight: "",
+  });
   const [showDropdown, setShowDropdown] = useState("hidden");
   const address = useRecoilValue(addressState);
 
@@ -42,16 +55,51 @@ function swap() {
   const next = async () => {
     setStep(1);
   };
+  const getPastEvents = async () => {
+    const contract1 = AnconProtocol__factory.connect(
+      contractAddresses.ancon,
+      prov
+    );
+    const filter = contract1.filters.HeaderUpdated();
+    const from = await prov.getBlockNumber();
+    let result = await contract1.queryFilter(filter, from);
+    let time = Date.now();
+    const maxTime = Date.now() + 120000;
+    while (time < maxTime) {
+      result = await contract1.queryFilter(filter, from);
+      console.log(result);
+      if (result.length > 0) {
+        break;
+      }
+      time = Date.now();
+      await sleep(10000);
+    }
+    return true;
+  };
   const swap = async () => {
     setStep(2);
     prov = new ethers.providers.Web3Provider(provider);
+    web3 = new Web3(provider);
+    web3.eth.defaultaccount = address;
     signer = await prov.getSigner();
     Network = await prov.getNetwork();
-    const contractAddresses: any = await GetChain(Network);
+    contractAddresses = await GetChain(Network);
     // debugger
     const contract3 = XDVNFT__factory.connect(
       contractAddresses.xdv,
       prov
+    );
+    const contract2 = XDVNFT__factory.connect(
+      contractAddresses.xdv,
+      signer
+    );
+    const contract1 = AnconProtocol__factory.connect(
+      contractAddresses.ancon,
+      prov
+    );
+    const contract = AnconProtocol__factory.connect(
+      contractAddresses.ancon,
+      signer
     );
 
     const tokenUri = await contract3.tokenURI(parseInt(tokenId));
@@ -92,6 +140,129 @@ function swap() {
       requestOptions
     );
     const put = await rawPut.json();
+    console.log("put", put);
+    
+    const rawGetProof = await fetch(
+      `https://api.ancon.did.pa/v0/dagjson/${put.cid}/`
+    );
+    const getProof = await rawGetProof.json();
+    let cid: any = await Object?.values(getProof.content)[0];
+    let hexdata = ethers.utils.defaultAbiCoder.encode(
+      ["uint256"],
+      [parseInt(tokenId)]
+    );
+    console.log("getProof", getProof);
+    
+    let s = await signer.signMessage(
+      ethers.utils.arrayify(
+        ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
+      )
+    );
+    let eventWaiter = await getPastEvents();
+
+    const rawPostProof = await fetch(
+      "https://api.ancon.did.pa/v0/dagjson",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: "/",
+          from: address,
+          signature: s,
+          data: [hexdata],
+        }),
+      }
+    );
+    const postProof = await rawPostProof.json();
+    console.log('post', postProof)
+    const key = await postProof.cid;
+    
+
+    const rawProof = await fetch(
+      `https://api.ancon.did.pa/v0/dagjson/${key}/`
+    );
+    const proof = await rawProof.json();
+    const packetKey = proof.key;
+    const packetHeight = proof.height;
+    cid = await Object?.values(getProof.content)[0];
+
+
+
+    eventWaiter = await getPastEvents();
+    const hash = ethers.utils.solidityKeccak256(
+      ["uint256"],
+      [parseInt(tokenId)]
+    );
+    /*
+    prepare proofs 
+    */
+    // get the key and height
+    const did = await GetDid(address);
+    //  packet proof
+    const rawPacketProof = await fetch(
+      `https://api.ancon.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
+    );
+    let packetProof = await rawPacketProof.json();
+    packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
+
+    //  user proof
+    const rawUserProof = await fetch(
+      `https://api.ancon.did.pa/v0/proof/${did.key}?height=${packetHeight}`
+    );
+    let userProof = await rawUserProof.json();
+    userProof = toAbiProof({ ...userProof[0].Proof.exist });
+    const relayHash = await contract1.getProtocolHeader();
+    console.log('relay hash', relayHash)
+    // check allowance
+    const dai = new web3.eth.Contract(
+      AnconToken.abi,
+      contractAddresses.dai
+    );
+    const allowance = await dai.methods
+      .allowance(address, contract2.address)
+      .call();
+    if (allowance == 0) {
+      await dai.methods
+        .approve(contract2.address, "1000000000000000000")
+        .send({
+          gasPrice: "22000000000",
+          gas: 400000,
+          from: address,
+        });
+      await dai.methods
+        .approve(contract3.address, "1000000000000000000")
+        .send({
+          gasPrice: "22000000000",
+          gas: 400000,
+          from: address,
+        });
+    }
+
+    /* call the contract */
+    try {
+      const mint2 = await contract1.verifyProofWithKV(
+        packetProof.key,
+        packetProof.value,
+        packetProof
+      );
+      console.log("mint2", mint2);
+      const mint = await contract1.verifyProofWithKV(
+        userProof.key,
+        userProof.value,
+        userProof
+      );
+      console.log("mint1", mint);
+      await contract2.lockWithProof(
+        packetProof.key,
+        hexdata,
+        userProof,
+        packetProof,
+        hash
+      );
+    } catch (error) {
+      console.log("error", error);
+    }
+
     setStep(3);
   };
   return (
@@ -102,7 +273,6 @@ function swap() {
           <span className="text-black font-bold text-xl">
             {step === 1 ? "Target" : "Source"}
           </span>
-          
 
           {step === 0 ? (
             <Step0

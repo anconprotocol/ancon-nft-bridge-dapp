@@ -128,36 +128,6 @@ function Create() {
     const filter = contract1.filters.HeaderUpdated();
     const from = await prov.getBlockNumber();
     let result = await contract1.queryFilter(filter, from);
-    // let i: number = 0;
-    // const interval = (resolve: any, reject: any) => {
-    //   let initial = true;
-    //   const cancelation = setInterval(async () => {
-    //     if (i > 8) {
-    //       reject();
-    //     } else if (result.length > 0) {
-    //       reject();
-    //     }
-    //     result = await contract1.queryFilter(filter, from);
-    //     console.log(result);
-    //     i++;
-    //     if (initial) {
-    //       initial = false;
-    //     } else {
-    //       if (result.length > 0) {
-    //         clearInterval(cancelation)
-    //         resolve(true);
-    //       }
-    //     }
-    //   }, 15000);
-    // };
-    // const myPromise = new Promise((resolve, reject) => {
-    //   return interval(resolve, reject);
-    // });
-    // try {
-    //   return await myPromise;
-    // } catch (error) {
-    //   console.log("error===>", error);
-    // }
     let time = Date.now();
     const maxTime = Date.now() + 120000;
     while (time < maxTime) {
@@ -497,11 +467,11 @@ function Create() {
 
     // let mint2;
     // try {
-    //   mint2 = await contract4.verifyProofWithKV(
-    //     packetProof.key,
-    //     packetProof.value,
-    //     packetProof
-    //   );
+      // mint2 = await contract4.verifyProofWithKV(
+      //   packetProof.key,
+      //   packetProof.value,
+      //   packetProof
+      // );
     // } catch (error) {
     //   console.log("error", error);
     // }
