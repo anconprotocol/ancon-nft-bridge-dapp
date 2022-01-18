@@ -163,7 +163,7 @@ function Enroll() {
         setDIDCid(cid);
 
         const rawdid = await GetDid(address);
-        const did = await Object?.values(rawdid.content)[0];
+        const did:any = await Object?.values(rawdid.content)[0];
 
         const rawGetProof = await fetch(
           `https://api.ancon.did.pa/v0/proof/${rawdid.key}?height=${rawdid.height}`
@@ -182,7 +182,7 @@ function Enroll() {
         );
         setTimeout(async () => {
           enroll = await EnrollL2Account(
-            cid,
+            did,
             z,
             setStep,
             prov,
