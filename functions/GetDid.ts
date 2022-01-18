@@ -1,5 +1,3 @@
-import { ethers } from "ethers";
-
 /**
  * 
  * @param address address to get the did from

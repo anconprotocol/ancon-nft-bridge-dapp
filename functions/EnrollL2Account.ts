@@ -1,7 +1,5 @@
 import { ethers } from "ethers";
-import { useRecoilValue, useRecoilState } from "recoil";
 import Web3 from "web3";
-import { errorState } from "../atoms/errorAtom";
 import { sleep } from "../pages/create";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 import GetChain from "./GetChain";

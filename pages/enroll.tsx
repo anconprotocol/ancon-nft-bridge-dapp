@@ -1,17 +1,12 @@
 import { ethers } from "ethers";
-import { get } from "http";
 import { Router, useRouter } from "next/router";
-import { EthrDID } from "ethr-did";
 import { useState } from "react";
 import {
   useRecoilState,
   useRecoilValue,
-  useSetRecoilState,
 } from "recoil";
 import { addressState } from "../atoms/addressAtom";
-import { DidState } from "../atoms/DIDAtom";
 import { errorState } from "../atoms/errorAtom";
-import ErrorMessage from "../components/ErrorMessage";
 import Header from "../components/Header";
 import EnrollL2Account from "../functions/EnrollL2Account";
 import GetPublicKey from "../functions/GetPublicKey";
@@ -19,7 +14,7 @@ import getTransaction from "../functions/GetTransaction";
 import toAbiProof from "../functions/ToAbiProof";
 import useProvider from "../hooks/useProvider";
 import GetDid from "../functions/GetDid";
-import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
+
 
 function Enroll() {
   // web3
@@ -29,10 +24,6 @@ function Enroll() {
   // state
   const [step, setStep] = useState(0);
   const [error, setError] = useState(false);
-  const [transactionHash, setTransactionHash] = useState({
-    transaction: "",
-    name: "",
-  });
   const [message, setMessage] = useState("");
   const [DIDCid, setDIDCid] = useState("");
 
