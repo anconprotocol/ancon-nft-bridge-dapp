@@ -45,14 +45,14 @@ function Enroll() {
   const getDomainName = async () => {
     const NoHexAddress = address.substring(2);
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
+      `https://api.ancon.did.pa/v0/did/raw:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
     if (rawResponse.status === 400) {
       return false;
     }
-    return false;
+    return true;
   };
 
 
@@ -106,7 +106,7 @@ function Enroll() {
         }
       } else {
         setErrorModal([
-          "This Domain already exists please try again with another one or procced to create a NFT",
+          "This Address is already enrolled please try again with another one or procced to create a NFT",
           "Try again",
           "/enroll",
           "Create NFT",

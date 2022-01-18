@@ -75,18 +75,13 @@ function Create() {
   //get the public key
   const getDid = async () => {
     // check if the a name written
-    if (transactionHash.name === "") {
-      setError(true);
-      return;
-    } else {
       setStep(-1);
       setMessage("Verifying L2 name...");
-    }
     try {
       const domain = await getDomainName();
       if (domain === false) {
         setErrorModal([
-          "This Domain does not match the records please try again or procced to create a NFT",
+          "This Address does not match the records please try again or Enroll the address",
           "Try again",
           "/create",
           "Enroll Account",
@@ -99,10 +94,10 @@ function Create() {
       console.log("error", error);
     }
   };
+
   const getDomainName = async () => {
-    const NoHexAddress = address.substring(2);
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/user/${NoHexAddress}/did.json`
+      `https://api.ancon.did.pa/v0/did/raw:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -151,16 +146,16 @@ function Create() {
   const handleUpload = async () => {
     try {
       // check if user if enrolled
-      // const domain = await getDomainName();
-      // if (domain === false) {
-      //   setErrorModal([
-      //     "This Domain does not match the records please try again or procced to create a NFT",
-      //     "Try again",
-      //     "/create",
-      //     "Enroll Account",
-      //     "/enroll",
-      //   ]);
-      // } else {
+      const domain = await getDomainName();
+      if (domain === false) {
+        setErrorModal([
+          "This Domain does not match the records please try again or procced to create a NFT",
+          "Try again",
+          "/create",
+          "Enroll Account",
+          "/enroll",
+        ]);
+      } else {
       // make the client
       const storage = new Web3Storage({
         token: getAccessToken(),
@@ -186,7 +181,7 @@ function Create() {
       });
       setTokenData({ ...tokenData, imageCid });
       return imageCid;
-      // }
+      }
     } catch (error) {
       console.log("err", error);
     }
