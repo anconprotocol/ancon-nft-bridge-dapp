@@ -15,7 +15,7 @@ const getTransaction = async (
 
   const prov = new ethers.providers.Web3Provider(provider);
   const network = await prov.getNetwork();
-  console.log(network);
+ 
   try {
     let rawList;
     switch (network.chainId) {
@@ -41,7 +41,7 @@ const getTransaction = async (
         break;
     }
     const list = await rawList.json();
-    console.log("list", list);
+    
     let item;
     setMessage("Obtaining public key...");
     for (item of list.result) {

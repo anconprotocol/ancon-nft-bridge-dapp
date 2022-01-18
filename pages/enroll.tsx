@@ -22,6 +22,11 @@ import GetDid from "../functions/GetDid";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 
 function Enroll() {
+  // web3
+ let prov: ethers.providers.Web3Provider;
+ let signer: ethers.providers.JsonRpcSigner;
+ let network:ethers.providers.Network;
+  // state
   const [step, setStep] = useState(0);
   const [error, setError] = useState(false);
   const [transactionHash, setTransactionHash] = useState({
@@ -35,13 +40,14 @@ function Enroll() {
   const address: any = useRecoilValue(addressState);
 
   const [errorModal, setErrorModal] = useRecoilState(errorState);
-  const setDIDcid = useSetRecoilState(DidState);
 
   //custom hooks
   const provider = useProvider();
   const router = useRouter();
 
-  // step 0 //
+  /*
+   step 0 
+   */
   // check if domain already exists
   const getDomainName = async () => {
     const NoHexAddress = address.substring(2);
@@ -56,7 +62,12 @@ function Enroll() {
     return false;
   };
 
-  // STEP 1  gets the public key and handle the get did//
+
+  /*
+   step 1
+  gets the public key and handle the get did
+   */
+
   //get the public key
   const getDid = async () => {
     // check if theres a name written
@@ -65,7 +76,6 @@ function Enroll() {
       const domain = await getDomainName();
       if (domain === false) {
         // check if the user has made any transaction
-
         const trans = await getTransaction(
           setStep,
           address,
@@ -73,11 +83,11 @@ function Enroll() {
           setMessage,
           provider
         );
-
-        console.log("transaction", trans);
-        const prov = new ethers.providers.Web3Provider(provider);
+        //create provider
+        prov = new ethers.providers.Web3Provider(provider);
+        // get a transaction
         const transaction: any = await prov.getTransaction(trans);
-        console.log("transaction2", transaction);
+        
         // join the signature
         const sig = ethers.utils.joinSignature({
           r: transaction.r,
@@ -118,11 +128,18 @@ function Enroll() {
 
   //get the cid and the proof
   const handleProof = async (pubkey: string) => {
+    // encode the pub key
     const base58Encode = ethers.utils.base58.encode(pubkey);
-    const prov = new ethers.providers.Web3Provider(provider);
+
+    // take out the 0x from the address
     const NoHexAddress = address.substring(2);
-    const signer = prov.getSigner();
-    const network = await prov.getNetwork();
+
+    // initialize the signer
+    signer = prov.getSigner();
+
+    // get the network
+    network = await prov.getNetwork();
+
     const signature = await signer.signMessage(
       ethers.utils.arrayify(
         ethers.utils.toUtf8Bytes(
@@ -130,12 +147,6 @@ function Enroll() {
         )
       )
     );
-    const etherDid = new EthrDID({
-      identifier: address,
-      provider: prov,
-      chainNameOrId: network.name,
-    });
-    console.log(etherDid.did);
     //post to get the did
     const payload = {
       domainName: NoHexAddress,
@@ -150,39 +161,24 @@ function Enroll() {
     };
     try {
       const getDid = async () => {
+        // post the data
         const rawdata = await fetch(
           "https://api.ancon.did.pa/v0/did/web",
           requestOptions
         );
         const data = await rawdata.json();
         let cid: any = data.cid;
+        //save the cid to state
         setDIDCid(cid);
-        setDIDcid(cid);
-        localStorage.setItem("DIDCid", cid);
-        console.log("get /did/web ==>>", data, cid);
 
-        const did = await GetDid(address);
-        cid = await Object?.values(did.content)[0];
-        const rawCid = await fetch(
-          `https://api.ancon.did.pa/v0/did/${cid}`
-        );
-        const Cid = await rawCid.json();
-        console.log("cid", Cid);
-        // const rawLastHash = await fetch(
-        //   "https://api.ancon.did.pa/v0/proofs/lasthash"
-        // );
-        // const lasthash = await rawLastHash.json();
-        // console.log("last hash", lasthash);
+        const rawdid = await GetDid(address);
+        const did = await Object?.values(rawdid.content)[0];
 
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/proof/${did.key}?height=${did.height}`
+          `https://api.ancon.did.pa/v0/proof/${rawdid.key}?height=${rawdid.height}`
         );
         const GetProof = await rawGetProof.json();
-        console.log(GetProof);
-        console.log("proof==>", {
-          ...GetProof[0].Proof,
-        });
-        // const rawCidReq =
+        
         // calling to abi proof
         const z = toAbiProof({
           ...GetProof[0].Proof.exist,
@@ -198,14 +194,14 @@ function Enroll() {
             cid,
             z,
             setStep,
-            provider,
+            prov,
+            signer,
             setErrorModal,
-            address
+            address,
+            provider,
+            network
           );
         }, 30000);
-        // setStep(1);
-        // console.log("post /proofs ===>", Postproof);
-        console.log("get /proofs/key ===>", GetProof);
       };
 
       getDid();

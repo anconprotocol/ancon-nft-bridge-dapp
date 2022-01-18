@@ -21,19 +21,19 @@ async function EnrollL2Account(
   cid: string,
   z: any,
   setStep: React.Dispatch<React.SetStateAction<number>>,
-  provider: any,
+  prov: ethers.providers.Web3Provider,
+  signer:ethers.providers.JsonRpcSigner,
   setErrorModal: React.Dispatch<React.SetStateAction<string[]>>,
-  address: string
+  address: string,
+  provider:any,
+  network:ethers.providers.Network
 ) {
   // const [errorModal, setErrorModal] = useRecoilState(errorState);
   console.log("enrolling to L2");
   try {
-    const prov = new ethers.providers.Web3Provider(provider);
-    const signer = await prov.getSigner();
-    const network = await prov.getNetwork();
-
     const contractAddress: any = await GetChain(network);
-    console.log("asdd", contractAddress);
+
+
     const contract1 = AnconProtocol__factory.connect(
       contractAddress.ancon,
       prov
@@ -43,9 +43,9 @@ async function EnrollL2Account(
       signer
     );
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
-    console.log("utf8 ===>", UTF8_cid);
+    
     const getProof = await contract1.getProof(UTF8_cid);
-    console.log("getProof", getProof);
+    
     if (getProof !== "0x") {
       return "proof already exist";
     }
@@ -79,10 +79,9 @@ async function EnrollL2Account(
     const filter = contract1.filters.HeaderUpdated();
     const from = await prov.getBlockNumber();
     let result = await contract1.queryFilter(filter, from);
-    console.log("hash", hash);
-    console.log("relay", relayHash);
+    
     console.log("equal", hash === relayHash);
-    console.log(typeof hash, typeof relayHash);
+    
     let time = Date.now();
     const maxTime = Date.now() + 180000;
     if (hash !== relayHash) {
@@ -135,18 +134,13 @@ async function EnrollL2Account(
         });
         break;
     }
-    // enroll = await contract2.enrollL2Account(z.key, UTF8_cid, z, {
-    //   gasPrice: "22000000000",
-    //   gasLimit: 400000,
-    // });
+   
     const enrolled = await contract1.verifyProofWithKV(
       z.key,
       z.value,
       z
     );
-    // const waitFortransaction = await prov.waitForTransaction(
-    //   enroll
-    // );
+
     setStep(3);
     console.log("enroll==>", enroll, enrolled);
     // console.log("waiting", waitFortransaction);

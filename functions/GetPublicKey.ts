@@ -25,7 +25,7 @@ type transaction = {
 
 async function GetPublicKey(transaction:transaction, sig: string, provider: any) {
   // get the txData
-  console.log(transaction);
+  
   const txData = {
     gasPrice: transaction.gasPrice,
     gasLimit: transaction.gasLimit,
