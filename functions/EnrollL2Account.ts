@@ -11,9 +11,12 @@ const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
  * @param {string} cid the network object provided from getNetwork()
  * @param z the value returned from toAbiProof()
  * @param setStep step setter to jump to next step
- * @param provider web3 provider
- * * @param setErrorModal web3 provider
-* @param address user Address
+ * @param prov provider instiated in enroll page
+ * @param signer signer instiated in enroll page
+ *  @param setErrorModal web3 provider
+  * @param address user Address
+  * @param provider web3 provider
+  * @param network network instiated in enroll page
  */
 async function EnrollL2Account(
   cid: string,
@@ -26,7 +29,6 @@ async function EnrollL2Account(
   provider:any,
   network:ethers.providers.Network
 ) {
-  // const [errorModal, setErrorModal] = useRecoilState(errorState);
   console.log("enrolling to L2");
   try {
     const contractAddress: any = await GetChain(network);
@@ -141,7 +143,7 @@ async function EnrollL2Account(
       z
     );
 
-    setStep(3);
+    setStep(2);
     console.log("enroll==>", enroll, enrolled);
     // console.log("waiting", waitFortransaction);
   } catch (error) {

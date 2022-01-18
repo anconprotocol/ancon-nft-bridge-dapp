@@ -1,6 +1,4 @@
 import { ethers } from "ethers";
-import { useRecoilState } from "recoil";
-import { errorState } from "../atoms/errorAtom";
 declare let window: any;
 // get transaction
 const getTransaction = async (

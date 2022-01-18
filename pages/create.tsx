@@ -21,22 +21,19 @@ import { base64, keccak256 } from "ethers/lib/utils";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 
 // functions
-import enrollL2Account from "../functions/EnrollL2Account";
 import toAbiProof from "../functions/ToAbiProof";
-import getTransaction from "../functions/GetTransaction";
-import GetPublicKey from "../functions/GetPublicKey";
+// web3
 import {
   AnconVerifier__factory,
   XDVNFT__factory,
 } from "../types/ethers-contracts";
 import Web3 from "web3";
-import { DidState } from "../atoms/DIDAtom";
 import GetDid from "../functions/GetDid";
 import GetChain from "../functions/GetChain";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
-const AnconNFT = require("../contracts/AnconNFT.sol/AnconNFT.json");
+
 
 // fix the type error for document in nextjs
 declare let document: any;

@@ -22,8 +22,13 @@ type transaction = {
   value: BigNumber;
   wait: any;
 };
-
-async function GetPublicKey(transaction:transaction, sig: string, provider: any) {
+/**
+ * 
+ * @param transaction transaction returned from the get transaction
+ * @param sig the signature joined by the r s v values
+ * @returns an array [recoveredAddress, pubkey]
+ */
+async function GetPublicKey(transaction:transaction, sig: string) {
   // get the txData
   
   const txData = {
