@@ -1,9 +1,8 @@
 import { useRouter } from "next/router";
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   useRecoilState,
-  useRecoilValue,
   useSetRecoilState,
 } from "recoil";
 
@@ -17,14 +16,12 @@ import { ethers } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
-import { base64, keccak256 } from "ethers/lib/utils";
 import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 
 // functions
 import toAbiProof from "../functions/ToAbiProof";
 // web3
 import {
-  AnconVerifier__factory,
   XDVNFT__factory,
 } from "../types/ethers-contracts";
 import Web3 from "web3";
@@ -41,6 +38,10 @@ export function sleep(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 function Create() {
+   // web3
+ let prov: ethers.providers.Web3Provider;
+ let signer: ethers.providers.JsonRpcSigner;
+ let network:ethers.providers.Network;
   // state
   const [step, setStep] = useState(3);
   const [localImage, setLocalImage] = useState<any | null>(null);
@@ -54,10 +55,7 @@ function Create() {
     tokenCid: "",
     proofKey: "",
   });
-  const [transactionHash, setTransactionHash] = useState({
-    transaction: "",
-    name: "",
-  });
+
   const [packet, setPacket] = useState({ proof: "", packet: "" });
   const [user, setUser] = useState({ key: "", height: "" });
   // atoms
@@ -72,29 +70,6 @@ function Create() {
   //step 0 //
 
   // STEP 0  gets the public key and handle the get did//
-  //get the public key
-  const getDid = async () => {
-    // check if the a name written
-      setStep(-1);
-      setMessage("Verifying L2 name...");
-    try {
-      const domain = await getDomainName();
-      if (domain === false) {
-        setErrorModal([
-          "This Address does not match the records please try again or Enroll the address",
-          "Try again",
-          "/create",
-          "Enroll Account",
-          "/enroll",
-        ]);
-      } else {
-        setStep(1);
-      }
-    } catch (error) {
-      console.log("error", error);
-    }
-  };
-
   const getDomainName = async () => {
     const rawResponse = await fetch(
       `https://api.ancon.did.pa/v0/did/raw:${address}`
@@ -110,8 +85,7 @@ function Create() {
   // step 1 //
 
   const getPastEvents = async () => {
-    const prov = new ethers.providers.Web3Provider(provider);
-    const network = await prov.getNetwork()
+    network = await prov.getNetwork()
     const chain = await GetChain(network);
     const contract1 = AnconProtocol__factory.connect(
       chain.ancon,
@@ -149,7 +123,7 @@ function Create() {
       const domain = await getDomainName();
       if (domain === false) {
         setErrorModal([
-          "This Domain does not match the records please try again or procced to create a NFT",
+          "This Address does not match the records please try again or Enroll the address",
           "Try again",
           "/create",
           "Enroll Account",
@@ -190,9 +164,9 @@ function Create() {
   // step4 //
   // creates the metadata
   const createMetadata = async (cidI: string) => {
-    const prov = new ethers.providers.Web3Provider(provider);
+    prov = new ethers.providers.Web3Provider(provider);
     const NoHexAddress = address.substring(2);
-    const signer = await prov.getSigner();
+    signer = await prov.getSigner();
     const payload = {
       name: tokenData.name,
       description: tokenData.description,
@@ -293,15 +267,6 @@ function Create() {
         console.log()
         let packetId: any = await Object?.values(getProof.content)[0];
         setUser({ key: getProof.key, height: getProof.height });
-        // const rawPacket = await fetch(
-        //   `https://api.ancon.did.pa/v0/dagjson/${packetId}/`
-        // );
-        // const packet = await rawPacket.json();
-
-        // packetId = await packet[0][0];
-        // console.log('packetid', packetId, packet)
-        // packetId = ethers.utils.base64.decode(packetId.bytes);
-        // console.log("packet", packet, packetId);
         setPacket({ proof: getProof.proof, packet: hexdata });
         console.log("31 seconds");
         eventWaiter = await getPastEvents();
@@ -325,28 +290,30 @@ function Create() {
   };
 
   // step 5 //
-  let web3;
-  let ethersInstance;
-  let signer;
   const mintNft = async () => {
-    setStep(5);
+    
     const _web3 = new Web3(provider);
     _web3.eth.defaultAccount = address;
-    //setWeb3(_web3);
-    web3 = _web3;
-    bindContracts(web3);
+    const web3 = _web3;
+    bindContracts();
   };
   console.log(step);
-  async function bindContracts(web3: any) {
+
+  const bindContracts = async() => {
+    setStep(5);
     console.log("Beginning of BINDCONTRACTS()");
-    ethersInstance = new ethers.providers.Web3Provider(provider);
-    signer = ethersInstance.getSigner();
-    const network = await ethersInstance.getNetwork();
+    // initalize the web3 sockets
+    const _web3 = new Web3(provider);
+    _web3.eth.defaultAccount = address;
+    const web3 = _web3;
+    prov = new ethers.providers.Web3Provider(provider);
+    signer = await prov.getSigner();
+    network = await prov.getNetwork()
 
     const contractAddress: any = await GetChain(network);
     const contract1 = XDVNFT__factory.connect(
       contractAddress.xdv,
-      ethersInstance
+      prov
     );
     const contract2 = XDVNFT__factory.connect(
       contractAddress.xdv,
@@ -354,7 +321,7 @@ function Create() {
     );
     const contract3 = AnconProtocol__factory.connect(
       contractAddress.ancon,
-      ethersInstance
+      prov
     );
 
     const dai = new web3.eth.Contract(
@@ -362,6 +329,7 @@ function Create() {
       contractAddress.dai
     );
 
+    // check the allowance
     const allowance = await dai.methods
       .allowance(address, contract2.address)
       .call();
@@ -400,8 +368,10 @@ function Create() {
     // get the key and height
     const Did = await GetDid(address);
     const key = Did.key;
-    const height = Did.height;
 
+
+    /* prepare the packet and user proof 
+    */
     // prepare packet proof
     const rawPacketProof = await fetch(
       `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
@@ -415,22 +385,21 @@ function Create() {
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });
-    // fetch with proof key
+
+
+
+      // get the hexdata
     const hexData = packet.packet;
 
+    // hash the data
     const hash = ethers.utils.solidityKeccak256(
       ["address", "string"],
       [address, tokenData.tokenCid]
     );
-    console.log("hash", hash, "packet", hexData);
+  
+
     let mint;
-    console.log(
-      packetProof.key,
-      packet.packet,
-      userProof,
-      packetProof,
-      hash
-    );
+    // tries two times in case it fails
     try {
       mint = await contract2.mintWithProof(
         packetProof.key,
@@ -440,6 +409,7 @@ function Create() {
         hash
       );
     } catch (error) {
+      console.log('failed, trying again...', error)
       mint = await contract2.mintWithProof(
         packetProof.key,
         hexData,
@@ -448,40 +418,7 @@ function Create() {
         hash
       );
     }
-
-    // mint = await contract4.submitPacketWithProof(
-    //   address,
-    //   userProof,
-    //   packetProof.key,
-    //   packet.packet,
-    //   packetProof
-    // );
-
-    // let mint2;
-    // try {
-      // mint2 = await contract4.verifyProofWithKV(
-      //   packetProof.key,
-      //   packetProof.value,
-      //   packetProof
-      // );
-    // } catch (error) {
-    //   console.log("error", error);
-    // }
-    // try {
-    //   mint = await contract4.verifyProofWithKV(
-    //     userProof.key,
-    //     userProof.value,
-    //     userProof
-    //   );
-    // } catch (error) {
-    //   console.log("error", error);
-    // }
-
-    console.log("user", mint);
-    // console.log("packet", mint2);
     setStep(6);
-
-    // createDocumentNode(web3);
   }
 
   //
@@ -657,7 +594,7 @@ function Create() {
                       alt="readyLocal"
                     />
                     <p
-                      onClick={mintNft}
+                      onClick={bindContracts}
                       className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
                     >
                       Mint
