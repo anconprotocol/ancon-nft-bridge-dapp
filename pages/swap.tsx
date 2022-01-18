@@ -1,6 +1,3 @@
-// network
-// nft address
-// token id
 
 import { ethers } from "ethers";
 import { useState } from "react";
@@ -20,7 +17,7 @@ import { AnconProtocol__factory } from "../types/ethers-contracts/factories/Anco
 import { sleep } from "./create";
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 // swap
-function swap() {
+function Swap() {
   const provider = useProvider();
   let prov: any;
   let Network: any;
@@ -372,4 +369,4 @@ function swap() {
   );
 }
 
-export default swap;
+export default Swap;
