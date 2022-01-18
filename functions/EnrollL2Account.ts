@@ -31,7 +31,6 @@ async function EnrollL2Account(
   try {
     const contractAddress: any = await GetChain(network);
 
-
     const contract1 = AnconProtocol__factory.connect(
       contractAddress.ancon,
       prov
@@ -40,18 +39,17 @@ async function EnrollL2Account(
       contractAddress.ancon,
       signer
     );
+    // encoded to utf8
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
     
+    // get proof
     const getProof = await contract1.getProof(UTF8_cid);
     
     if (getProof !== "0x") {
       return "proof already exist";
     }
-    console.log(
-      "proof key",
-      Web3.utils.hexToString(z.key),
-      Web3.utils.hexToString(z.value)
-    );
+   
+    // check the hashes
     const rawLastHash = await fetch(
       "https://api.ancon.did.pa/v0/proofs/lasthash"
     );
@@ -59,6 +57,7 @@ async function EnrollL2Account(
     const relayHash = await contract1.getProtocolHeader();
     const version = lasthash.lastHash.version;
 
+    // make a Web3 prov to call the dai contract
     const provi = new Web3(provider);
     provi.eth.defaultAccount = address;
     const dai = new provi.eth.Contract(
@@ -66,14 +65,15 @@ async function EnrollL2Account(
       contractAddress.dai
     );
 
-    const getHeight = async () => {
-      const did = await GetDid(address);
-      return did.height;
-    };
-    let height = await getHeight();
+
+    let height = await GetDid(address);
+    height = height.height
     const hash = ethers.utils.hexlify(
       ethers.utils.base64.decode(lasthash.lastHash.hash)
     );
+
+
+    // wait for the header to be updated
     const filter = contract1.filters.HeaderUpdated();
     const from = await prov.getBlockNumber();
     let result = await contract1.queryFilter(filter, from);
@@ -95,10 +95,12 @@ async function EnrollL2Account(
       }
     }
 
+    // check the allowance
     const allowance = await dai.methods
       .allowance(address, contract2.address)
       .call();
 
+      // enroll based on the network
     let enroll;
     switch (network.chainId) {
       case 97:
