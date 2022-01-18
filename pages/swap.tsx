@@ -26,10 +26,14 @@ function swap() {
   let Network: any;
   let signer: any;
   let web3: any;
-  let contractAddresses:any;
+  let contractAddresses: any;
   const [step, setStep] = useState(0);
-  const [nftAddress, setNftAddress] = useState("0x31388941eebad128d7eabd5d529de1a61c0f6625");
-  const [owner, setOwner] = useState("0x2a3D91a8D48C2892b391122b6c3665f52bCace23");
+  const [nftAddress, setNftAddress] = useState(
+    "0x31388941eebad128d7eabd5d529de1a61c0f6625"
+  );
+  const [owner, setOwner] = useState(
+    "0x2a3D91a8D48C2892b391122b6c3665f52bCace23"
+  );
   const [tokenId, setTokenId] = useState("");
   const [network, setNetwork] = useState("Network");
   const [proofs, setProofs] = useState({
@@ -105,14 +109,16 @@ function swap() {
     const tokenUri = await contract3.tokenURI(parseInt(tokenId));
 
     const rawMetadaUri = await fetch(
-      `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/`
+      `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
     );
+
     const metadaUri = await rawMetadaUri.json();
+    console.log("metadata uri", tokenUri, metadaUri);
     const payload = [
       {
         path: "owner",
         previousValue: address,
-        nextValue: owner,
+        nextValue: address,
       },
     ];
 
@@ -131,7 +137,6 @@ function swap() {
         from: address,
         signature,
         data: payload,
-        pin: "true",
         cid: tokenUri,
       }),
     };
@@ -141,9 +146,9 @@ function swap() {
     );
     const put = await rawPut.json();
     console.log("put", put);
-    
+
     const rawGetProof = await fetch(
-      `https://api.ancon.did.pa/v0/dagjson/${put.cid}/`
+      `https://api.ancon.did.pa/v0/dagjson/${put.cid}/?namespace=anconprotocol/users/${address}`
     );
     const getProof = await rawGetProof.json();
     let cid: any = await Object?.values(getProof.content)[0];
@@ -152,44 +157,12 @@ function swap() {
       [parseInt(tokenId)]
     );
     console.log("getProof", getProof);
-    
-    let s = await signer.signMessage(
-      ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
-      )
-    );
+
     let eventWaiter = await getPastEvents();
+    let packetKey = getProof.key;
+    let packetHeight = getProof.height;
 
-    const rawPostProof = await fetch(
-      "https://api.ancon.did.pa/v0/dagjson",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          path: "/",
-          from: address,
-          signature: s,
-          data: [hexdata],
-        }),
-      }
-    );
-    const postProof = await rawPostProof.json();
-    console.log('post', postProof)
-    const key = await postProof.cid;
-    
-
-    const rawProof = await fetch(
-      `https://api.ancon.did.pa/v0/dagjson/${key}/`
-    );
-    const proof = await rawProof.json();
-    const packetKey = proof.key;
-    const packetHeight = proof.height;
-    cid = await Object?.values(getProof.content)[0];
-
-
-
-    eventWaiter = await getPastEvents();
-    const hash = ethers.utils.solidityKeccak256(
+    let hash = ethers.utils.solidityKeccak256(
       ["uint256"],
       [parseInt(tokenId)]
     );
@@ -212,7 +185,7 @@ function swap() {
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });
     const relayHash = await contract1.getProtocolHeader();
-    console.log('relay hash', relayHash)
+    console.log("relay hash", relayHash);
     // check allowance
     const dai = new web3.eth.Contract(
       AnconToken.abi,
@@ -252,13 +225,82 @@ function swap() {
         userProof
       );
       console.log("mint1", mint);
-      await contract2.lockWithProof(
+      const lock = await contract2.lockWithProof(
         packetProof.key,
         hexdata,
         userProof,
         packetProof,
         hash
       );
+
+      console.log("lock", lock);
+
+      hexdata = ethers.utils.defaultAbiCoder.encode(
+        ["uint256", "string", "address"],
+        [parseInt(tokenId), cid, address]
+      );
+      hash = ethers.utils.solidityKeccak256(
+        ["uint256", "string", "address"],
+        [parseInt(tokenId), cid, address]
+      );
+
+      let s = await signer.signMessage(
+        ethers.utils.arrayify(
+          ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
+        )
+      );
+      const rawPostProof = await fetch(
+        "https://api.ancon.did.pa/v0/dagjson",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            path: "/",
+            from: address,
+            signature: s,
+            data: [hexdata],
+          }),
+        }
+      );
+
+      const postProof = await rawPostProof.json();
+      const key = await postProof.cid;
+
+      const rawGetProof = await fetch(
+        `https://api.ancon.did.pa/v0/dagjson/${key}/`
+      );
+      const getProof = await rawGetProof.json();
+      cid = await Object?.values(getProof.content)[0];
+      packetKey = getProof.key;
+      packetHeight = getProof.height;
+
+      /*
+    prepare proofs 
+    */
+      // get the key and height
+      const did = await GetDid(address);
+      //  packet proof
+      const rawPacketProof = await fetch(
+        `https://api.ancon.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
+      );
+      packetProof = await rawPacketProof.json();
+      packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
+
+      //  user proof
+      const rawUserProof = await fetch(
+        `https://api.ancon.did.pa/v0/proof/${did.key}?height=${packetHeight}`
+      );
+      userProof = await rawUserProof.json();
+      userProof = toAbiProof({ ...userProof[0].Proof.exist });
+      eventWaiter = await getPastEvents();
+      const release = await contract2.releaseWithProof(
+        packetProof.key,
+        hexdata,
+        userProof,
+        packetProof,
+        hash
+      );
+      console.log("release", release);
     } catch (error) {
       console.log("error", error);
     }

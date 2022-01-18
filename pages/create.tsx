@@ -225,7 +225,6 @@ function Create() {
         from: address,
         signature,
         data: payload,
-        pin: "true",
       }),
     };
     try {
@@ -299,12 +298,13 @@ function Create() {
           `https://api.ancon.did.pa/v0/dagjson/${key}/`
         );
         const getProof = await rawGetProof.json();
+        console.log()
         let packetId: any = await Object?.values(getProof.content)[0];
         setUser({ key: getProof.key, height: getProof.height });
-        const rawPacket = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${packetId}/`
-        );
-        const packet = await rawPacket.json();
+        // const rawPacket = await fetch(
+        //   `https://api.ancon.did.pa/v0/dagjson/${packetId}/`
+        // );
+        // const packet = await rawPacket.json();
 
         // packetId = await packet[0][0];
         // console.log('packetid', packetId, packet)

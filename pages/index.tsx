@@ -16,7 +16,7 @@ export default function Home() {
 
       <main className="bg-gray-50 relative h-screen w-full">
         <Header />
-        <section className="mt-8 mx-2 grid md:grid-cols-3 grid-cols-1">
+        <section className="mt-8 mx-2 grid md:grid-cols-2 xl:grid-cols-3 grid-cols-1">
           <ButtonCard
             title="New NFT"
             img="/new-icon.png"
