@@ -27,10 +27,10 @@ function Swap() {
   let contractAddresses: any;
   const [step, setStep] = useState(0);
   const [nftAddress, setNftAddress] = useState(
-    "0x31388941eebad128d7eabd5d529de1a61c0f6625"
+    ""
   );
   const [owner, setOwner] = useState(
-    "0x2a3D91a8D48C2892b391122b6c3665f52bCace23"
+    ""
   );
   const [tokenId, setTokenId] = useState("");
   const [network, setNetwork] = useState("Network");

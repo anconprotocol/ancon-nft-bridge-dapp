@@ -87,12 +87,16 @@ function Create() {
   const getPastEvents = async () => {
     network = await prov.getNetwork()
     const chain = await GetChain(network);
+    console.log('past events', network, chain)
     const contract1 = AnconProtocol__factory.connect(
       chain.ancon,
       prov
     );
+    console.log('contract',contract1)
     const filter = contract1.filters.HeaderUpdated();
+    console.log('filter',filter)
     const from = await prov.getBlockNumber();
+    console.log('filter',from)
     let result = await contract1.queryFilter(filter, from);
     let time = Date.now();
     const maxTime = Date.now() + 120000;
