@@ -451,7 +451,7 @@ function Create() {
       setError(false);
     }
   };
-  console.log("image", tokenData);
+  
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
