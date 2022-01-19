@@ -1,10 +1,7 @@
 import { useRouter } from "next/router";
 import React from "react";
 import { useState } from "react";
-import {
-  useRecoilState,
-  useSetRecoilState,
-} from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 // components
 import Header from "../components/Header";
@@ -21,9 +18,7 @@ import { AnconProtocol__factory } from "../types/ethers-contracts/factories/Anco
 // functions
 import toAbiProof from "../functions/ToAbiProof";
 // web3
-import {
-  XDVNFT__factory,
-} from "../types/ethers-contracts";
+import { XDVNFT__factory } from "../types/ethers-contracts";
 import Web3 from "web3";
 import GetDid from "../functions/GetDid";
 import GetChain from "../functions/GetChain";
@@ -31,17 +26,16 @@ import GetChain from "../functions/GetChain";
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 
-
 // fix the type error for document in nextjs
 declare let document: any;
 export function sleep(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 function Create() {
-   // web3
- let prov: ethers.providers.Web3Provider;
- let signer: ethers.providers.JsonRpcSigner;
- let network:ethers.providers.Network;
+  // web3
+  let prov: ethers.providers.Web3Provider;
+  let signer: ethers.providers.JsonRpcSigner;
+  let network: ethers.providers.Network;
   // state
   const [step, setStep] = useState(3);
   const [localImage, setLocalImage] = useState<any | null>(null);
@@ -85,29 +79,35 @@ function Create() {
   // step 1 //
 
   const getPastEvents = async () => {
-    network = await prov.getNetwork()
+    const prov = new ethers.providers.Web3Provider(provider);
+    const network = await prov.getNetwork();
     const chain = await GetChain(network);
-    console.log('past events', network, chain)
-    const contract1 = AnconProtocol__factory.connect(
-      chain.ancon,
-      prov
-    );
-    console.log('contract',contract1)
-    const filter = contract1.filters.HeaderUpdated();
-    console.log('filter',filter)
-    const from = await prov.getBlockNumber();
-    console.log('filter',from)
-    let result = await contract1.queryFilter(filter, from);
-    let time = Date.now();
-    const maxTime = Date.now() + 120000;
-    while (time < maxTime) {
-      result = await contract1.queryFilter(filter, from);
-      console.log(result);
-      if (result.length > 0) {
-        break;
+    console.log("past events", network, chain);
+    try {
+      const contract1 = await AnconProtocol__factory.connect(
+        chain.ancon,
+        prov
+      );
+      console.log("contract", contract1);
+      const filter = await contract1.filters.HeaderUpdated();
+      console.log("filter", filter);
+      const from = await prov.getBlockNumber();
+      console.log("from", from);
+      let result = await contract1.queryFilter(filter, from);
+      console.log("result", result);
+      let time = Date.now();
+      const maxTime = Date.now() + 120000;
+      while (time < maxTime) {
+        result = await contract1.queryFilter(filter, from);
+        console.log(result);
+        if (result.length > 0) {
+          break;
+        }
+        time = Date.now();
+        await sleep(10000);
       }
-      time = Date.now();
-      await sleep(10000);
+    } catch (error) {
+      console.log("error", error);
     }
     return true;
   };
@@ -133,44 +133,46 @@ function Create() {
           "Enroll Account",
           "/enroll",
         ]);
+        throw 'not enrolled'
       } else {
-      // make the client
-      const storage = new Web3Storage({
-        token: getAccessToken(),
-      });
-      // show the root cid as soon as it's ready
-      const onRootCidReady = (cid: string) => {
-        console.log("uploading files with cid:", cid);
-      };
+        // make the client
+        const storage = new Web3Storage({
+          token: getAccessToken(),
+        });
+        // show the root cid as soon as it's ready
+        const onRootCidReady = (cid: string) => {
+          console.log("uploading files with cid:", cid);
+        };
 
-      // when each chunk is stored, update the percentage complete and display
-      const totalSize = image.size;
-      let uploaded = 0;
+        // when each chunk is stored, update the percentage complete and display
+        const totalSize = image.size;
+        let uploaded = 0;
 
-      const onStoredChunk = (size: number) => {
-        uploaded += size;
-        const pct = totalSize / uploaded;
-        console.log(`Uploading... ${pct.toFixed(2)}% complete`);
-      };
+        const onStoredChunk = (size: number) => {
+          uploaded += size;
+          const pct = totalSize / uploaded;
+          console.log(`Uploading... ${pct.toFixed(2)}% complete`);
+        };
 
-      const imageCid: string = await storage.put([image], {
-        onRootCidReady,
-        onStoredChunk,
-      });
-      setTokenData({ ...tokenData, imageCid });
-      return imageCid;
+        const imageCid: string = await storage.put([image], {
+          onRootCidReady,
+          onStoredChunk,
+        });
+        setTokenData({ ...tokenData, imageCid });
+        return imageCid;
       }
     } catch (error) {
       console.log("err", error);
+      return false
     }
   };
 
   // step4 //
   // creates the metadata
   const createMetadata = async (cidI: string) => {
-    prov = new ethers.providers.Web3Provider(provider);
+    const prov = new ethers.providers.Web3Provider(provider);
     const NoHexAddress = address.substring(2);
-    signer = await prov.getSigner();
+    const signer = await prov.getSigner();
     const payload = {
       name: tokenData.name,
       description: tokenData.description,
@@ -268,7 +270,7 @@ function Create() {
           `https://api.ancon.did.pa/v0/dagjson/${key}/`
         );
         const getProof = await rawGetProof.json();
-        console.log()
+        console.log();
         let packetId: any = await Object?.values(getProof.content)[0];
         setUser({ key: getProof.key, height: getProof.height });
         setPacket({ proof: getProof.proof, packet: hexdata });
@@ -295,7 +297,6 @@ function Create() {
 
   // step 5 //
   const mintNft = async () => {
-    
     const _web3 = new Web3(provider);
     _web3.eth.defaultAccount = address;
     const web3 = _web3;
@@ -303,7 +304,7 @@ function Create() {
   };
   console.log(step);
 
-  const bindContracts = async() => {
+  const bindContracts = async () => {
     setStep(5);
     console.log("Beginning of BINDCONTRACTS()");
     // initalize the web3 sockets
@@ -312,7 +313,7 @@ function Create() {
     const web3 = _web3;
     prov = new ethers.providers.Web3Provider(provider);
     signer = await prov.getSigner();
-    network = await prov.getNetwork()
+    network = await prov.getNetwork();
 
     const contractAddress: any = await GetChain(network);
     const contract1 = XDVNFT__factory.connect(
@@ -373,9 +374,8 @@ function Create() {
     const Did = await GetDid(address);
     const key = Did.key;
 
-
-    /* prepare the packet and user proof 
-    */
+    /* prepare the packet and user proof
+     */
     // prepare packet proof
     const rawPacketProof = await fetch(
       `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
@@ -390,9 +390,7 @@ function Create() {
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });
 
-
-
-      // get the hexdata
+    // get the hexdata
     const hexData = packet.packet;
 
     // hash the data
@@ -400,7 +398,6 @@ function Create() {
       ["address", "string"],
       [address, tokenData.tokenCid]
     );
-  
 
     let mint;
     // tries two times in case it fails
@@ -413,7 +410,7 @@ function Create() {
         hash
       );
     } catch (error) {
-      console.log('failed, trying again...', error)
+      console.log("failed, trying again...", error);
       mint = await contract2.mintWithProof(
         packetProof.key,
         hexData,
@@ -423,7 +420,7 @@ function Create() {
       );
     }
     setStep(6);
-  }
+  };
 
   //
   // handles the change of the image
@@ -448,7 +445,9 @@ function Create() {
     } else {
       setStep(2);
       const cid: any = await handleUpload();
-      await createMetadata(cid);
+      if(cid !== false){
+        await createMetadata(cid);
+      }
       setError(false);
     }
   };
