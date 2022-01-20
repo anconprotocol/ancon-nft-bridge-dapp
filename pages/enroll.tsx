@@ -52,7 +52,7 @@ function Enroll() {
     if (rawResponse.status === 400) {
       return false;
     }
-    return true;
+    return false;
   };
 
 

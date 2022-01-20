@@ -126,13 +126,14 @@ async function EnrollL2Account(
           .approve(contract2.address, "1000000000000000000000")
           .send({
             gasPrice: "400000000000",
-            gas: 200000,
+            gas: 700000,
             from: address,
           });
         // }
         enroll = await contract2.enrollL2Account(z.key, UTF8_cid, z, {
           gasPrice: "400000000000",
-          gasLimit: 200000,
+          gasLimit: 900000,
+          from:address
         });
         break;
     }

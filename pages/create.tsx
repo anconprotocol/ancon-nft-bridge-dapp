@@ -88,13 +88,13 @@ function Create() {
         chain.ancon,
         prov
       );
-      console.log("contract", contract1);
+     
       const filter = await contract1.filters.HeaderUpdated();
-      console.log("filter", filter);
+      
       const from = await prov.getBlockNumber();
-      console.log("from", from);
+      
       let result = await contract1.queryFilter(filter, from);
-      console.log("result", result);
+     
       let time = Date.now();
       const maxTime = Date.now() + 120000;
       while (time < maxTime) {
@@ -338,22 +338,6 @@ function Create() {
     const allowance = await dai.methods
       .allowance(address, contract2.address)
       .call();
-    if (allowance == 0) {
-      await dai.methods
-        .approve(contract2.address, "1000000000000000000")
-        .send({
-          gasPrice: "22000000000",
-          gas: 400000,
-          from: address,
-        });
-      await dai.methods
-        .approve(contract3.address, "1000000000000000000")
-        .send({
-          gasPrice: "22000000000",
-          gas: 400000,
-          from: address,
-        });
-    }
     await sleep(7000);
 
     // checking hashes
@@ -400,26 +384,80 @@ function Create() {
     );
 
     let mint;
-    // tries two times in case it fails
-    try {
-      mint = await contract2.mintWithProof(
-        packetProof.key,
-        hexData,
-        userProof,
-        packetProof,
-        hash
-      );
-    } catch (error) {
-      console.log("failed, trying again...", error);
-      mint = await contract2.mintWithProof(
-        packetProof.key,
-        hexData,
-        userProof,
-        packetProof,
-        hash
-      );
+    switch (network.chainId) {
+      case 97:
+        // tries two times in case it fails
+        if (allowance == 0) {
+          await dai.methods
+            .approve(contract2.address, "1000000000000000000000")
+            .send({
+              gasPrice: "22000000000",
+              gas: 400000,
+              from: address,
+            });
+        }
+        try {
+          mint = await contract2.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash
+          );
+        } catch (error) {
+          console.log("failed, trying again...", error);
+          mint = await contract2.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash
+          );
+        }
+        break;
+      case 42:
+        // if (allowance == 0) {
+        await dai.methods
+          .approve(contract2.address, "1000000000000000000000")
+          .send({
+            gasPrice: "200000000000",
+            gas: 700000,
+            from: address,
+          });
+        // }
+        // tries two times in case it fails
+        try {
+          mint = await contract2.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash,
+            {
+              gasPrice: "200000000000",
+              gasLimit: 900000,
+              from: address
+            }
+          );
+          console.log(mint)
+        } catch (error) {
+          console.log("failed, trying again...", error);
+          mint = await contract2.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash, {
+              gasPrice: "200000000000",
+              gasLimit: 900000,
+              from: address
+            }
+          );
+        }
+        break;
     }
-    setStep(6);
+    
+    // setStep(6);
   };
 
   //

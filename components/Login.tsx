@@ -1,4 +1,5 @@
-import { connect } from "http2";
+import { DuplicateIcon } from "@heroicons/react/solid";
+import { ethers } from "ethers";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
@@ -11,28 +12,71 @@ import Modal from "./Modal";
 declare let window: any;
 let provider: any;
 function Login() {
-  const [accounts, setAccounts] = useState<string[] | null>();
+  const [account, setAccount] = useState<string | null>();
   // provider = useProvider();
   const [show, setShow] = useRecoilState(showState);
   const [butState, setButState] = useRecoilState(buttonState);
   const [address, setAddress] = useRecoilState(addressState);
-  const [connected, setConnected] = useState(false);
+  const [network, setNetwork] = useState("");
   const router = useRouter();
   provider = useProvider();
+  let prov: ethers.providers.Web3Provider;
   // creates the web3 object and request the accounts
   let changed = "";
   const onLogin = async (provider: any) => {
     console.log("calling the provider");
     const web3 = new Web3(provider);
-    const accounts = await web3.eth.getAccounts();
-    if (accounts.length === 0) {
+    prov = new ethers.providers.Web3Provider(provider);
+    let Network: any = await prov.getNetwork();
+    Network = await Network.chainId
+    switch (Network) {
+      case 97:
+        Network = "Binance Tesnet";
+        break;
+
+      case 42:
+        Network = "Kovan Tesnet";
+        break;
+      default: 
+      try {
+        const net = await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: "0x61" }],
+        });
+        console.log('net', net)
+      } catch (switchError:any) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: '0x61',
+                  chainName: 'Binance SC Tesnet',
+                  rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
+                   
+                },
+              ],
+            });
+          } catch (addError) {
+            // handle "add" error
+          }
+        }
+        // handle other "switch" errors
+      }
+      Network = 'Binance Smart Chain'
+    }
+    setNetwork(Network);
+    const accountsArray = await web3.eth.getAccounts();
+    if (accountsArray.length === 0) {
       console.log("error");
       return true;
     }
     console.log("out of if");
-    setAccounts(accounts);
-    changed = accounts[0];
-    setAddress(accounts[0]);
+    setAccount(accountsArray[0]);
+    changed = accountsArray[0];
+    setAddress(accountsArray[0]);
     // console.log("accounts", accounts[0]);
   };
 
@@ -92,14 +136,18 @@ function Login() {
   if (typeof window !== "undefined") {
     // browser code
     window.ethereum.on("accountsChanged", function (accounts: any) {
-      console.log("changed");
+      console.log("changed account");
       setAddress(accounts[0]);
+      router.reload();
+    });
+    window.ethereum.on('chainChanged', (chainId:any) => {
+      console.log("changed account",chainId);
       router.reload();
     });
   }
   useEffect(() => {
     setTimeout(() => {
-      handleUsualLogin()
+      handleUsualLogin();
     }, 300);
   }, []);
   // async function getAccount() {
@@ -110,13 +158,19 @@ function Login() {
 
   return (
     <>
-      {accounts && (
-        <span className="select-none">
-          {accounts?.[0]?.substring(0, 5)}...
-          {accounts?.[0]?.substring(accounts[0].length - 4)}
-        </span>
+      {account && (
+        <div className="grid select-none" onClick={() => navigator.clipboard.writeText(account)}>
+          <div className="flex cursor-pointer transform active:scale-105 active:text-green-900 transition-all ease-out duration-200">
+          <span className="select-none">
+            {account.substring(0, 5)}...
+            {account.substring(account.length - 4)}
+          </span>
+          <DuplicateIcon className="w-5 text-gray-600" />
+          </div>
+          <span className="font-light text-gray-600">{network}</span>
+        </div>
       )}
-      {accounts == null && (
+      {account == null && (
         <span
           onClick={handleUsualLogin}
           className="cursor-pointer animated-underline select-none"
