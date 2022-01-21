@@ -32,7 +32,7 @@ function Step3({ network, setNetwork, transaction, cid,token, owner }: StepProps
               network === "Kovan Tesnet" ? "42" : "97"
             }&tokenId=${token}&oldOwner=${owner}`)}>
           <QRCode
-            value={`http://localhost:3000/release?cid=${cid}&transaction=${transaction}&network=${
+            value={`https://mint.ancon.did.pa/release?cid=${cid}&transaction=${transaction}&network=${
               network === "Kovan Tesnet" ? "42" : "97"
             }&tokenId=${token}&oldOwner=${owner}` }
           />
