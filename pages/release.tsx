@@ -12,7 +12,7 @@ import toAbiProof from "../functions/ToAbiProof";
 import useProvider from "../hooks/useProvider";
 import { XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
-export default function release() {
+export default function Release() {
   // release the token
   const address = useRecoilValue(addressState);
   const [step, setStep] = useState(0);
