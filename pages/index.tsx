@@ -9,8 +9,8 @@ export default function Home() {
   return (
     <div>
       <Head>
-        <title>Nft Bridge</title>
-        <meta name="description" content="Nft Bridge" />
+        <title>Ancon Protocol - Widgets and tools</title>
+        <meta name="description" content="Ancon Protocol - Widgets and tools" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -18,7 +18,7 @@ export default function Home() {
         <Header />
         <section className="mt-8 mx-2 grid md:grid-cols-2 xl:grid-cols-3 grid-cols-1">
           <ButtonCard
-            title="New NFT"
+            title="Mint NFT"
             img="/new-icon.png"
             url="create"
           />
@@ -35,9 +35,20 @@ export default function Home() {
           />
 
           <ButtonCard
-            title="Solicitud de Identidad"
-            
+            title="DID Panama"            
             url="identity"
+            img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
+          />
+          
+          <ButtonCard
+            title="Register DAG Network"            
+            url="registerdag"
+            img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
+          />
+
+           <ButtonCard
+            title="Register NFT token"            
+            url="registernft"
             img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
           />
           
