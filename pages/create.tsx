@@ -241,7 +241,7 @@ function Create() {
         console.log("dag", dag, metadataCid);
         console.log("61 seconds");
         setMessage(
-          "Creating Offchain Metadata, please wait this process can take several minutes."
+          "Creating Metadata, please wait this process can take several minutes."
         );
         setStep(-1);
         let eventWaiter = await getPastEvents();
@@ -457,7 +457,7 @@ function Create() {
         break;
     }
     
-    // setStep(6);
+    setStep(6);
   };
 
   //

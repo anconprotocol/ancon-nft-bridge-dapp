@@ -37,10 +37,10 @@ function Swap() {
   const provider = useProvider();
   const [step, setStep] = useState(-1);
   const [nftAddress, setNftAddress] = useState(
-    "0x31388941eebad128d7eabd5d529de1a61c0f6625"
+    ""
   );
   const [owner, setOwner] = useState(
-    "0x32A21c1bB6E7C20F547e930b53dAC57f42cd25F6"
+    ""
   );
   const [tokenId, setTokenId] = useState("");
   const [network, setNetwork] = useState("Network");
