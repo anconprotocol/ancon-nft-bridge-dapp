@@ -13,7 +13,7 @@ const getTransaction = async (
 
   const prov = new ethers.providers.Web3Provider(provider);
   const network = await prov.getNetwork();
- 
+
   try {
     let rawList;
     switch (network.chainId) {
@@ -32,6 +32,11 @@ const getTransaction = async (
           `https://api-kovan.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${process.env.NEXT_PUBLIC_ETHER_KEY}`
         );
         break;
+      case 80001:
+        rawList = await fetch(
+          `https://api-testnet.polygonscan.com/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_MUMBAI_KEY}`
+        );
+        break;
       default:
         rawList = await fetch(
           `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=6271351&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.NEXT_PUBLIC_ETHER_KEY}`
@@ -39,7 +44,7 @@ const getTransaction = async (
         break;
     }
     const list = await rawList.json();
-    
+
     let item;
     setMessage("Obtaining public key...");
     for (item of list.result) {

@@ -4,109 +4,25 @@
 
 import { Contract, Signer, utils } from "ethers";
 import { Provider } from "@ethersproject/providers";
-import type {
-  IAnconProtocol,
-  IAnconProtocolInterface,
-} from "../IAnconProtocol";
+import type { IWXDV, IWXDVInterface } from "../IWXDV";
 
 const _abi = [
   {
     inputs: [
-      {
-        internalType: "bytes32",
-        name: "moniker",
-        type: "bytes32",
-      },
       {
         internalType: "address",
         name: "sender",
         type: "address",
       },
       {
-        components: [
-          {
-            internalType: "bool",
-            name: "valid",
-            type: "bool",
-          },
-          {
-            internalType: "bytes",
-            name: "key",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes",
-            name: "value",
-            type: "bytes",
-          },
-          {
-            components: [
-              {
-                internalType: "bool",
-                name: "valid",
-                type: "bool",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "hash",
-                type: "uint8",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "prehash_key",
-                type: "uint8",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "prehash_value",
-                type: "uint8",
-              },
-              {
-                internalType: "enum Ics23Helper.LengthOp",
-                name: "len",
-                type: "uint8",
-              },
-              {
-                internalType: "bytes",
-                name: "prefix",
-                type: "bytes",
-              },
-            ],
-            internalType: "struct Ics23Helper.LeafOp",
-            name: "leaf",
-            type: "tuple",
-          },
-          {
-            components: [
-              {
-                internalType: "bool",
-                name: "valid",
-                type: "bool",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "hash",
-                type: "uint8",
-              },
-              {
-                internalType: "bytes",
-                name: "prefix",
-                type: "bytes",
-              },
-              {
-                internalType: "bytes",
-                name: "suffix",
-                type: "bytes",
-              },
-            ],
-            internalType: "struct Ics23Helper.InnerOp[]",
-            name: "path",
-            type: "tuple[]",
-          },
-        ],
-        internalType: "struct Ics23Helper.ExistenceProof",
-        name: "userProof",
-        type: "tuple",
+        internalType: "uint256",
+        name: "newItemId",
+        type: "uint256",
+      },
+      {
+        internalType: "bytes32",
+        name: "moniker",
+        type: "bytes32",
       },
       {
         internalType: "bytes",
@@ -201,11 +117,102 @@ const _abi = [
           },
         ],
         internalType: "struct Ics23Helper.ExistenceProof",
+        name: "userProof",
+        type: "tuple",
+      },
+      {
+        components: [
+          {
+            internalType: "bool",
+            name: "valid",
+            type: "bool",
+          },
+          {
+            internalType: "bytes",
+            name: "key",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes",
+            name: "value",
+            type: "bytes",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_key",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_value",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.LengthOp",
+                name: "len",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.LeafOp",
+            name: "leaf",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+              {
+                internalType: "bytes",
+                name: "suffix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.InnerOp[]",
+            name: "path",
+            type: "tuple[]",
+          },
+        ],
+        internalType: "struct Ics23Helper.ExistenceProof",
         name: "proof",
         type: "tuple",
       },
+      {
+        internalType: "bytes32",
+        name: "hash",
+        type: "bytes32",
+      },
     ],
-    name: "submitPacketWithProof",
+    name: "mintWithProof",
     outputs: [
       {
         internalType: "bool",
@@ -219,110 +226,10 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "bytes32",
-        name: "moniker",
-        type: "bytes32",
+        internalType: "address",
+        name: "sender",
+        type: "address",
       },
-      {
-        components: [
-          {
-            internalType: "bool",
-            name: "valid",
-            type: "bool",
-          },
-          {
-            internalType: "bytes",
-            name: "key",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes",
-            name: "value",
-            type: "bytes",
-          },
-          {
-            components: [
-              {
-                internalType: "bool",
-                name: "valid",
-                type: "bool",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "hash",
-                type: "uint8",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "prehash_key",
-                type: "uint8",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "prehash_value",
-                type: "uint8",
-              },
-              {
-                internalType: "enum Ics23Helper.LengthOp",
-                name: "len",
-                type: "uint8",
-              },
-              {
-                internalType: "bytes",
-                name: "prefix",
-                type: "bytes",
-              },
-            ],
-            internalType: "struct Ics23Helper.LeafOp",
-            name: "leaf",
-            type: "tuple",
-          },
-          {
-            components: [
-              {
-                internalType: "bool",
-                name: "valid",
-                type: "bool",
-              },
-              {
-                internalType: "enum Ics23Helper.HashOp",
-                name: "hash",
-                type: "uint8",
-              },
-              {
-                internalType: "bytes",
-                name: "prefix",
-                type: "bytes",
-              },
-              {
-                internalType: "bytes",
-                name: "suffix",
-                type: "bytes",
-              },
-            ],
-            internalType: "struct Ics23Helper.InnerOp[]",
-            name: "path",
-            type: "tuple[]",
-          },
-        ],
-        internalType: "struct Ics23Helper.ExistenceProof",
-        name: "exProof",
-        type: "tuple",
-      },
-    ],
-    name: "verifyProof",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
       {
         internalType: "bytes32",
         name: "moniker",
@@ -335,7 +242,7 @@ const _abi = [
       },
       {
         internalType: "bytes",
-        name: "value",
+        name: "packet",
         type: "bytes",
       },
       {
@@ -421,32 +328,331 @@ const _abi = [
           },
         ],
         internalType: "struct Ics23Helper.ExistenceProof",
-        name: "exProof",
+        name: "userProof",
         type: "tuple",
       },
-    ],
-    name: "verifyProofWithKV",
-    outputs: [
       {
-        internalType: "bool",
-        name: "",
-        type: "bool",
+        components: [
+          {
+            internalType: "bool",
+            name: "valid",
+            type: "bool",
+          },
+          {
+            internalType: "bytes",
+            name: "key",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes",
+            name: "value",
+            type: "bytes",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_key",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_value",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.LengthOp",
+                name: "len",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.LeafOp",
+            name: "leaf",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+              {
+                internalType: "bytes",
+                name: "suffix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.InnerOp[]",
+            name: "path",
+            type: "tuple[]",
+          },
+        ],
+        internalType: "struct Ics23Helper.ExistenceProof",
+        name: "proof",
+        type: "tuple",
+      },
+      {
+        internalType: "bytes32",
+        name: "hash",
+        type: "bytes32",
       },
     ],
-    stateMutability: "view",
+    name: "lockWithProof",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "sender",
+        type: "address",
+      },
+      {
+        internalType: "bytes32",
+        name: "moniker",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes",
+        name: "key",
+        type: "bytes",
+      },
+      {
+        internalType: "bytes",
+        name: "packet",
+        type: "bytes",
+      },
+      {
+        components: [
+          {
+            internalType: "bool",
+            name: "valid",
+            type: "bool",
+          },
+          {
+            internalType: "bytes",
+            name: "key",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes",
+            name: "value",
+            type: "bytes",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_key",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_value",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.LengthOp",
+                name: "len",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.LeafOp",
+            name: "leaf",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+              {
+                internalType: "bytes",
+                name: "suffix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.InnerOp[]",
+            name: "path",
+            type: "tuple[]",
+          },
+        ],
+        internalType: "struct Ics23Helper.ExistenceProof",
+        name: "userProof",
+        type: "tuple",
+      },
+      {
+        components: [
+          {
+            internalType: "bool",
+            name: "valid",
+            type: "bool",
+          },
+          {
+            internalType: "bytes",
+            name: "key",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes",
+            name: "value",
+            type: "bytes",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_key",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "prehash_value",
+                type: "uint8",
+              },
+              {
+                internalType: "enum Ics23Helper.LengthOp",
+                name: "len",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.LeafOp",
+            name: "leaf",
+            type: "tuple",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "valid",
+                type: "bool",
+              },
+              {
+                internalType: "enum Ics23Helper.HashOp",
+                name: "hash",
+                type: "uint8",
+              },
+              {
+                internalType: "bytes",
+                name: "prefix",
+                type: "bytes",
+              },
+              {
+                internalType: "bytes",
+                name: "suffix",
+                type: "bytes",
+              },
+            ],
+            internalType: "struct Ics23Helper.InnerOp[]",
+            name: "path",
+            type: "tuple[]",
+          },
+        ],
+        internalType: "struct Ics23Helper.ExistenceProof",
+        name: "proof",
+        type: "tuple",
+      },
+      {
+        internalType: "bytes32",
+        name: "hash",
+        type: "bytes32",
+      },
+    ],
+    name: "releaseWithProof",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "payable",
     type: "function",
   },
 ];
 
-export class IAnconProtocol__factory {
+export class IWXDV__factory {
   static readonly abi = _abi;
-  static createInterface(): IAnconProtocolInterface {
-    return new utils.Interface(_abi) as IAnconProtocolInterface;
+  static createInterface(): IWXDVInterface {
+    return new utils.Interface(_abi) as IWXDVInterface;
   }
-  static connect(
-    address: string,
-    signerOrProvider: Signer | Provider
-  ): IAnconProtocol {
-    return new Contract(address, _abi, signerOrProvider) as IAnconProtocol;
+  static connect(address: string, signerOrProvider: Signer | Provider): IWXDV {
+    return new Contract(address, _abi, signerOrProvider) as IWXDV;
   }
 }

@@ -29,6 +29,7 @@ function Login() {
     prov = new ethers.providers.Web3Provider(provider);
     let Network: any = await prov.getNetwork();
     Network = await Network.chainId
+    console.log(Network)
     switch (Network) {
       case 97:
         Network = "Binance Tesnet";
@@ -37,6 +38,9 @@ function Login() {
       case 42:
         Network = "Kovan Tesnet";
         break;
+      case 80001:
+        Network = "Mumbai Tesnet"
+        break
       default: 
       try {
         const net = await window.ethereum.request({

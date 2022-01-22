@@ -1,10 +1,7 @@
 import { ethers } from "ethers";
 import { Router, useRouter } from "next/router";
 import { useState } from "react";
-import {
-  useRecoilState,
-  useRecoilValue,
-} from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
@@ -16,13 +13,13 @@ import useProvider from "../hooks/useProvider";
 import GetDid from "../functions/GetDid";
 import Step0 from "../sections/enroll/EnrollStep0";
 import EnrollStep2 from "../sections/enroll/EnrollStep2";
-
+import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
 
 function Enroll() {
   // web3
- let prov: ethers.providers.Web3Provider;
- let signer: ethers.providers.JsonRpcSigner;
- let network:ethers.providers.Network;
+  let prov: ethers.providers.Web3Provider;
+  let signer: ethers.providers.JsonRpcSigner;
+  let network: ethers.providers.Network;
   // state
   const [step, setStep] = useState(0);
   const [error, setError] = useState(false);
@@ -36,7 +33,11 @@ function Enroll() {
 
   //custom hooks
   const provider = useProvider();
+  
   const router = useRouter();
+
+  // ancon
+  let Ancon:AnconProtocol;
 
   /*
    step 0 
@@ -54,7 +55,6 @@ function Enroll() {
     }
     return false;
   };
-
 
   /*
    step 1
@@ -76,28 +76,22 @@ function Enroll() {
           setMessage,
           provider
         );
-        //create provider
-        prov = new ethers.providers.Web3Provider(provider);
-        // get a transaction
-        const transaction: any = await prov.getTransaction(trans);
-        
-        // join the signature
-        const sig = ethers.utils.joinSignature({
-          r: transaction.r,
-          s: transaction.s,
-          v: transaction.v,
-        });
 
-        // get publicKey
-        const getPublicKey = await GetPublicKey(
-          transaction,
-          sig,
-        );
-        const pubkey = getPublicKey[1];
-        const recoveredAddress = getPublicKey[0];
+        Ancon = new AnconProtocol(provider, address)
+        // the pubkey from ancon
+        const getPubKey = await Ancon.getPubKey(trans)
+
+        console.log('getoub', getPubKey)
+        const pubkey = getPubKey[2];
+        const recoveredAddress = getPubKey[0];
+        const sentAddress = getPubKey[1]
+
+        // const pubkey = "getPubKey[2];";
+        // const recoveredAddress = "";
+        // const sentAddress = "";
         setMessage("Validating proof...");
         // if the address are equal procced to get the proof
-        if (recoveredAddress === transaction.from) {
+        if (recoveredAddress == sentAddress) {
           setTimeout(() => {
             handleProof(pubkey);
           }, 2000);
@@ -126,25 +120,32 @@ function Enroll() {
     // take out the 0x from the address
     const NoHexAddress = address.substring(2);
 
+    const prov = new ethers.providers.Web3Provider(provider)
     // initialize the signer
     signer = prov.getSigner();
 
     // get the network
     network = await prov.getNetwork();
 
+    const message = `#Welcome to Ancon Protocol!
+    
+    For more information read the docs https://anconprotocol.github.io/docs/
+    
+    To make free posts and gets to the DAG Store you have to enroll and pay the service fee
+
+    This request will not trigger a blockchain transaction or cost any gas fees.
+    by signing this message you accept the terms and conditions of Ancon Protocol
+    `;
+
     const signature = await signer.signMessage(
-      ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(
-          "signin this message to verify my public key"
-        )
-      )
+      ethers.utils.arrayify(ethers.utils.toUtf8Bytes(message))
     );
     //post to get the did
     const payload = {
       domainName: NoHexAddress,
       pub: base58Encode,
       signature: signature,
-      message: "signin this message to verify my public key",
+      message: message,
     };
     const requestOptions = {
       method: "POST",
@@ -154,27 +155,14 @@ function Enroll() {
     try {
       const getDid = async () => {
         // post the data
-        const rawdata = await fetch(
-          "https://api.ancon.did.pa/v0/did/web",
-          requestOptions
-        );
-        const data = await rawdata.json();
-        let cid: any = data.cid;
-        //save the cid to state
-        setDIDCid(cid);
-
-        const rawdid = await GetDid(address);
-        const did:any = await Object?.values(rawdid.content)[0];
-
-        const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/proof/${rawdid.key}?height=${rawdid.height}`
-        );
-        const GetProof = await rawGetProof.json();
+        const data = await Ancon.postProof('did/web',requestOptions,true)
+        console.log('data',data)
         
-        // calling to abi proof
-        const z = toAbiProof({
-          ...GetProof[0].Proof.exist,
-        });
+        //save the cid to state
+        setDIDCid(data.did);
+
+        const proof = await Ancon.getProof(data.userProofKey, data.userProofHeight)
+        console.log("getproff", proof);
 
         // enroll to L2
         let enroll;
@@ -182,17 +170,8 @@ function Enroll() {
           "Preparing to enroll the account, please wait this proccess can take several minutes"
         );
         setTimeout(async () => {
-          enroll = await EnrollL2Account(
-            did,
-            z,
-            setStep,
-            prov,
-            signer,
-            setErrorModal,
-            address,
-            provider,
-            network
-          );
+          enroll = await Ancon.EnrollL2Account(data.did,proof)
+          setStep(2)
         }, 30000);
       };
 
@@ -215,9 +194,7 @@ function Enroll() {
               ? "Enrollment Proccess"
               : "Enroll Account"}
           </span>
-          {step === 0 ? (
-            <Step0 func={getKey}/>
-          ) : null}
+          {step === 0 ? <Step0 func={getKey} /> : null}
           {/* loading screen */}
           {step === 1 ? (
             <div className="flex flex-col items-center">
@@ -231,7 +208,11 @@ function Enroll() {
 
           {/* step 3 account enrolled create nft */}
           {step === 2 ? (
-            <EnrollStep2 router={router} address={address} DIDCid={DIDCid}/>
+            <EnrollStep2
+              router={router}
+              address={address}
+              DIDCid={DIDCid}
+            />
           ) : null}
         </div>
       </div>

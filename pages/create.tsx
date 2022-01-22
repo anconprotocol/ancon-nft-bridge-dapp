@@ -80,6 +80,7 @@ function Create() {
 
   const getPastEvents = async () => {
     const prov = new ethers.providers.Web3Provider(provider);
+    const web3 = new Web3(provider)
     const network = await prov.getNetwork();
     const chain = await GetChain(network);
     console.log("past events", network, chain);
@@ -89,7 +90,7 @@ function Create() {
         prov
       );
      
-      const filter = await contract1.filters.HeaderUpdated();
+      const filter = await contract1.filters.HeaderUpdated(web3.utils.keccak256('anconprotocol'));
       
       const from = await prov.getBlockNumber();
       
@@ -340,12 +341,13 @@ function Create() {
       .call();
     await sleep(7000);
 
+    const memonik = web3.utils.keccak256('anconprotocol')
     // checking hashes
     const rawLastHash = await fetch(
       "https://api.ancon.did.pa/v0/proofs/lasthash"
     );
     const lasthash = await rawLastHash.json();
-    const relayHash = await contract3.getProtocolHeader();
+    const relayHash = await contract3.getProtocolHeader(memonik);
     console.log(
       "last hash",
       ethers.utils.hexlify(

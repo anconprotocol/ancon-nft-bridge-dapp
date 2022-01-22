@@ -18,6 +18,11 @@ const GetChain = async (network: any) => {
       daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
       xdvnftAdress = process.env.NEXT_PUBLIC_XDVNFT_kovan;
       break;
+    case 80001:
+      anconAddress = process.env.NEXT_PUBLIC_ANCON_mumbai;
+      daiAddress = process.env.NEXT_PUBLIC_DAI_mumbai;
+      xdvnftAdress = process.env.NEXT_PUBLIC_XDVNFT_mumbai;
+      break;
   }
   return { ancon: anconAddress, dai: daiAddress, xdv: xdvnftAdress };
 };
