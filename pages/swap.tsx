@@ -6,7 +6,7 @@ import Header from "../components/Header";
 
 import GetChain from "../functions/GetChain";
 import useProvider from "../hooks/useProvider";
-import { XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
+import { WXDV__factory, XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
 import Step1 from "../sections/swap/Step1";
 import Step3 from "../sections/swap/Step3";
 import Web3 from "web3";
@@ -28,6 +28,7 @@ const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 interface web {
   network?: ethers.providers.Network;
   contracts: {
+    wxdv:string;
     xdv: string;
     ancon: string;
     dai: string;
@@ -55,6 +56,7 @@ function Swap() {
       xdv: "",
       ancon: "",
       dai: "",
+      wxdv: "",
     },
   });
 const router = useRouter()
@@ -66,15 +68,28 @@ const router = useRouter()
     const contractAddresses = await GetChain(Network);
     setWeb({ network: Network, contracts: contractAddresses });
 
-    let tempProv =
-      Network.chainId == 97
-        ? new ethers.providers.JsonRpcProvider(
-            "https://data-seed-prebsc-1-s1.binance.org:8545/"
-          )
-        : new ethers.providers.JsonRpcProvider(
-            "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-          );
 
+
+    // TODO Move to GetChain
+    let rpc =  "https://data-seed-prebsc-1-s1.binance.org:8545/"
+      
+    if (Network.chainId === 97) {
+      // no op
+    } else if (Network.chainId === 42) {
+      rpc='https://kovan.infura.io/v3/92ed13edfad140409ac24457a9c4e22d'
+      
+    } else if (Network.chainId === 80001) {
+      rpc='https://matic-mumbai.chainstacklabs.com'
+      
+    } else if (Network.chainId === 100) {
+      rpc='https://rpc.gnosischain.com/'
+      
+    } else if (Network.chainId === 1313161555) {
+      rpc='https://testnet.aurora.dev/'
+      
+    }
+    let tempProv = new ethers.providers.JsonRpcProvider(rpc);
+     
     // if there is any transaction hash written look for the lock
     if (transactionHash) {
       try {
@@ -154,11 +169,15 @@ const router = useRouter()
       web.contracts.xdv,
       signer
     );
-    const contract1 = AnconProtocol__factory.connect(
+    const protocol = AnconProtocol__factory.connect(
       web.contracts.ancon,
       prov
     );
-
+    const wxdv =  WXDV__factory.connect(web.contracts.wxdv, signer);
+    const dai = new web3.eth.Contract(
+      AnconToken.abi,
+      web.contracts.dai
+    );
     // get the tokenUri
     const tokenUri = await contract3.tokenURI(parseInt(tokenId));
       console.log('token uri', tokenUri)
@@ -221,7 +240,7 @@ const router = useRouter()
     // extract the key and height from the packet
     const packetKey = getProof.key;
     const packetHeight = getProof.height;
-    const contractId = await contract1.getContractIdentifier();
+    const contractId = await protocol.getContractIdentifier();
     // encode the hexdata to be sent and hash it
     let hexdata = ethers.utils.defaultAbiCoder.encode(
       ["uint256", "bytes32"],
@@ -264,29 +283,30 @@ const router = useRouter()
 
 
     // check allowance
-    const dai = new web3.eth.Contract(
-      AnconToken.abi,
-      web.contracts.dai
-    );
+    
     const allowance = await dai.methods
-      .allowance(address, contract2.address)
+      .allowance(address, protocol.address)
       .call();
     if (allowance == 0) {
-      await dai.methods
-        .approve(contract2.address, "1000000000000000000")
+      const tx = await dai.methods
+        .approve(protocol.address, "1000000000000000000")
         .send({
           gasPrice: "22000000000",
           gas: 400000,
           from: address,
         });
-      await dai.methods
-        .approve(contract3.address, "1000000000000000000")
-        .send({
-          gasPrice: "22000000000",
-          gas: 400000,
-          from: address,
-        });
+      await tx.wait(1);
+      // await dai.methods
+      //   .approve(contract3.address, "1000000000000000000")
+      //   .send({
+      //     gasPrice: "22000000000",
+      //     gas: 400000,
+      //     from: address,
+      //   });
     }
+
+    const approveTx = await contract2.approve(wxdv.address, 1);
+    await approveTx.wait(1);
 
     /* call the contract */
     try {
@@ -297,6 +317,7 @@ const router = useRouter()
         packetProof,
         hash
       );
+      await lock.wait(1);
       console.log("lock");
       setTransactionHash(lock.hash)
     } catch (error) {
