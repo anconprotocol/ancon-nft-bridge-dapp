@@ -221,15 +221,15 @@ const router = useRouter()
     // extract the key and height from the packet
     const packetKey = getProof.key;
     const packetHeight = getProof.height;
-
+    const contractId = await contract1.getContractIdentifier();
     // encode the hexdata to be sent and hash it
     let hexdata = ethers.utils.defaultAbiCoder.encode(
-      ["uint256"],
-      [parseInt(tokenId)]
+      ["uint256", "bytes32"],
+      [parseInt(tokenId), contractId]
     );
     let hash = ethers.utils.solidityKeccak256(
-      ["uint256"],
-      [parseInt(tokenId)]
+      ["uint256", "bytes32"],
+      [parseInt(tokenId), contractId]
     );
       const net = await prov.getNetwork()
 
