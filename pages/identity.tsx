@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
-import GoogleLogin from "react-google-login";
 import * as securePin from "secure-pin";
 import QRCode from "react-qr-code";
 import { ethers, Signer } from "ethers";
@@ -10,7 +9,7 @@ import { decrypt, encrypt } from "eciesjs";
 import { base64, sha256, toUtf8Bytes, toUtf8String } from "ethers/lib/utils";
 import { RWebShare } from "react-web-share";
 import { useRouter } from "next/router";
-import image from "next/image";
+
 
 declare let document: any;
 function identity() {

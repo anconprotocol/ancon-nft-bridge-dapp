@@ -415,7 +415,7 @@ export default class AnconProtocol {
           
           break;
       }
-
+      await enroll?.wait(1)
       console.log("enrolled");
       return enroll
     } catch (error) {

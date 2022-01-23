@@ -50,6 +50,11 @@ function Create() {
     proofKey: "",
   });
 
+  const [transaction, setTransaction] = useState<any>({
+    hash:'',
+    value:"",
+    block:""
+  });
   const [packet, setPacket] = useState({ proof: "", packet: "" });
   const [user, setUser] = useState({ key: "", height: "" });
   // atoms
@@ -80,7 +85,7 @@ function Create() {
 
   const getPastEvents = async () => {
     const prov = new ethers.providers.Web3Provider(provider);
-    const web3 = new Web3(provider)
+    const web3 = new Web3(provider);
     const network = await prov.getNetwork();
     const chain = await GetChain(network);
     console.log("past events", network, chain);
@@ -89,13 +94,15 @@ function Create() {
         chain.ancon,
         prov
       );
-     
-      const filter = await contract1.filters.HeaderUpdated(web3.utils.keccak256('anconprotocol'));
-      
+
+      const filter = await contract1.filters.HeaderUpdated(
+        web3.utils.keccak256("anconprotocol")
+      );
+
       const from = await prov.getBlockNumber();
-      
+
       let result = await contract1.queryFilter(filter, from);
-     
+
       let time = Date.now();
       const maxTime = Date.now() + 120000;
       while (time < maxTime) {
@@ -134,7 +141,7 @@ function Create() {
           "Enroll Account",
           "/enroll",
         ]);
-        throw 'not enrolled'
+        throw "not enrolled";
       } else {
         // make the client
         const storage = new Web3Storage({
@@ -164,7 +171,7 @@ function Create() {
       }
     } catch (error) {
       console.log("err", error);
-      return false
+      return false;
     }
   };
 
@@ -341,7 +348,7 @@ function Create() {
       .call();
     await sleep(7000);
 
-    const memonik = web3.utils.keccak256('anconprotocol')
+    const memonik = web3.utils.keccak256("anconprotocol");
     // checking hashes
     const rawLastHash = await fetch(
       "https://api.ancon.did.pa/v0/proofs/lasthash"
@@ -407,6 +414,7 @@ function Create() {
             hash
           );
         } catch (error) {
+          sleep(5000);
           console.log("failed, trying again...", error);
           mint = await contract2.mintWithProof(
             packetProof.key,
@@ -438,27 +446,34 @@ function Create() {
             {
               gasPrice: "200000000000",
               gasLimit: 900000,
-              from: address
+              from: address,
             }
           );
-          console.log(mint)
+          console.log(mint);
         } catch (error) {
           console.log("failed, trying again...", error);
+          sleep(5000);
           mint = await contract2.mintWithProof(
             packetProof.key,
             hexData,
             userProof,
             packetProof,
-            hash, {
+            hash,
+            {
               gasPrice: "200000000000",
               gasLimit: 900000,
-              from: address
+              from: address,
             }
           );
         }
         break;
     }
-    
+    console.log(mint);
+    setTransaction({
+      hash:mint?.hash,
+      value: mint?.value._hex,
+      block: mint?.blockNumber
+    })
     setStep(6);
   };
 
@@ -485,13 +500,13 @@ function Create() {
     } else {
       setStep(2);
       const cid: any = await handleUpload();
-      if(cid !== false){
+      if (cid !== false) {
         await createMetadata(cid);
       }
       setError(false);
     }
   };
-  
+
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
@@ -670,10 +685,26 @@ function Create() {
                   {tokenData.tokenCid}
                 </span>
 
-                {/* <a className="text-gray-600 text-sm">OWNER</a>
+                
+                <a className="text-gray-600 text-sm">Transaction hash</a>
+                <span className="text-lg font-medium mb-2">
+                  {transaction.hash}
+                </span>
+
+                <a className="text-gray-600 text-sm">Transaction Fee</a>
+                <span className="text-lg font-medium mb-2">
+                  {transaction.value}
+                </span>
+
+                <a className="text-gray-600 text-sm">Block</a>
+                <span className="text-lg font-medium mb-2">
+                  {transaction.block}
+                </span>
+
+                <a className="text-gray-600 text-sm">From</a>
                 <span className="text-lg font-medium mb-2">
                   {address}
-                </span> */}
+                </span>
 
                 <div className="flex items-center justify-center mt-3 w-full">
                   <div>
