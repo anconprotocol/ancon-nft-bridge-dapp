@@ -97,7 +97,7 @@ function Enroll() {
         // const sentAddress = "";
         setMessage("Validating proof...");
         // if the address are equal procced to get the proof
-        if (recoveredAddress !== sentAddress) {
+        if (recoveredAddress === sentAddress) {
           setTimeout(() => {
             handleProof(pubkey);
           }, 2000);

@@ -10,7 +10,7 @@ import GetDid from "../functions/GetDid";
 import GetPastEvents from "../functions/GetPastEvents";
 import toAbiProof from "../functions/ToAbiProof";
 import useProvider from "../hooks/useProvider";
-import { XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
+import { AnconProtocol__factory, WXDV__factory, XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 export default function Release() {
   // release the token
@@ -41,14 +41,19 @@ export default function Release() {
       contractAddresses.xdv,
       signer
     );
-    // create the data and sign it
+    const protocol = AnconProtocol__factory.connect(
+      contractAddresses.ancon,
+      prov
+    );
+    const wxdv =  WXDV__factory.connect(contractAddresses.wxdv, signer);
+    const contractId = await protocol.getContractIdentifier();  // create the data and sign it
     const hexdata = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "string", "address"],
-      [parseInt(tokenId), cid, address]
+      ["uint256", "string", "address","bytes32"],
+      [parseInt(tokenId), cid, address, contractId]
     );
     const hash = ethers.utils.solidityKeccak256(
-      ["uint256", "string", "address"],
-      [parseInt(tokenId), cid, address]
+      ["uint256", "string", "address","bytes32"],
+      [parseInt(tokenId), cid, address, contractId]
     );
 
     // sign the data
@@ -89,7 +94,7 @@ export default function Release() {
   prepare proofs 
   */
     // get the key and height
-    const did = await GetDid(address);
+    const did = await GetDid(Network.name,address);
     //  packet proof
     const rawPacketProof = await fetch(
       `https://api.ancon.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
@@ -116,16 +121,19 @@ export default function Release() {
       contractAddresses.dai
     );
     const allowance = await dai.methods
-      .allowance(address, xdvSigner.address)
+      .allowance(address, protocol.address)
       .call();
-    // if (allowance == 0) {
-      await dai.methods
-        .approve(xdvSigner.address, "1000000000000000000000")
+    if (allowance == 0) {
+      const tx = await dai.methods
+        .approve(protocol.address, "1000000000000000000")
         .send({
-          gasPrice: "400000000000",
+          gasPrice: "50000000000",
           gas: 400000,
           from: address,
         });
+      
+      await tx.wait(1);
+    }
     //   await dai.methods
     //     .approve(xdvSigner.address, "1000000000000000000000")
     //     .send({
@@ -140,8 +148,13 @@ export default function Release() {
         packetProof.value,
         userProof,
         packetProof,
-        hash
+        hash,{
+          gasPrice: "50000000000",
+          gasLimit: 400000,
+          from: address,
+        }
       );
+      await release.wait(2);
       setTransactionHash(release.hash);
       setStep(2);
       console.log("release", release);

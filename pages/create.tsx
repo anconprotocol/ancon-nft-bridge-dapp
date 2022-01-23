@@ -400,7 +400,8 @@ function Create() {
 
     let mint;
     switch (network.chainId) {
-      case 97:
+      case 97: 
+        case 80001:
         // tries two times in case it fails
         if (allowance == 0) {
           await dai.methods

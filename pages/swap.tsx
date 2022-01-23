@@ -178,13 +178,10 @@ const router = useRouter()
       AnconToken.abi,
       web.contracts.dai
     );
-    debugger
     // get the tokenUri
     const tokenUri = await contract3.tokenURI(parseInt(tokenId));
       console.log('token uri', tokenUri)
     // check if the metadata resolves
-    debugger
-    ;
     try {
       const rawMetadaUri = await fetch(
         `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
@@ -222,7 +219,6 @@ const router = useRouter()
         cid: tokenUri,
       }),
     };
-debugger
     // make a put to the dag
     const rawPut = await fetch(
       `https://api.ancon.did.pa/v0/dag`,
@@ -308,9 +304,12 @@ debugger
       //   });
     }
 
+    try {
     const approveTx = await contract2.approve(wxdv.address, parseInt(tokenId));
     await approveTx.wait(1);
-
+    }catch (error) {
+      // no op
+    }
     /* call the contract */
     try {
       const lock = await contract2.lockWithProof(

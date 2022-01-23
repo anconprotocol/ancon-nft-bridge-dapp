@@ -87,7 +87,8 @@ export default class AnconProtocol {
    */
   async getDidTransaction() {
     const rawDid = await fetch(
-      `https://api.ancon.did.pa/v0/did/raw:${this.address}`
+      `https://api.ancon.did.pa/v0/did/raw:did:ethr:${this.network.name}:${this.address}`
+
     );
     const encodedDid = await rawDid.json();
     return encodedDid;
@@ -95,7 +96,8 @@ export default class AnconProtocol {
 
   async signMessage() {
     const rawDid = await fetch(
-      `https://api.ancon.did.pa/v0/did/raw:${this.address}`
+      `https://api.ancon.did.pa/v0/did/raw:did:ethr:${this.network.name}:${this.address}`
+
     );
     const encodedDid = await rawDid.json();
     return encodedDid;
