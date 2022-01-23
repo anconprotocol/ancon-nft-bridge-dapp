@@ -378,12 +378,12 @@ const router = useRouter()
               />
               {/* nft */}
               <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
+                <a className="text-gray-600 text-md font-bold">
                   NFT Address
                 </a>
                 <input
                   type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2 shadow-sm"
+                  className="bg-gray-100 rounded-md h-10 pl-2 shadow-md"
                   onChange={(e) => {
                     setNftAddress(e.target.value);
                   }}
@@ -392,7 +392,7 @@ const router = useRouter()
               </div>
               {/* token id */}
               <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
+                <a className="text-gray-600 text-md font-bold">
                   Token ID
                 </a>
                 {tokenId}

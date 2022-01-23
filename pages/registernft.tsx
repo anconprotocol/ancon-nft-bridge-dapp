@@ -563,7 +563,7 @@ function RegisterNFT() {
                   {tokenData.imageCid}
                 </span>
 
-                <a className="text-gray-600 text-sm">Metada CID</a>
+                <a className="text-gray-600 text-sm">Metadata CID</a>
                 <span className="text-lg font-medium mb-2">
                   {tokenData.tokenCid}
                 </span>
@@ -605,7 +605,7 @@ function RegisterNFT() {
                   {tokenData.imageCid}
                 </span>
 
-                <a className="text-gray-600 text-sm">Metada CID</a>
+                <a className="text-gray-600 text-sm">Metadata CID</a>
                 <span className="text-lg font-medium mb-2">
                   {tokenData.tokenCid}
                 </span>
