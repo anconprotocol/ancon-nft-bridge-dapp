@@ -44,9 +44,14 @@ function Enroll() {
    */
   // check if domain already exists
   const getDomainName = async () => {
-    const NoHexAddress = address.substring(2);
+    
+    const prov = new ethers.providers.Web3Provider(provider)
+
+    // get the network
+    const    network = await prov.getNetwork();
+
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/v0/did/raw:${address}`
+      `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -78,6 +83,7 @@ function Enroll() {
         );
 
         Ancon = new AnconProtocol(provider, address)
+        await Ancon.initialize();
         // the pubkey from ancon
         const getPubKey = await Ancon.getPubKey(trans)
 
@@ -91,7 +97,7 @@ function Enroll() {
         // const sentAddress = "";
         setMessage("Validating proof...");
         // if the address are equal procced to get the proof
-        if (recoveredAddress == sentAddress) {
+        if (recoveredAddress !== sentAddress) {
           setTimeout(() => {
             handleProof(pubkey);
           }, 2000);
@@ -142,7 +148,7 @@ function Enroll() {
     );
     //post to get the did
     const payload = {
-      domainName: NoHexAddress,
+      ethrdid: `did:ethr:${network.name}:${address}`,
       pub: base58Encode,
       signature: signature,
       message: message,
@@ -155,7 +161,7 @@ function Enroll() {
     try {
       const getDid = async () => {
         // post the data
-        const data = await Ancon.postProof('did/web',requestOptions,true)
+        const data = await Ancon.postProof('did',requestOptions,true)
         console.log('data',data)
         
         //save the cid to state

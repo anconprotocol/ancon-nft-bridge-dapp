@@ -178,10 +178,13 @@ const router = useRouter()
       AnconToken.abi,
       web.contracts.dai
     );
+    debugger
     // get the tokenUri
     const tokenUri = await contract3.tokenURI(parseInt(tokenId));
       console.log('token uri', tokenUri)
     // check if the metadata resolves
+    debugger
+    ;
     try {
       const rawMetadaUri = await fetch(
         `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
@@ -219,7 +222,7 @@ const router = useRouter()
         cid: tokenUri,
       }),
     };
-
+debugger
     // make a put to the dag
     const rawPut = await fetch(
       `https://api.ancon.did.pa/v0/dag`,
@@ -265,7 +268,7 @@ const router = useRouter()
     prepare proofs 
     */
     // get the key for the user
-    const did = await GetDid(address);
+    const did = await GetDid(net.name,address);
 
     //  packet proof
     const rawPacketProof = await fetch(
@@ -305,7 +308,7 @@ const router = useRouter()
       //   });
     }
 
-    const approveTx = await contract2.approve(wxdv.address, 1);
+    const approveTx = await contract2.approve(wxdv.address, parseInt(tokenId));
     await approveTx.wait(1);
 
     /* call the contract */

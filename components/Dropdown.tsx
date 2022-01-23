@@ -27,7 +27,7 @@ export default function Dropdown({
     //   set title
     switch (network) {
       case "bnbt":
-        await setNetwork("Binance Smart Chain Tesnet");
+        await setNetwork("Binance Smart Chain testnet");
         if (step === 0 || step === 3) {
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
@@ -36,12 +36,12 @@ export default function Dropdown({
         }
         break;
 
-      case "kovan":
-        await setNetwork("Kovan Tesnet");
+      case "mumbai":
+        await setNetwork("Polygon Mumbai testnet");
         if (step === 0 || step === 3) {
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x2A" }],
+            params: [{ chainId: "0x13881" }],
           });
         }
         break;
@@ -71,15 +71,15 @@ export default function Dropdown({
               className="rounded-t bg-primary-600 hover:bg-primary-500 py-2 px-4 block whitespace-no-wrap transition-all duration-250 ease-out"
               href="#"
             >
-              Binance Smart Chain Tesnet
+              Binance Smart Chain testnet
             </a>
           </li>
-          <li className="" onClick={() => handleNetwork("kovan")}>
+          <li className="" onClick={() => handleNetwork("mumbai")}>
             <a
               className="bg-primary-600 hover:bg-primary-500  py-2 px-4 block whitespace-no-wrap rounded-b transition-all duration-250 ease-out"
               href="#"
             >
-              Kovan Testnet
+              Polygon Mumbai testnet
             </a>
           </li>
         </ul>

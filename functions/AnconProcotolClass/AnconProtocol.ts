@@ -33,9 +33,12 @@ export default class AnconProtocol {
     this.xdvnftAdress = "";
     this.moniker = this.provWeb3.utils.keccak256("anconprotocol");
 
-    this.getNetwork();
+    
   }
 
+  async initialize(){
+    await this.getNetwork();
+  }
   /**
    * @returns returns the network the user is in
    */
@@ -82,7 +85,7 @@ export default class AnconProtocol {
    * @param address address to get the did from
    * @returns encoded did
    */
-  async getDid() {
+  async getDidTransaction() {
     const rawDid = await fetch(
       `https://api.ancon.did.pa/v0/did/raw:${this.address}`
     );
@@ -220,7 +223,7 @@ export default class AnconProtocol {
     let result;
     switch (enrolling) {
       case true:
-        const did = await this.getDid();
+        const did = await this.getDidTransaction();
         const content: any = await Object?.values(did.content)[0];
         result = {
           did: content,
@@ -228,7 +231,6 @@ export default class AnconProtocol {
           userProofHeight: did.height,
         };
         break;
-
       default:
         result = {
           cid,
@@ -303,7 +305,7 @@ export default class AnconProtocol {
         this.daiAddress
       );
         
-      const did = await this.getDid();
+      const did = await this.getDidTransaction();
       const height = did.height;
       const hash = ethers.utils.hexlify(
         ethers.utils.base64.decode(lasthash.lastHash.hash)

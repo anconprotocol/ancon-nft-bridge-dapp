@@ -70,8 +70,14 @@ function Create() {
 
   // STEP 0  gets the public key and handle the get did//
   const getDomainName = async () => {
+    
+    const prov = new ethers.providers.Web3Provider(provider)
+
+    // get the network
+    const    network = await prov.getNetwork();
+
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/v0/did/raw:${address}`
+      `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -364,7 +370,7 @@ function Create() {
     console.log("relay hash", relayHash);
 
     // get the key and height
-    const Did = await GetDid(address);
+    const Did = await GetDid(network.name,address);
     const key = Did.key;
 
     /* prepare the packet and user proof

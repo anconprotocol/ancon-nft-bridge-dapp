@@ -63,20 +63,23 @@ function RegisterNFT() {
 
   //step 0 //
 
-  // STEP 0  gets the public key and handle the get did//
   const getDomainName = async () => {
+    
+    const prov = new ethers.providers.Web3Provider(provider)
+
+    // get the network
+    const    network = await prov.getNetwork();
+
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/v0/did/raw:${address}`
+      `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
     if (rawResponse.status === 400) {
       return false;
     }
-    return true;
-  };
-
-  // step 1 //
+    return false;
+  };  // step 1 //
 
   const getPastEvents = async () => {
     const prov = new ethers.providers.Web3Provider(provider);

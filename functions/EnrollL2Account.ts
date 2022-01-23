@@ -73,7 +73,7 @@ async function EnrollL2Account(
     const relayHash = await contract1.getProtocolHeader(
       provi.utils.keccak256("anconprotocol")
     );
-    let height = await GetDid(address);
+    let height = await GetDid(network.name,address);
     height = height.height;
     const hash = ethers.utils.hexlify(
       ethers.utils.base64.decode(lasthash.lastHash.hash)

@@ -141,9 +141,6 @@ function identity() {
       ethers.utils.arrayify(ethers.utils.toUtf8Bytes(JSON.stringify(payload)))
     );
 
-    // const did = await fetch(
-    //   `https://api.ancon.did.pa/v0/did/${walletAddress.replace('0x','raw:0x')}`
-    // )
 
     const rawDagPost = await fetch("https://api.ancon.did.pa/v0/dagjson", {
       method: "POST",
