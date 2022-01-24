@@ -32,11 +32,9 @@ export default class AnconProtocol {
     this.daiAddress = "";
     this.xdvnftAdress = "";
     this.moniker = this.provWeb3.utils.keccak256("anconprotocol");
-
-    
   }
 
-  async initialize(){
+  async initialize() {
     await this.getNetwork();
   }
   /**
@@ -45,25 +43,28 @@ export default class AnconProtocol {
   async getNetwork() {
     const network = await this.prov.getNetwork();
     this.network = network;
-    await this.getContractAddresses(network)
+    await this.getContractAddresses(network);
   }
 
-  async getContractAddresses(network:any) {
+  async getContractAddresses(network: any) {
     console.log("getting contracts", this.network);
     let anconAddress: any;
     let daiAddress: any;
     let xdvnftAdress: any;
     switch (this.network.chainId) {
+      // bnbt
       case 97:
         anconAddress = process.env.NEXT_PUBLIC_ANCON_bnbt;
         daiAddress = process.env.NEXT_PUBLIC_DAI_bnbt;
         xdvnftAdress = process.env.NEXT_PUBLIC_XDVNFT_bnbt;
         break;
+      // kovan
       case 42:
         anconAddress = process.env.NEXT_PUBLIC_ANCON_kovan;
         daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
         xdvnftAdress = process.env.NEXT_PUBLIC_XDVNFT_kovan;
         break;
+        // mumbai
       case 80001:
         anconAddress = process.env.NEXT_PUBLIC_ANCON_mumbai;
         daiAddress = process.env.NEXT_PUBLIC_DAI_mumbai;
@@ -71,8 +72,8 @@ export default class AnconProtocol {
         break;
     }
     this.anconAddress = anconAddress;
-    this.daiAddress = daiAddress
-    this.xdvnftAdress = xdvnftAdress
+    this.daiAddress = daiAddress;
+    this.xdvnftAdress = xdvnftAdress;
     console.log("contracts", anconAddress);
     return {
       ancon: this.anconAddress,
@@ -88,7 +89,6 @@ export default class AnconProtocol {
   async getDidTransaction() {
     const rawDid = await fetch(
       `https://api.ancon.did.pa/v0/did/raw:did:ethr:${this.network.name}:${this.address}`
-
     );
     const encodedDid = await rawDid.json();
     return encodedDid;
@@ -97,7 +97,6 @@ export default class AnconProtocol {
   async signMessage() {
     const rawDid = await fetch(
       `https://api.ancon.did.pa/v0/did/raw:did:ethr:${this.network.name}:${this.address}`
-
     );
     const encodedDid = await rawDid.json();
     return encodedDid;
@@ -153,6 +152,7 @@ export default class AnconProtocol {
 
     return proof;
   }
+
   /**
    *
    * @param transactionHash transaction hash of a normal transfer made by the user
@@ -229,14 +229,20 @@ export default class AnconProtocol {
         const content: any = await Object?.values(did.content)[0];
         result = {
           did: content,
-          userProofKey: did.key,
-          userProofHeight: did.height,
+          proofKey: did.key,
+          proofHeight: did.height,
+          cid,
+          ipfs,
         };
         break;
       default:
+        const dag = await this.fetchDag(cid);
         result = {
           cid,
           ipfs,
+          did: dag.cid,
+          proofKey: dag.proofKey,
+          proofHeight: dag.proofHeight,
         };
         break;
     }
@@ -260,6 +266,19 @@ export default class AnconProtocol {
     return abiedProof;
   }
 
+  async fetchDag(id: string) {
+    const rawResponse = await fetch(
+      `https://api.ancon.did.pa/v0/dagjson/${id}/`
+    );
+    const response = await rawResponse.json();
+    const cid = await Object?.values(response.content)[0];
+    return {
+      cid: cid as string,
+      proofKey: response.key as string,
+      proofHeight: response.height as string,
+    };
+  }
+
   /**
    *
    * @param cid did return from get proof
@@ -277,14 +296,14 @@ export default class AnconProtocol {
         this.anconAddress,
         this.signer
       );
-     
+
       // encoded to utf8
       const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
 
+      console.log('getting proof')
       // get proof
       const getProof = await anconContractReader.getProof(UTF8_cid);
 
-    
       if (getProof !== "0x") {
         return "proof already exist";
       }
@@ -294,19 +313,15 @@ export default class AnconProtocol {
         "https://api.ancon.did.pa/v0/proofs/lasthash"
       );
       const lasthash = await rawLastHash.json();
-      const relayHash = await anconContractReader.getProtocolHeader(
-        this.moniker
-      );
       console.log(rawLastHash, lasthash);
 
       // make a Web3 prov to call the dai contract
 
-     
       const dai = new this.provWeb3.eth.Contract(
         AnconToken.abi,
         this.daiAddress
       );
-        
+
       const did = await this.getDidTransaction();
       const height = did.height;
       const hash = ethers.utils.hexlify(
@@ -314,7 +329,7 @@ export default class AnconProtocol {
       );
 
       // wait for the header to be updated
-      const filter = anconContractReader.filters.HeaderUpdated(this.moniker);
+      const filter = anconContractReader.filters.HeaderUpdated();
       const from = await this.prov.getBlockNumber();
       let result = await anconContractReader.queryFilter(
         filter,
@@ -330,7 +345,7 @@ export default class AnconProtocol {
             filter,
             from
           );
-          
+
           if (result.length > 0) {
             break;
           }
@@ -340,13 +355,12 @@ export default class AnconProtocol {
       }
 
       // check the allowance
-  
-      
+
       const allowance = await dai.methods
         .allowance(this.address, this.anconAddress)
         .call();
-  
-      console.log('allowance')
+
+      console.log("allowance");
       // enroll based on the network
       let enroll;
       switch (this.network.chainId) {
@@ -370,7 +384,7 @@ export default class AnconProtocol {
               gasLimit: 400000,
             }
           );
-          
+
           break;
         case 42:
           // if (allowance == 0) {
@@ -394,7 +408,7 @@ export default class AnconProtocol {
             }
           );
           console.log("enrolled", enroll);
-          
+
           break;
         case 80001:
           if (allowance == 0) {
@@ -416,15 +430,51 @@ export default class AnconProtocol {
               gasLimit: 400000,
             }
           );
-          
+
           break;
       }
-      await enroll?.wait(1)
+      await enroll?.wait(1);
       console.log("enrolled");
-      return enroll
+      return enroll;
     } catch (error) {
       console.log("error", error);
     }
+  }
+
+  async getPastEvents() {
+    console.log("contract", this.anconAddress);
+    // instiate the contract
+    const AnconReader = await AnconProtocol__factory.connect(
+      this.anconAddress,
+      this.prov
+    );
+
+
+    // filter the contract
+    const filter = await AnconReader.filters.HeaderUpdated();
+
+    // get the from
+    const from = await this.prov.getBlockNumber();
+
+    // query the filter
+    let result = await AnconReader.queryFilter(filter, from);
+
+    let time = Date.now();
+    try {
+      const maxTime = Date.now() + 120000;
+      while (time < maxTime) {
+        result = await AnconReader.queryFilter(filter, from);
+        if (result.length > 0) {
+          break;
+        }
+        time = Date.now();
+        console.log(result);
+        await sleep(10000);
+      }
+    } catch (error) {
+      console.log("error", error);
+    }
+    return true;
   }
 }
 

@@ -31,11 +31,14 @@ declare let document: any;
 export function sleep(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
+
 function Create() {
   // web3
   let prov: ethers.providers.Web3Provider;
   let signer: ethers.providers.JsonRpcSigner;
   let network: ethers.providers.Network;
+  let Ancon: AnconProtocol;
   // state
   const [step, setStep] = useState(3);
   const [localImage, setLocalImage] = useState<any | null>(null);
@@ -51,9 +54,9 @@ function Create() {
   });
 
   const [transaction, setTransaction] = useState<any>({
-    hash:'',
-    value:"",
-    block:""
+    hash: "",
+    value: "",
+    block: "",
   });
   const [packet, setPacket] = useState({ proof: "", packet: "" });
   const [user, setUser] = useState({ key: "", height: "" });
@@ -70,11 +73,11 @@ function Create() {
 
   // STEP 0  gets the public key and handle the get did//
   const getDomainName = async () => {
-    
-    const prov = new ethers.providers.Web3Provider(provider)
-
+    const prov = new ethers.providers.Web3Provider(provider);
+    Ancon = new AnconProtocol(provider, address);
+    Ancon.getNetwork()
     // get the network
-    const    network = await prov.getNetwork();
+    const network = await prov.getNetwork();
 
     const rawResponse = await fetch(
       `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
@@ -101,9 +104,7 @@ function Create() {
         prov
       );
 
-      const filter = await contract1.filters.HeaderUpdated(
-        web3.utils.keccak256("anconprotocol")
-      );
+      const filter = await contract1.filters.HeaderUpdated();
 
       const from = await prov.getBlockNumber();
 
@@ -216,43 +217,33 @@ function Create() {
     try {
       // creates the metadata
       const PostRequest = async () => {
-        const rawMetadata = await fetch(
-          "https://api.ancon.did.pa/v0/dagjson",
+
+        // post to ancon
+        const metadataPost = await Ancon.postProof(
+          "dagjson",
           requestOptions
         );
-        const metadata = await rawMetadata.json();
-        // returns the metadata cid
-        console.log("metadata", metadata);
-        const id = await metadata.cid;
+        console.log("metadata", metadataPost);
+        const id: any = await metadataPost.cid;
 
         setTokenData({ ...tokenData, tokenCid: id });
-        console.log("didCID", id);
-        const dagRequest = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${id}/`
-        );
 
-        const dag = await dagRequest.json();
-        let metadataCid: any;
-        console.log(dag);
-        let proofKey: any;
-        console.log("dag", dag);
-        if (dag !== null) {
-          metadataCid = await Object?.values(dag.content)[0];
-        }
+        const metadataCid = await metadataPost.did;
+
+        // prepare hex data to be signed
         let hexdata = ethers.utils.defaultAbiCoder.encode(
           ["address", "string"],
           [address, metadataCid]
         );
-        // let hexdata = Web3.utils.stringToHex(metadataCid)
-
+        
+          // hex data
         let s = await signer.signMessage(
           ethers.utils.arrayify(
             ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
           )
         );
-        // let s = await signer.signMessage(hexdata)
-
-        console.log("dag", dag, metadataCid);
+        
+        console.log("dag", metadataPost, metadataCid);
         console.log("61 seconds");
         setMessage(
           "Creating Metadata, please wait this process can take several minutes."
@@ -370,7 +361,7 @@ function Create() {
     console.log("relay hash", relayHash);
 
     // get the key and height
-    const Did = await GetDid(network.name,address);
+    const Did = await GetDid(network.name, address);
     const key = Did.key;
 
     /* prepare the packet and user proof
@@ -400,8 +391,8 @@ function Create() {
 
     let mint;
     switch (network.chainId) {
-      case 97: 
-        case 80001:
+      case 97:
+      case 80001:
         // tries two times in case it fails
         if (allowance == 0) {
           await dai.methods
@@ -477,10 +468,10 @@ function Create() {
     }
     console.log(mint);
     setTransaction({
-      hash:mint?.hash,
+      hash: mint?.hash,
       value: mint?.value._hex,
-      block: mint?.blockNumber
-    })
+      block: mint?.blockNumber,
+    });
     setStep(6);
   };
 
@@ -692,13 +683,16 @@ function Create() {
                   {tokenData.tokenCid}
                 </span>
 
-                
-                <a className="text-gray-600 text-sm">Transaction hash</a>
+                <a className="text-gray-600 text-sm">
+                  Transaction hash
+                </a>
                 <span className="text-lg font-medium mb-2">
                   {transaction.hash}
                 </span>
 
-                <a className="text-gray-600 text-sm">Transaction Fee</a>
+                <a className="text-gray-600 text-sm">
+                  Transaction Fee
+                </a>
                 <span className="text-lg font-medium mb-2">
                   {transaction.value}
                 </span>

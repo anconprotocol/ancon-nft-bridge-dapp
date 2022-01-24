@@ -143,6 +143,7 @@ function Enroll() {
     by signing this message you accept the terms and conditions of Ancon Protocol
     `;
 
+    // sign the message
     const signature = await signer.signMessage(
       ethers.utils.arrayify(ethers.utils.toUtf8Bytes(message))
     );
@@ -167,7 +168,7 @@ function Enroll() {
         //save the cid to state
         setDIDCid(data.did);
 
-        const proof = await Ancon.getProof(data.userProofKey, data.userProofHeight)
+        const proof = await Ancon.getProof(data.proofKey, data.proofHeight)
         console.log("getproff", proof);
 
         // enroll to L2
