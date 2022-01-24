@@ -21,6 +21,7 @@ import Step5 from "../sections/swap/Step5";
 import Step4 from "../sections/swap/Step4";
 import { useRouter } from "next/router";
 import GetPastEvents from "../functions/GetPastEvents";
+import { keccak256 } from "ethers/lib/utils";
 
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 // swap
@@ -240,14 +241,16 @@ const router = useRouter()
     const packetKey = getProof.key;
     const packetHeight = getProof.height;
     const contractId = await protocol.getContractIdentifier();
+    const nonce=keccak256(
+      ethers.utils.defaultAbiCoder.encode(["uint256",'bytes32'],[Math.floor(Math.random()*100000000000) ,contractId]))
     // encode the hexdata to be sent and hash it
     let hexdata = ethers.utils.defaultAbiCoder.encode(
       ["uint256", "bytes32"],
-      [parseInt(tokenId), contractId]
+      [parseInt(tokenId), nonce]
     );
     let hash = ethers.utils.solidityKeccak256(
       ["uint256", "bytes32"],
-      [parseInt(tokenId), contractId]
+      [parseInt(tokenId), nonce]
     );
       const net = await prov.getNetwork()
 

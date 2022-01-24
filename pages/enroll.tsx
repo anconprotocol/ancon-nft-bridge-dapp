@@ -97,13 +97,13 @@ function Enroll() {
         // const sentAddress = "";
         setMessage("Validating proof...");
         // if the address are equal procced to get the proof
-        if (recoveredAddress === sentAddress) {
+        // if (recoveredAddress === sentAddress) {
           setTimeout(() => {
             handleProof(pubkey);
           }, 2000);
-        } else {
-          setError(true);
-        }
+        // } else {
+        //   setError(true);
+        // }
       } else {
         setErrorModal([
           "This Address is already enrolled please try again with another one or procced to create a NFT",
