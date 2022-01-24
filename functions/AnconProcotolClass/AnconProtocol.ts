@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import Web3 from "web3";
+import { XDVNFT__factory } from "../../types/ethers-contracts";
 import { AnconProtocol__factory } from "../../types/ethers-contracts/factories/AnconProtocol__factory";
 const AnconToken = require("../../contracts/ANCON.sol/ANCON.json");
 declare let window: any;
@@ -64,7 +65,7 @@ export default class AnconProtocol {
         daiAddress = process.env.NEXT_PUBLIC_DAI_kovan;
         xdvnftAdress = process.env.NEXT_PUBLIC_XDVNFT_kovan;
         break;
-        // mumbai
+      // mumbai
       case 80001:
         anconAddress = process.env.NEXT_PUBLIC_ANCON_mumbai;
         daiAddress = process.env.NEXT_PUBLIC_DAI_mumbai;
@@ -91,6 +92,8 @@ export default class AnconProtocol {
       `https://api.ancon.did.pa/v0/did/raw:did:ethr:${this.network.name}:${this.address}`
     );
     const encodedDid = await rawDid.json();
+    const content: any = await Object?.values(encodedDid.content)[0];
+    encodedDid["content"] = content;
     return encodedDid;
   }
 
@@ -228,7 +231,7 @@ export default class AnconProtocol {
         const did = await this.getDidTransaction();
         const content: any = await Object?.values(did.content)[0];
         result = {
-          did: content,
+          did: did.content,
           proofKey: did.key,
           proofHeight: did.height,
           cid,
@@ -287,160 +290,161 @@ export default class AnconProtocol {
    */
   async EnrollL2Account(cid: string, proof: any) {
     console.log("enrolling to L2");
-    try {
-      const anconContractReader = AnconProtocol__factory.connect(
-        this.anconAddress,
-        this.prov
-      );
-      const contract2 = AnconProtocol__factory.connect(
-        this.anconAddress,
-        this.signer
-      );
+    // try {
+    const anconContractReader = AnconProtocol__factory.connect(
+      this.anconAddress,
+      this.prov
+    );
+    const contract2 = AnconProtocol__factory.connect(
+      this.anconAddress,
+      this.signer
+    );
 
-      // encoded to utf8
-      const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
+    // encoded to utf8
+    const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
 
-      console.log('getting proof')
-      // get proof
-      const getProof = await anconContractReader.getProof(UTF8_cid);
+    // get proof
+    const getProof = await anconContractReader.getProof(UTF8_cid);
+    console.log("get", getProof);
+    if (getProof !== "0x") {
+      return "proof already exist";
+    }
 
-      if (getProof !== "0x") {
-        return "proof already exist";
-      }
+    // check the hashes
+    const rawLastHash = await fetch(
+      "https://api.ancon.did.pa/v0/proofs/lasthash"
+    );
+    const lasthash = await rawLastHash.json();
+    console.log(lasthash);
 
-      // check the hashes
-      const rawLastHash = await fetch(
-        "https://api.ancon.did.pa/v0/proofs/lasthash"
-      );
-      const lasthash = await rawLastHash.json();
-      console.log(rawLastHash, lasthash);
+    console.log(rawLastHash, lasthash);
 
-      // make a Web3 prov to call the dai contract
+    // make a Web3 prov to call the dai contract
 
-      const dai = new this.provWeb3.eth.Contract(
-        AnconToken.abi,
-        this.daiAddress
-      );
+    const dai = new this.provWeb3.eth.Contract(
+      AnconToken.abi,
+      this.daiAddress
+    );
 
-      const did = await this.getDidTransaction();
-      const height = did.height;
-      const hash = ethers.utils.hexlify(
-        ethers.utils.base64.decode(lasthash.lastHash.hash)
-      );
+    // get the height
+    const did = await this.getDidTransaction();
+    const height = did.height;
 
-      // wait for the header to be updated
-      const filter = anconContractReader.filters.HeaderUpdated();
-      const from = await this.prov.getBlockNumber();
-      let result = await anconContractReader.queryFilter(
-        filter,
-        from
-      );
+    const hash = ethers.utils.hexlify(
+      ethers.utils.base64.decode(lasthash.lastHash.hash)
+    );
 
-      let time = Date.now();
-      const maxTime = Date.now() + 180000;
-      if (hash !== relayHash) {
-        console.log("hashes differ", height);
-        while (time < maxTime) {
-          result = await anconContractReader.queryFilter(
-            filter,
-            from
-          );
-
-          if (result.length > 0) {
-            break;
-          }
-          time = Date.now();
-          await sleep(10000);
-        }
-      }
-
-      // check the allowance
-
-      const allowance = await dai.methods
-        .allowance(this.address, this.anconAddress)
-        .call();
-
-      console.log("allowance");
-      // enroll based on the network
-      let enroll;
-      switch (this.network.chainId) {
-        case 97:
-          if (allowance == 0) {
-            await dai.methods
-              .approve(contract2.address, "1000000000000000000000")
-              .send({
-                gasPrice: "22000000000",
-                gas: 400000,
-                from: this.address,
-              });
-          }
-          enroll = await contract2.enrollL2Account(
-            this.moniker,
-            proof.key,
-            UTF8_cid,
-            proof,
-            {
-              gasPrice: "22000000000",
-              gasLimit: 400000,
-            }
-          );
-
+    // wait for the header to be updated
+    const filter = anconContractReader.filters.HeaderUpdated();
+    const from = await this.prov.getBlockNumber();
+    let result = await anconContractReader.queryFilter(filter, from);
+    let time = Date.now();
+    const maxTime = Date.now() + 180000;
+    const relayHash = await anconContractReader.getProtocolHeader(
+      this.moniker
+    );
+    if (hash !== relayHash) {
+      console.log("hashes differ", height);
+      while (time < maxTime) {
+        result = await anconContractReader.queryFilter(filter, from);
+        console.log(result);
+        if (result.length > 0) {
           break;
-        case 42:
-          // if (allowance == 0) {
+        }
+        time = Date.now();
+        await sleep(10000);
+      }
+    }
+
+    console.log("test");
+    // check the allowance
+    const allowance = await dai.methods
+      .allowance(this.address, this.anconAddress)
+      .call();
+    console.log("test");
+    // enroll based on the network
+    let enroll;
+    switch (this.network.chainId) {
+      case 97:
+        if (allowance == 0) {
           await dai.methods
             .approve(contract2.address, "1000000000000000000000")
             .send({
-              gasPrice: "400000000000",
-              gas: 700000,
+              gasPrice: "22000000000",
+              gas: 400000,
               from: this.address,
             });
-          // }
-          enroll = await contract2.enrollL2Account(
-            this.moniker,
-            proof.key,
-            UTF8_cid,
-            proof,
-            {
-              gasPrice: "400000000000",
-              gasLimit: 900000,
-              from: this.address,
-            }
-          );
-          console.log("enrolled", enroll);
-
-          break;
-        case 80001:
-          if (allowance == 0) {
-            await dai.methods
-              .approve(contract2.address, "1000000000000000000000")
-              .send({
-                gasPrice: "22000000000",
-                gas: 400000,
-                from: this.address,
-              });
+        }
+        enroll = await contract2.enrollL2Account(
+          this.moniker,
+          proof.key,
+          UTF8_cid,
+          proof,
+          {
+            gasPrice: "22000000000",
+            gasLimit: 400000,
           }
-          enroll = await contract2.enrollL2Account(
-            this.moniker,
-            proof.key,
-            UTF8_cid,
-            proof,
-            {
-              gasPrice: "22000000000",
-              gasLimit: 400000,
-            }
-          );
+        );
 
-          break;
-      }
-      await enroll?.wait(1);
-      console.log("enrolled");
-      return enroll;
-    } catch (error) {
-      console.log("error", error);
+        break;
+      case 42:
+        // if (allowance == 0) {
+        await dai.methods
+          .approve(contract2.address, "1000000000000000000000")
+          .send({
+            gasPrice: "400000000000",
+            gas: 700000,
+            from: this.address,
+          });
+        // }
+        enroll = await contract2.enrollL2Account(
+          this.moniker,
+          proof.key,
+          UTF8_cid,
+          proof,
+          {
+            gasPrice: "400000000000",
+            gasLimit: 900000,
+            from: this.address,
+          }
+        );
+        console.log("enrolled", enroll);
+        break;
+      case 80001:
+        // if (allowance == 0) {
+        await dai.methods
+          .approve(contract2.address, "1000000000000000000000")
+          .send({
+            gasPrice: "22000000000",
+            gas: 400000,
+            from: this.address,
+          });
+        // }
+        enroll = await contract2.enrollL2Account(
+          this.moniker,
+          proof.key,
+          UTF8_cid,
+          proof,
+          {
+            gasPrice: "22000000000",
+            gasLimit: 400000,
+          }
+        );
+
+        break;
     }
+    await enroll?.wait(1);
+    console.log("enrolled");
+    return enroll;
+    // } catch (error) {
+    //   console.log("error", error);
+    // }
   }
 
+  /**
+   *
+   * @returns returns true when the protocol is updated
+   */
   async getPastEvents() {
     console.log("contract", this.anconAddress);
     // instiate the contract
@@ -448,7 +452,6 @@ export default class AnconProtocol {
       this.anconAddress,
       this.prov
     );
-
 
     // filter the contract
     const filter = await AnconReader.filters.HeaderUpdated();
@@ -459,22 +462,168 @@ export default class AnconProtocol {
     // query the filter
     let result = await AnconReader.queryFilter(filter, from);
 
+    // checking hashes
+    const rawLastHash = await fetch(
+      "https://api.ancon.did.pa/v0/proofs/lasthash"
+    );
+    const lasthash = await rawLastHash.json();
+    const decodedlastHash = ethers.utils.hexlify(
+      ethers.utils.base64.decode(lasthash.lastHash.hash)
+    );
+
+    let relayHash = await AnconReader.getProtocolHeader(this.moniker);
     let time = Date.now();
     try {
       const maxTime = Date.now() + 120000;
       while (time < maxTime) {
         result = await AnconReader.queryFilter(filter, from);
-        if (result.length > 0) {
+        relayHash = await AnconReader.getProtocolHeader(this.moniker);
+
+        if (relayHash == decodedlastHash) {
           break;
         }
+
         time = Date.now();
-        console.log(result);
+        console.log(result, relayHash, decodedlastHash);
         await sleep(10000);
       }
     } catch (error) {
       console.log("error", error);
     }
     return true;
+  }
+
+  async mintNft(
+    hexData: string,
+    metadataCid: string,
+    userProofKey: string,
+    userProofHeight: string
+  ) {
+    console.log("beggining minting");
+
+    const xdvReader = XDVNFT__factory.connect(
+      this.xdvnftAdress,
+      this.prov
+    );
+    const xdvSigner = XDVNFT__factory.connect(
+      this.xdvnftAdress,
+      this.signer
+    );
+    const anconReader = AnconProtocol__factory.connect(
+      this.anconAddress,
+      this.prov
+    );
+
+    const dai = new this.provWeb3.eth.Contract(
+      AnconToken.abi,
+      this.daiAddress
+    );
+    // check the allowance
+    const allowance = await dai.methods
+      .allowance(this.address, xdvSigner.address)
+      .call();
+    await sleep(7000);
+
+    const did = await this.getDidTransaction();
+
+    /* prepare the packet and user proof
+     */
+    // prepare packet proof
+    const packetProof = await this.getProof(
+      userProofKey,
+      userProofHeight
+    );
+
+    // prepare user proof
+    const userProof = await this.getProof(
+      did.content,
+      userProofHeight
+    );
+
+    // hash the data
+    const hash = ethers.utils.solidityKeccak256(
+      ["address", "string"],
+      [this.address, metadataCid]
+    );
+
+    // start minting
+    let mint;
+    switch (this.network.chainId) {
+      case 97:
+      case 80001:
+        // tries two times in case it fails
+        if (allowance == 0) {
+          await dai.methods
+            .approve(xdvSigner.address, "1000000000000000000000")
+            .send({
+              gasPrice: "22000000000",
+              gas: 400000,
+              from: this.address,
+            });
+        }
+        try {
+          mint = await xdvSigner.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash
+          );
+        } catch (error) {
+          sleep(5000);
+          console.log("failed, trying again...", error);
+          mint = await xdvSigner.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash
+          );
+        }
+        break;
+      case 42:
+        // if (allowance == 0) {
+        await dai.methods
+          .approve(xdvSigner.address, "1000000000000000000000")
+          .send({
+            gasPrice: "200000000000",
+            gas: 700000,
+            from: this.address,
+          });
+        // }
+        // tries two times in case it fails
+        try {
+          mint = await xdvSigner.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash,
+            {
+              gasPrice: "200000000000",
+              gasLimit: 900000,
+              from: this.address,
+            }
+          );
+          console.log(mint);
+        } catch (error) {
+          console.log("failed, trying again...", error);
+          sleep(5000);
+          mint = await xdvSigner.mintWithProof(
+            packetProof.key,
+            hexData,
+            userProof,
+            packetProof,
+            hash,
+            {
+              gasPrice: "200000000000",
+              gasLimit: 900000,
+              from: this.address,
+            }
+          );
+        }
+        break;
+    }
   }
 }
 

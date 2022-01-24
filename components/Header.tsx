@@ -6,7 +6,7 @@ import { addressState } from "../atoms/addressAtom";
 function Header() {
   const address = useRecoilValue(addressState);
   return (
-    <header className="flex justify-between p-4 items-center shadow-md bg-white">
+    <header className="flex justify-between p-4 items-center shadow-md bg-white dark:bg-red-200">
       {/* left section */}
       <Link passHref href={"/"}>
         <div className="flex md:flex-grow cursor-pointer">

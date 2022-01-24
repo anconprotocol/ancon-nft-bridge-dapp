@@ -59,7 +59,7 @@ function Create() {
     block: "",
   });
   const [packet, setPacket] = useState({ proof: "", packet: "" });
-  const [user, setUser] = useState({ key: "", height: "" });
+  const [user, setUserProof] = useState({ key: "", height: "" });
   // atoms
   const [address, setAddress] = useRecoilState(addressState);
   const setErrorModal = useSetRecoilState(errorState);
@@ -75,7 +75,7 @@ function Create() {
   const getDomainName = async () => {
     const prov = new ethers.providers.Web3Provider(provider);
     Ancon = new AnconProtocol(provider, address);
-    Ancon.getNetwork()
+    Ancon.getNetwork();
     // get the network
     const network = await prov.getNetwork();
 
@@ -217,7 +217,6 @@ function Create() {
     try {
       // creates the metadata
       const PostRequest = async () => {
-
         // post to ancon
         const metadataPost = await Ancon.postProof(
           "dagjson",
@@ -235,55 +234,48 @@ function Create() {
           ["address", "string"],
           [address, metadataCid]
         );
-        
-          // hex data
+
+        // sign data
         let s = await signer.signMessage(
           ethers.utils.arrayify(
             ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
           )
         );
-        
+
         console.log("dag", metadataPost, metadataCid);
         console.log("61 seconds");
         setMessage(
           "Creating Metadata, please wait this process can take several minutes."
         );
         setStep(-1);
-        let eventWaiter = await getPastEvents();
+        let eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
 
-        // await sleep(61000);
-
-        const rawPostProof = await fetch(
-          "https://api.ancon.did.pa/v0/dagjson",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              path: "/",
-              from: address,
-              signature: s,
-              data: [hexdata],
-            }),
-          }
+        // create the second request options
+        const requestOptions2 = {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            path: "/",
+            from: address,
+            signature: s,
+            data: [hexdata],
+          }),
+        };
+  
+        const postProof = await Ancon.postProof(
+          "dagjson",
+          requestOptions2
         );
-        const postProof = await rawPostProof.json();
         const key = await postProof.cid;
-        console.log("date", postProof, key);
 
-        const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${key}/`
-        );
-        const getProof = await rawGetProof.json();
-        console.log();
-        let packetId: any = await Object?.values(getProof.content)[0];
-        setUser({ key: getProof.key, height: getProof.height });
-        setPacket({ proof: getProof.proof, packet: hexdata });
-        console.log("31 seconds");
-        eventWaiter = await getPastEvents();
+        console.log('31 seconds')
+        setUserProof({ key: postProof.proofKey, height: postProof.proofHeight });
+        setPacket({ ...packet, packet: hexdata });
+        eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
 
-        console.log("fetch", getProof);
+        console.log("fetch");
         setMessage("Minting NFT...");
         setTokenData({
           ...tokenData,
@@ -506,10 +498,10 @@ function Create() {
   };
 
   return (
-    <main className="bg-gray-50 relative h-screen w-full mb-4">
+    <main className="bg-gray-50 relative h-screen w-full mb-4 dark:bg-red-800">
       <Header />
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
-        <div className="bg-white shadow-xl rounded-lg px-3 py-4">
+        <div className="bg-white shadow-xl rounded-lg px-3 py-4 dark:bg-coolGray-800">
           <span className="text-black font-bold text-xl">
             {step === 6 ? "NFT Created" : "Create NFT"}
           </span>
