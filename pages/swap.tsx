@@ -241,16 +241,15 @@ const router = useRouter()
     const packetKey = getProof.key;
     const packetHeight = getProof.height;
     const contractId = await protocol.getContractIdentifier();
-    const nonce=keccak256(
-      ethers.utils.defaultAbiCoder.encode(["uint256",'bytes32'],[Math.floor(Math.random()*100000000000) ,contractId]))
+
     // encode the hexdata to be sent and hash it
     let hexdata = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "bytes32"],
-      [parseInt(tokenId), nonce]
+      ["uint256","string", "bytes32"],
+      [parseInt(tokenId),cid, contractId]
     );
     let hash = ethers.utils.solidityKeccak256(
-      ["uint256", "bytes32"],
-      [parseInt(tokenId), nonce]
+      ["uint256", "string","bytes32"],
+      [parseInt(tokenId), cid,contractId]
     );
       const net = await prov.getNetwork()
 
@@ -298,21 +297,8 @@ const router = useRouter()
           from: address,
         });
       await tx.wait(1);
-      // await dai.methods
-      //   .approve(contract3.address, "1000000000000000000")
-      //   .send({
-      //     gasPrice: "22000000000",
-      //     gas: 400000,
-      //     from: address,
-      //   });
     }
 
-    try {
-    const approveTx = await contract2.approve(wxdv.address, parseInt(tokenId));
-    await approveTx.wait(1);
-    }catch (error) {
-      // no op
-    }
     /* call the contract */
     try {
       const lock = await contract2.lockWithProof(
@@ -325,6 +311,10 @@ const router = useRouter()
       await lock.wait(1);
       console.log("lock");
       setTransactionHash(lock.hash)
+
+
+
+
     } catch (error) {
       console.log("error", error);
     }

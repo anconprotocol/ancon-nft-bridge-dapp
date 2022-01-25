@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { keccak256 } from "ethers/lib/utils";
+import { arrayify, keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -46,18 +46,17 @@ export default function Release() {
       contractAddresses.ancon,
       prov
     );
-    const wxdv =  WXDV__factory.connect(contractAddresses.wxdv, signer);
     const contractId = await protocol.getContractIdentifier();
     const nonce=keccak256(
       ethers.utils.defaultAbiCoder.encode(["uint256",'bytes32'],[Math.floor(Math.random()*100000000000) ,contractId]))
 
     const hexdata = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "string", "address","bytes32"],
-      [parseInt(tokenId), cid, address, nonce ]
+      ["uint256", "string", "bytes","bytes","bytes32"],
+      [(tokenId), cid, arrayify(address),arrayify(xdvSigner.address) ,contractId ]
     );
     const hash = ethers.utils.solidityKeccak256(
-      ["uint256", "string", "address","bytes32"],
-      [parseInt(tokenId), cid, address, nonce]
+      ["uint256", "string","bytes", "bytes","bytes32"],
+      [(tokenId), cid, arrayify(address),arrayify(xdvSigner.address) ,contractId]
     );
 
     // sign the data
@@ -128,22 +127,6 @@ export default function Release() {
       .allowance(address, protocol.address)
       .call();
     //if (allowance == 0) {
-      const tx = await dai.methods
-        .approve(protocol.address, "1000000000000000000")
-        .send({
-          gasPrice: "50000000000",
-          gas: 400000,
-          from: address,
-        });
-      
-      const tx2 = await dai.methods
-        .approve(wxdv.address, "1000000000000000000")
-        .send({
-          gasPrice: "50000000000",
-          gas: 400000,
-          from: address,
-        });
-      
   //  }
     //   await dai.methods
     //     .approve(xdvSigner.address, "1000000000000000000000")
@@ -156,12 +139,13 @@ export default function Release() {
     try {
       const release = await xdvSigner.releaseWithProof(
         packetProof.key,
-        packetProof.value,
+        hexdata,
         userProof,
         packetProof,
-        hash,{
+         hash,
+         {
           gasPrice: "50000000000",
-          gasLimit: 400000,
+          gasLimit: '4000000',
           from: address,
         }
       );
