@@ -22,6 +22,7 @@ import { XDVNFT__factory } from "../types/ethers-contracts";
 import Web3 from "web3";
 import GetDid from "../functions/GetDid";
 import GetChain from "../functions/GetChain";
+import {   arrayify, keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -185,7 +186,6 @@ function Create() {
   // creates the metadata
   const createMetadata = async (cidI: string) => {
     const prov = new ethers.providers.Web3Provider(provider);
-    const NoHexAddress = address.substring(2);
     const signer = await prov.getSigner();
     const payload = {
       name: tokenData.name,
@@ -243,14 +243,10 @@ function Create() {
           ["address", "string"],
           [address, metadataCid]
         );
-        // let hexdata = Web3.utils.stringToHex(metadataCid)
 
         let s = await signer.signMessage(
-          ethers.utils.arrayify(
-            ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
-          )
+          arrayify(toUtf8Bytes(hexdata))
         );
-        // let s = await signer.signMessage(hexdata)
 
         console.log("dag", dag, metadataCid);
         console.log("61 seconds");
@@ -261,8 +257,6 @@ function Create() {
         let eventWaiter = await getPastEvents();
         console.log("event", eventWaiter);
 
-        // await sleep(61000);
-
         const rawPostProof = await fetch(
           "https://api.ancon.did.pa/v0/dagjson",
           {
@@ -272,7 +266,7 @@ function Create() {
               path: "/",
               from: address,
               signature: s,
-              data: [hexdata],
+              data: hexdata,
             }),
           }
         );
@@ -285,7 +279,7 @@ function Create() {
         );
         const getProof = await rawGetProof.json();
         console.log();
-        let packetId: any = await Object?.values(getProof.content)[0];
+        
         setUser({ key: getProof.key, height: getProof.height });
         setPacket({ proof: getProof.proof, packet: hexdata });
         console.log("31 seconds");
@@ -377,14 +371,14 @@ function Create() {
      */
     // prepare packet proof
     const rawPacketProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
+      `https://api.ancon.did.pa/v0/proof/${user.key}?height=${lasthash.lastHash.version}`
     );
     let packetProof = await rawPacketProof.json();
     packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
     // prepare user proof
     const rawUserProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${key}?height=${user.height}`
+      `https://api.ancon.did.pa/v0/proof/${key}?height=${lasthash.lastHash.version}`
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });
@@ -392,11 +386,6 @@ function Create() {
     // get the hexdata
     const hexData = packet.packet;
 
-    // hash the data
-    const hash = ethers.utils.solidityKeccak256(
-      ["address", "string"],
-      [address, tokenData.tokenCid]
-    );
 
     let mint;
     switch (network.chainId) {
@@ -414,21 +403,17 @@ function Create() {
         }
         try {
           mint = await contract2.mintWithProof(
-            packetProof.key,
             hexData,
             userProof,
             packetProof,
-            hash
           );
         } catch (error) {
           sleep(5000);
           console.log("failed, trying again...", error);
           mint = await contract2.mintWithProof(
-            packetProof.key,
             hexData,
             userProof,
             packetProof,
-            hash
           );
         }
         break;
@@ -445,11 +430,9 @@ function Create() {
         // tries two times in case it fails
         try {
           mint = await contract2.mintWithProof(
-            packetProof.key,
             hexData,
             userProof,
             packetProof,
-            hash,
             {
               gasPrice: "200000000000",
               gasLimit: 900000,
@@ -461,11 +444,9 @@ function Create() {
           console.log("failed, trying again...", error);
           sleep(5000);
           mint = await contract2.mintWithProof(
-            packetProof.key,
             hexData,
             userProof,
             packetProof,
-            hash,
             {
               gasPrice: "200000000000",
               gasLimit: 900000,

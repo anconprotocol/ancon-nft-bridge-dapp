@@ -32,14 +32,14 @@ function Login() {
     console.log(Network)
     switch (Network) {
       case 97:
-        Network = "Binance Tesnet";
+        Network = "Binance testnet";
         break;
 
       case 42:
-        Network = "Kovan Tesnet";
+        Network = "Kovan testnet";
         break;
       case 80001:
-        Network = "Mumbai Tesnet"
+        Network = "Mumbai testnet"
         break
       default: 
       try {
@@ -57,7 +57,7 @@ function Login() {
               params: [
                 {
                   chainId: '0x61',
-                  chainName: 'Binance SC Tesnet',
+                  chainName: 'Binance SC testnet',
                   rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
                    
                 },

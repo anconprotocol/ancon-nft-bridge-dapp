@@ -54,15 +54,12 @@ export default function Release() {
       ["uint256", "string", "bytes","bytes","bytes32"],
       [(tokenId), cid, arrayify(address),arrayify(xdvSigner.address) ,contractId ]
     );
-    const hash = ethers.utils.solidityKeccak256(
-      ["uint256", "string","bytes", "bytes","bytes32"],
-      [(tokenId), cid, arrayify(address),arrayify(xdvSigner.address) ,contractId]
-    );
+
 
     // sign the data
     const s = await signer.signMessage(
       ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
+        ethers.utils.toUtf8Bytes(hexdata)
       )
     );
 
@@ -76,7 +73,7 @@ export default function Release() {
           path: "/",
           from: address,
           signature: s,
-          data: [hexdata],
+          data: hexdata,
         }),
       }
     );
@@ -89,7 +86,7 @@ export default function Release() {
     );
     const getProof = await rawGetProof.json();
     console.log("getproff", getProof);
-    const newCid = await Object?.values(getProof.content)[0];
+
     const packetKey = getProof.key;
     const packetHeight = getProof.height;
 
@@ -137,15 +134,14 @@ export default function Release() {
     //     });
     // }
     try {
+     const gasLimit =await xdvSigner.estimateGas.releaseWithProof(hexdata,userProof,packetProof);
       const release = await xdvSigner.releaseWithProof(
-        packetProof.key,
         hexdata,
         userProof,
         packetProof,
-         hash,
          {
           gasPrice: "50000000000",
-          gasLimit: '4000000',
+          gasLimit,
           from: address,
         }
       );
@@ -163,7 +159,7 @@ export default function Release() {
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
         <div className="bg-white shadow-xl rounded-lg px-3 py-4">
           <span className="text-black font-bold text-xl">
-            Release Token
+            Transfer Metadata Ownership - Destination 
           </span>
           {step === 0 ? (
             <div>

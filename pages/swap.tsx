@@ -174,7 +174,6 @@ const router = useRouter()
       web.contracts.ancon,
       prov
     );
-    const wxdv =  WXDV__factory.connect(web.contracts.wxdv, signer);
     const dai = new web3.eth.Contract(
       AnconToken.abi,
       web.contracts.dai
@@ -187,7 +186,6 @@ const router = useRouter()
       const rawMetadaUri = await fetch(
         `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
       );
-      const metadaUri = await rawMetadaUri.json();
     } catch (error) {
       setStep(-1);
       return "error metadata";
@@ -302,18 +300,13 @@ const router = useRouter()
     /* call the contract */
     try {
       const lock = await contract2.lockWithProof(
-        packetProof.key,
         hexdata,
         userProof,
         packetProof,
-        hash
       );
       await lock.wait(1);
       console.log("lock");
       setTransactionHash(lock.hash)
-
-
-
 
     } catch (error) {
       console.log("error", error);
@@ -327,10 +320,10 @@ const router = useRouter()
         <div className="bg-white shadow-xl rounded-lg px-3 py-4">
           <span className="text-black font-bold text-xl">
             {step === 1
-              ? "Target"
+              ? "Transfer Metadata To"
               : step === 3
               ? "NFT sent"
-              : "Source"}
+              : "Transfer Metadata Source"}
           </span>
 
           {step === -1 ? (

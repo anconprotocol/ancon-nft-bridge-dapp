@@ -29,11 +29,11 @@ function Step3({ network, setNetwork, transaction, cid,token, owner }: StepProps
           click QR code to copy the link or save the QR
         </a>
         <div className="pb-2 cursor-pointer transform active:scale-105 active:text-green-900 transition-all ease-out duration-200" onClick={() => navigator.clipboard.writeText(`http://localhost:3000/release?cid=${cid}&transaction=${transaction}&network=${
-              network === "Kovan Tesnet" ? "42" : "97"
+              network === "Kovan testnet" ? "42" : "97"
             }&tokenId=${token}&oldOwner=${owner}`)}>
           <QRCode
             value={`https://mint.ancon.did.pa/release?cid=${cid}&transaction=${transaction}&network=${
-              network === "Kovan Tesnet" ? "42" : "97"
+              network === "Kovan testnet" ? "42" : "97"
             }&tokenId=${token}&oldOwner=${owner}` }
           />
         </div>
