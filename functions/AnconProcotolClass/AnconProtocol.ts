@@ -624,6 +624,8 @@ export default class AnconProtocol {
         }
         break;
     }
+    mint?.wait(1)
+    return mint
   }
 }
 

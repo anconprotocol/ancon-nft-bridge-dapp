@@ -262,15 +262,17 @@ function Create() {
             data: [hexdata],
           }),
         };
-  
+
         const postProof = await Ancon.postProof(
           "dagjson",
           requestOptions2
         );
-        const key = await postProof.cid;
 
-        console.log('31 seconds')
-        setUserProof({ key: postProof.proofKey, height: postProof.proofHeight });
+        console.log("31 seconds");
+        setUserProof({
+          key: postProof.proofKey,
+          height: postProof.proofHeight,
+        });
         setPacket({ ...packet, packet: hexdata });
         eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
@@ -303,161 +305,167 @@ function Create() {
 
   const bindContracts = async () => {
     setStep(5);
-    console.log("Beginning of BINDCONTRACTS()");
-    // initalize the web3 sockets
-    const _web3 = new Web3(provider);
-    _web3.eth.defaultAccount = address;
-    const web3 = _web3;
-    prov = new ethers.providers.Web3Provider(provider);
-    signer = await prov.getSigner();
-    network = await prov.getNetwork();
-
-    const contractAddress: any = await GetChain(network);
-    const contract1 = XDVNFT__factory.connect(
-      contractAddress.xdv,
-      prov
+    const mint = await Ancon.mintNft(
+      packet.packet,
+      tokenData.tokenCid,
+      user.key,
+      user.height
     );
-    const contract2 = XDVNFT__factory.connect(
-      contractAddress.xdv,
-      signer
-    );
-    const contract3 = AnconProtocol__factory.connect(
-      contractAddress.ancon,
-      prov
-    );
+    // console.log("Beginning of BINDCONTRACTS()");
+    // // initalize the web3 sockets
+    // const _web3 = new Web3(provider);
+    // _web3.eth.defaultAccount = address;
+    // const web3 = _web3;
+    // prov = new ethers.providers.Web3Provider(provider);
+    // signer = await prov.getSigner();
+    // network = await prov.getNetwork();
 
-    const dai = new web3.eth.Contract(
-      AnconToken.abi,
-      contractAddress.dai
-    );
+    // const contractAddress: any = await GetChain(network);
+    // const contract1 = XDVNFT__factory.connect(
+    //   contractAddress.xdv,
+    //   prov
+    // );
+    // const contract2 = XDVNFT__factory.connect(
+    //   contractAddress.xdv,
+    //   signer
+    // );
+    // const contract3 = AnconProtocol__factory.connect(
+    //   contractAddress.ancon,
+    //   prov
+    // );
 
-    // check the allowance
-    const allowance = await dai.methods
-      .allowance(address, contract2.address)
-      .call();
-    await sleep(7000);
+    // const dai = new web3.eth.Contract(
+    //   AnconToken.abi,
+    //   contractAddress.dai
+    // );
 
-    const memonik = web3.utils.keccak256("anconprotocol");
-    // checking hashes
-    const rawLastHash = await fetch(
-      "https://api.ancon.did.pa/v0/proofs/lasthash"
-    );
-    const lasthash = await rawLastHash.json();
-    const relayHash = await contract3.getProtocolHeader(memonik);
-    console.log(
-      "last hash",
-      ethers.utils.hexlify(
-        ethers.utils.base64.decode(lasthash.lastHash.hash)
-      )
-    );
-    console.log("relay hash", relayHash);
+    // // check the allowance
+    // const allowance = await dai.methods
+    //   .allowance(address, contract2.address)
+    //   .call();
+    // await sleep(7000);
 
-    // get the key and height
-    const Did = await GetDid(network.name, address);
-    const key = Did.key;
+    // const memonik = web3.utils.keccak256("anconprotocol");
+    // // checking hashes
+    // const rawLastHash = await fetch(
+    //   "https://api.ancon.did.pa/v0/proofs/lasthash"
+    // );
+    // const lasthash = await rawLastHash.json();
+    // const relayHash = await contract3.getProtocolHeader(memonik);
+    // console.log(
+    //   "last hash",
+    //   ethers.utils.hexlify(
+    //     ethers.utils.base64.decode(lasthash.lastHash.hash)
+    //   )
+    // );
+    // console.log("relay hash", relayHash);
 
-    /* prepare the packet and user proof
-     */
-    // prepare packet proof
-    const rawPacketProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
-    );
-    let packetProof = await rawPacketProof.json();
-    packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
+    // // get the key and height
+    // const Did = await GetDid(network.name, address);
+    // const key = Did.key;
 
-    // prepare user proof
-    const rawUserProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${key}?height=${user.height}`
-    );
-    let userProof = await rawUserProof.json();
-    userProof = toAbiProof({ ...userProof[0].Proof.exist });
+    // /* prepare the packet and user proof
+    //  */
+    // // prepare packet proof
+    // const rawPacketProof = await fetch(
+    //   `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
+    // );
+    // let packetProof = await rawPacketProof.json();
+    // packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
-    // get the hexdata
-    const hexData = packet.packet;
+    // // prepare user proof
+    // const rawUserProof = await fetch(
+    //   `https://api.ancon.did.pa/v0/proof/${key}?height=${user.height}`
+    // );
+    // let userProof = await rawUserProof.json();
+    // userProof = toAbiProof({ ...userProof[0].Proof.exist });
 
-    // hash the data
-    const hash = ethers.utils.solidityKeccak256(
-      ["address", "string"],
-      [address, tokenData.tokenCid]
-    );
+    // // get the hexdata
+    // const hexData = packet.packet;
 
-    let mint;
-    switch (network.chainId) {
-      case 97:
-      case 80001:
-        // tries two times in case it fails
-        if (allowance == 0) {
-          await dai.methods
-            .approve(contract2.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: address,
-            });
-        }
-        try {
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash
-          );
-        } catch (error) {
-          sleep(5000);
-          console.log("failed, trying again...", error);
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash
-          );
-        }
-        break;
-      case 42:
-        // if (allowance == 0) {
-        await dai.methods
-          .approve(contract2.address, "1000000000000000000000")
-          .send({
-            gasPrice: "200000000000",
-            gas: 700000,
-            from: address,
-          });
-        // }
-        // tries two times in case it fails
-        try {
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash,
-            {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address,
-            }
-          );
-          console.log(mint);
-        } catch (error) {
-          console.log("failed, trying again...", error);
-          sleep(5000);
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash,
-            {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address,
-            }
-          );
-        }
-        break;
-    }
+    // // hash the data
+    // const hash = ethers.utils.solidityKeccak256(
+    //   ["address", "string"],
+    //   [address, tokenData.tokenCid]
+    // );
+
+    // let mint;
+    // switch (network.chainId) {
+    //   case 97:
+    //   case 80001:
+    //     // tries two times in case it fails
+    //     if (allowance == 0) {
+    //       await dai.methods
+    //         .approve(contract2.address, "1000000000000000000000")
+    //         .send({
+    //           gasPrice: "22000000000",
+    //           gas: 400000,
+    //           from: address,
+    //         });
+    //     }
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     } catch (error) {
+    //       sleep(5000);
+    //       console.log("failed, trying again...", error);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     }
+    //     break;
+    //   case 42:
+    //     // if (allowance == 0) {
+    //     await dai.methods
+    //       .approve(contract2.address, "1000000000000000000000")
+    //       .send({
+    //         gasPrice: "200000000000",
+    //         gas: 700000,
+    //         from: address,
+    //       });
+    //     // }
+    //     // tries two times in case it fails
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address,
+    //         }
+    //       );
+    //       console.log(mint);
+    //     } catch (error) {
+    //       console.log("failed, trying again...", error);
+    //       sleep(5000);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address,
+    //         }
+    //       );
+    //     }
+    //     break;
+    // }
     console.log(mint);
     setTransaction({
       hash: mint?.hash,
@@ -501,72 +509,82 @@ function Create() {
     <main className="bg-gray-50 relative h-screen w-full mb-4 dark:bg-red-800">
       <Header />
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
-        <div className="bg-white shadow-xl rounded-lg px-3 py-4 dark:bg-coolGray-800">
+        <div className="bg-white shadow-xl rounded-lg px-3 py-4 dark:bg-coolGray-800 md:w-6/12 2xl:w-5/12 md:h-full">
           <span className="text-black font-bold text-xl">
             {step === 6 ? "NFT Created" : "Create NFT"}
           </span>
           {step === 2 ? (
-            <div className="flex flex-col items-center">
-              <div
-                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
-                role="status"
-              ></div>
-              <p className="animate-pulse mt-4">
-                Uploading Image to IPFS
-              </p>
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center">
+                <div
+                  className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                  role="status"
+                ></div>
+                <p className="animate-pulse mt-4">
+                  Uploading Image to IPFS
+                </p>
+              </div>
             </div>
           ) : null}
           {step === -1 ? (
-            <div className="flex flex-col items-center">
-              <div
-                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
-                role="status"
-              ></div>
-              <p className="animate-pulse mt-4">{message}</p>
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center">
+                <div
+                  className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                  role="status"
+                ></div>
+                <p className="animate-pulse mt-4">{message}</p>
+              </div>
             </div>
           ) : null}
           {step == 3 ? (
-            <div className="flex-col flex mt-3">
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  NFT Name
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTokenData({
-                      ...tokenData,
-                      name: e.target.value,
-                    });
-                  }}
-                  value={tokenData.name}
-                ></input>
+            <div className="mt-3">
+              <div className="flex justify-center items-center">
+                <div className="flex-col flex mt-3 md:w-2/3">
+                  <a className="text-gray-600 text-sm font-bold">
+                    NFT Name
+                  </a>
+                  <input
+                    type="text"
+                    className="bg-gray-100 rounded-sm h-10 pl-2"
+                    onChange={(e) => {
+                      setTokenData({
+                        ...tokenData,
+                        name: e.target.value,
+                      });
+                    }}
+                    value={tokenData.name}
+                  ></input>
+                </div>
+              </div>
+              <div className="flex justify-center items-center">
+                <div className="flex-col flex mt-6 md:w-2/3">
+                  <a className="text-gray-600 text-sm font-bold">
+                    Description
+                  </a>
+                  <input
+                    id="TITLE"
+                    className="bg-gray-100 rounded-sm h-10 pl-2"
+                    onChange={(e) => {
+                      setTokenData({
+                        ...tokenData,
+                        description: e.target.value,
+                      });
+                    }}
+                    value={tokenData.description}
+                  ></input>
+                </div>
               </div>
 
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  Description
-                </a>
-                <input
-                  id="TITLE"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTokenData({
-                      ...tokenData,
-                      description: e.target.value,
-                    });
-                  }}
-                  value={tokenData.description}
-                ></input>
-              </div>
-              <div
-                onClick={clickInput}
-                className="p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out mt-3"
-              >
-                <p className="flex justify-center items-center">
-                  Select Image
-                </p>
+              <div className="flex justify-center items-center">
+                <div
+                  onClick={clickInput}
+                  className="mt-6 p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out"
+                >
+                  <p className="flex justify-center items-center">
+                    Select Image
+                  </p>
+                </div>
               </div>
               <ErrorMessage
                 message="Please fill the blanks and select an Image"
@@ -611,8 +629,8 @@ function Create() {
             </div>
           ) : null}
           {step == 4 ? (
-            <div className="">
-              <div className="flex flex-col items-start mt-3">
+            <div className="flex items-center justify-center">
+              <div className="flex flex-col mt-3">
                 <a className="text-gray-600 text-sm">NFT Name</a>
                 <span className="text-lg font-medium mb-2">
                   {tokenData.name}
@@ -653,7 +671,7 @@ function Create() {
             </div>
           ) : null}
           {step == 6 ? (
-            <div className="">
+            <div className="flex items-center justify-center">
               <div className="flex flex-col items-start mt-3">
                 <a className="text-gray-600 text-sm">NFT Name</a>
                 <span className="text-lg font-medium mb-2">
