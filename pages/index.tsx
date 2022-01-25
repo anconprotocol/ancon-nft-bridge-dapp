@@ -39,12 +39,12 @@ export default function Home() {
             url="identity"
             img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
           />
-          
+{/*           
           <ButtonCard
             title="Register DAG Network"            
             url="registerdag"
             img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
-          />
+          /> */}
 
 
           

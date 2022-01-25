@@ -363,7 +363,7 @@ function RegisterDAG() {
     console.log("relay hash", relayHash);
 
     // get the key and height
-    const Did = await GetDid(address);
+    const Did = await GetDid(network.name,address);
     const key = Did.key;
 
     /* prepare the packet and user proof
@@ -391,79 +391,79 @@ function RegisterDAG() {
       [address, tokenData.tokenCid]
     );
 
-    let mint;
-    switch (network.chainId) {
-      case 97:
-        // tries two times in case it fails
-        if (allowance == 0) {
-          await dai.methods
-            .approve(contract2.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: address,
-            });
-        }
-        try {
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash
-          );
-        } catch (error) {
-          console.log("failed, trying again...", error);
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash
-          );
-        }
-        break;
-      case 42:
-        // if (allowance == 0) {
-        await dai.methods
-          .approve(contract2.address, "1000000000000000000000")
-          .send({
-            gasPrice: "200000000000",
-            gas: 700000,
-            from: address,
-          });
-        // }
-        // tries two times in case it fails
-        try {
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash,
-            {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address
-            }
-          );
-          console.log(mint)
-        } catch (error) {
-          console.log("failed, trying again...", error);
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash, {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address
-            }
-          );
-        }
-        break;
-    }
+    // let mint;
+    // switch (network.chainId) {
+    //   case 97:
+    //     // tries two times in case it fails
+    //     if (allowance == 0) {
+    //       await dai.methods
+    //         .approve(contract2.address, "1000000000000000000000")
+    //         .send({
+    //           gasPrice: "22000000000",
+    //           gas: 400000,
+    //           from: address,
+    //         });
+    //     }
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     } catch (error) {
+    //       console.log("failed, trying again...", error);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     }
+    //     break;
+    //   case 42:
+    //     // if (allowance == 0) {
+    //     await dai.methods
+    //       .approve(contract2.address, "1000000000000000000000")
+    //       .send({
+    //         gasPrice: "200000000000",
+    //         gas: 700000,
+    //         from: address,
+    //       });
+    //     // }
+    //     // tries two times in case it fails
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address
+    //         }
+    //       );
+    //       console.log(mint)
+    //     } catch (error) {
+    //       console.log("failed, trying again...", error);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash, {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address
+    //         }
+    //       );
+    //     }
+    //     break;
+    // }
     
     setStep(6);
   };

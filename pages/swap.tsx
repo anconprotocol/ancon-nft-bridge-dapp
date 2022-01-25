@@ -103,16 +103,7 @@ const router = useRouter()
           tempProv
         );
 
-        const filter = await xdvnftContract.filters.Locked();
-
-        const result = await xdvnftContract.queryFilter(
-          filter,
-          trans.blockHash
-        );
-
-        const decode = parseInt(result[0].args[0]._hex, 16);
         setNetwork('bnbt')
-        console.log("result", result);
         
       } catch (error) {
         console.log("not lock");
