@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export":"npm  run start && next export _static"
+    "export":"npm  run build && next export _static"
   },
   "dependencies": {
     "@badrap/bar-of-progress": "^0.1.2",
