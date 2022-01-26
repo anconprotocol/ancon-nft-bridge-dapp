@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export":"npm  run build && next export _static"
+    "export":"npm  run build && next export -o _static"
   },
   "engines": {
     "node": "v16.2.0"
