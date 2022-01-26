@@ -8,6 +8,9 @@
     "lint": "next lint",
     "export":"npm  run build && next export _static"
   },
+  "engines": {
+    "node": "v14.0.0"
+  },
   "dependencies": {
     "@badrap/bar-of-progress": "^0.1.2",
     "@heroicons/react": "^1.0.5",
