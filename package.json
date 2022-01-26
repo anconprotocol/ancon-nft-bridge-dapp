@@ -9,7 +9,7 @@
     "export":"npm  run build && next export _static"
   },
   "engines": {
-    "node": "v14.0.0"
+    "node": "v16.2.0"
   },
   "dependencies": {
     "@badrap/bar-of-progress": "^0.1.2",
