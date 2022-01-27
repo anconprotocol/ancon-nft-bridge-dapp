@@ -22,7 +22,11 @@ import { XDVNFT__factory } from "../types/ethers-contracts";
 import Web3 from "web3";
 import GetDid from "../functions/GetDid";
 import GetChain from "../functions/GetChain";
-import {   arrayify, keccak256, toUtf8Bytes } from "ethers/lib/utils";
+import { arrayify, keccak256, toUtf8Bytes } from "ethers/lib/utils";
+import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
+import QRCode from "react-qr-code";
+import { QrcodeIcon } from "@heroicons/react/solid";
+import ProgressLine from "../components/ProgressLine";
 
 //Contracts
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
@@ -37,8 +41,9 @@ function Create() {
   let prov: ethers.providers.Web3Provider;
   let signer: ethers.providers.JsonRpcSigner;
   let network: ethers.providers.Network;
+  let Ancon: AnconProtocol;
   // state
-  const [step, setStep] = useState(3);
+  const [step, setStep] = useState(0);
   const [localImage, setLocalImage] = useState<any | null>(null);
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
@@ -48,16 +53,17 @@ function Create() {
     description: "",
     imageCid: "",
     tokenCid: "",
-    proofKey: "",
+    metadaCid: "",
   });
 
   const [transaction, setTransaction] = useState<any>({
-    hash:'',
-    value:"",
-    block:""
+    hash: "",
+    value: "",
+    block: "",
   });
   const [packet, setPacket] = useState({ proof: "", packet: "" });
   const [user, setUser] = useState({ key: "", height: "" });
+  const [showQr, setShowQr] = useState(false);
   // atoms
   const [address, setAddress] = useRecoilState(addressState);
   const setErrorModal = useSetRecoilState(errorState);
@@ -65,27 +71,24 @@ function Create() {
   // hooks
   const router = useRouter();
   const provider: any = useProvider();
-  const clickInput = () => document.getElementById("nft-img").click();
+  if (provider){
+    Ancon = new AnconProtocol(provider, address);
+    Ancon.initialize()
+  }
+    const clickInput = () =>
+      document.getElementById("nft-img").click();
 
+  const key = (event: any) => {
+    if (event.key === "Enter") {
+      handleSetMessageUpload();
+    }
+  };
   //step 0 //
 
   // STEP 0  gets the public key and handle the get did//
   const getDomainName = async () => {
-    
-    const prov = new ethers.providers.Web3Provider(provider)
-
-    // get the network
-    const    network = await prov.getNetwork();
-
-    const rawResponse = await fetch(
-      `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
-    );
-    const response = await rawResponse.json();
-    console.log("response", rawResponse);
-    if (rawResponse.status === 400) {
-      return false;
-    }
-    return true;
+    const status = await Ancon.getDomainName();
+    return status;
   };
 
   // step 1 //
@@ -185,8 +188,9 @@ function Create() {
   // step4 //
   // creates the metadata
   const createMetadata = async (cidI: string) => {
-    const prov = new ethers.providers.Web3Provider(provider);
-    const signer = await prov.getSigner();
+    setErrorModal(["Waiting for wallet action..."]);
+
+    // prepare de payload
     const payload = {
       name: tokenData.name,
       description: tokenData.description,
@@ -196,13 +200,16 @@ function Create() {
     };
 
     // sign the message
-    const signature = await signer.signMessage(
+    const signature = await Ancon.signer.signMessage(
       ethers.utils.arrayify(
         ethers.utils.toUtf8Bytes(JSON.stringify(payload))
       )
     );
-    const DIDcid = localStorage.getItem("DIDCid");
-    console.log("did", DIDcid);
+
+    // hide the modal
+    setErrorModal([]);
+
+    // prepare the request
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -214,254 +221,244 @@ function Create() {
       }),
     };
     try {
-      // creates the metadata
+      // creates the metadata in ancon protocol
       const PostRequest = async () => {
-        const rawMetadata = await fetch(
-          "https://api.ancon.did.pa/v0/dagjson",
+        const metadata = await Ancon.postProof(
+          "dagjson",
           requestOptions
         );
-        const metadata = await rawMetadata.json();
-        // returns the metadata cid
-        console.log("metadata", metadata);
-        const id = await metadata.cid;
 
-        setTokenData({ ...tokenData, tokenCid: id });
-        console.log("didCID", id);
-        const dagRequest = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${id}/`
-        );
+        const metadataCid = metadata.did;
 
-        const dag = await dagRequest.json();
-        let metadataCid: any;
-        console.log(dag);
-        let proofKey: any;
-        console.log("dag", dag);
-        if (dag !== null) {
-          metadataCid = await Object?.values(dag.content)[0];
-        }
+        // show the modal
+        setErrorModal(["Waiting for wallet action......"]);
+
+        // hexdata
         let hexdata = ethers.utils.defaultAbiCoder.encode(
           ["address", "string"],
           [address, metadataCid]
         );
 
-        let s = await signer.signMessage(
+        // sign the data
+        let s = await Ancon.signer.signMessage(
           arrayify(toUtf8Bytes(hexdata))
         );
 
-        console.log("dag", dag, metadataCid);
+        // hide the modal
+        setErrorModal([]);
         console.log("61 seconds");
+
         setMessage(
           "Creating Metadata, please wait this process can take several minutes."
         );
-        setStep(-1);
-        let eventWaiter = await getPastEvents();
+        setStep(2);
+
+        // wait for the header to change
+        let eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
 
-        const rawPostProof = await fetch(
-          "https://api.ancon.did.pa/v0/dagjson",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              path: "/",
-              from: address,
-              signature: s,
-              data: hexdata,
-            }),
-          }
-        );
-        const postProof = await rawPostProof.json();
-        const key = await postProof.cid;
-        console.log("date", postProof, key);
+        // handle the second request options
+        const requestOptions2 = {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            path: "/",
+            from: address,
+            signature: s,
+            data: hexdata,
+          }),
+        };
 
-        const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${key}/`
+        // post the second proof
+        const proof = await Ancon.postProof(
+          "dagjson",
+          requestOptions2
         );
-        const getProof = await rawGetProof.json();
-        console.log();
-        
-        setUser({ key: getProof.key, height: getProof.height });
-        setPacket({ proof: getProof.proof, packet: hexdata });
-        console.log("31 seconds");
-        eventWaiter = await getPastEvents();
+
+        // save the keys
+        setUser({ key: proof.proofKey, height: proof.proofHeight });
+        setPacket({ ...packet, packet: hexdata });
+
+        console.log("wait for the event");
+        eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
 
-        console.log("fetch", getProof);
         setMessage("Minting NFT...");
         setTokenData({
           ...tokenData,
           imageCid: cidI,
           tokenCid: metadataCid,
+          metadaCid: metadata.cid,
         });
-        setStep(4);
+        setStep(3);
       };
       PostRequest();
     } catch (error) {
       console.log("err", error);
       console.log("error");
-      setStep(3);
+      setStep(0);
     }
   };
-
-  // step 5 //
-  const mintNft = async () => {
-    const _web3 = new Web3(provider);
-    _web3.eth.defaultAccount = address;
-    const web3 = _web3;
-    bindContracts();
-  };
-  console.log(step);
 
   const bindContracts = async () => {
     setStep(5);
+    setShowQr(false);
     console.log("Beginning of BINDCONTRACTS()");
     // initalize the web3 sockets
-    const _web3 = new Web3(provider);
-    _web3.eth.defaultAccount = address;
-    const web3 = _web3;
-    prov = new ethers.providers.Web3Provider(provider);
-    signer = await prov.getSigner();
-    network = await prov.getNetwork();
+    const mint = await Ancon.mintNft(packet.packet, user.key);
+    // const _web3 = new Web3(provider);
+    // _web3.eth.defaultAccount = address;
+    // const web3 = _web3;
+    // prov = new ethers.providers.Web3Provider(provider);
+    // signer = await prov.getSigner();
+    // network = await prov.getNetwork();
 
-    const contractAddress: any = await GetChain(network);
-    const contract1 = XDVNFT__factory.connect(
-      contractAddress.xdv,
-      prov
-    );
-    const contract2 = XDVNFT__factory.connect(
-      contractAddress.xdv,
-      signer
-    );
-    const contract3 = AnconProtocol__factory.connect(
-      contractAddress.ancon,
-      prov
-    );
+    // const contractAddress: any = await GetChain(network);
+    // const contract1 = XDVNFT__factory.connect(
+    //   contractAddress.xdv,
+    //   prov
+    // );
+    // const contract2 = XDVNFT__factory.connect(
+    //   contractAddress.xdv,
+    //   signer
+    // );
+    // const contract3 = AnconProtocol__factory.connect(
+    //   contractAddress.ancon,
+    //   prov
+    // );
 
-    const dai = new web3.eth.Contract(
-      AnconToken.abi,
-      contractAddress.dai
-    );
+    // const dai = new web3.eth.Contract(
+    //   AnconToken.abi,
+    //   contractAddress.dai
+    // );
 
-    // check the allowance
-    const allowance = await dai.methods
-      .allowance(address, contract2.address)
-      .call();
-    await sleep(7000);
+    // // check the allowance
+    // const allowance = await dai.methods
+    //   .allowance(address, contract2.address)
+    //   .call();
+    // await sleep(7000);
 
-    const memonik = web3.utils.keccak256("anconprotocol");
-    // checking hashes
-    const rawLastHash = await fetch(
-      "https://api.ancon.did.pa/v0/proofs/lasthash"
-    );
-    const lasthash = await rawLastHash.json();
-    const relayHash = await contract3.getProtocolHeader(memonik);
-    console.log(
-      "last hash",
-      ethers.utils.hexlify(
-        ethers.utils.base64.decode(lasthash.lastHash.hash)
-      )
-    );
-    console.log("relay hash", relayHash);
+    // const memonik = web3.utils.keccak256("anconprotocol");
+    // // checking hashes
+    // const rawLastHash = await fetch(
+    //   "https://api.ancon.did.pa/v0/proofs/lasthash"
+    // );
+    // const lasthash = await rawLastHash.json();
+    // const relayHash = await contract3.getProtocolHeader(memonik);
+    // console.log(
+    //   "last hash",
+    //   ethers.utils.hexlify(
+    //     ethers.utils.base64.decode(lasthash.lastHash.hash)
+    //   )
+    // );
+    // console.log("relay hash", relayHash);
 
-    // get the key and height
-    const Did = await GetDid(network.name,address);
-    const key = Did.key;
+    // // get the key and height
+    // const Did = await GetDid(network.name, address);
+    // const key = Did.key;
 
-    /* prepare the packet and user proof
-     */
-    // prepare packet proof
-    const rawPacketProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${user.key}?height=${lasthash.lastHash.version}`
-    );
-    let packetProof = await rawPacketProof.json();
-    packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
+    // /* prepare the packet and user proof
+    //  */
+    // // prepare packet proof
+    // const rawPacketProof = await fetch(
+    //   `https://api.ancon.did.pa/v0/proof/${user.key}?height=${lasthash.lastHash.version}`
+    // );
+    // let packetProof = await rawPacketProof.json();
+    // packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
-    // prepare user proof
-    const rawUserProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${key}?height=${lasthash.lastHash.version}`
-    );
-    let userProof = await rawUserProof.json();
-    userProof = toAbiProof({ ...userProof[0].Proof.exist });
+    // // prepare user proof
+    // const rawUserProof = await fetch(
+    //   `https://api.ancon.did.pa/v0/proof/${key}?height=${lasthash.lastHash.version}`
+    // );
+    // let userProof = await rawUserProof.json();
+    // userProof = toAbiProof({ ...userProof[0].Proof.exist });
 
-    // get the hexdata
-    const hexData = packet.packet;
+    // // get the hexdata
+    // const hexData = packet.packet;
 
+    // // let mint;
+    // // show the modal
+    // setErrorModal([
+    //   "Please complete the 2 following wallet actions...",
+    // ]);
+    // switch (network.chainId) {
+    //   case 97:
+    //   case 80001:
+    //     // tries two times in case it fails
+    //     if (allowance == 0) {
+    //       await dai.methods
+    //         .approve(contract2.address, "1000000000000000000000")
+    //         .send({
+    //           gasPrice: "22000000000",
+    //           gas: 400000,
+    //           from: address,
+    //         });
+    //     }
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         hexData,
+    //         userProof,
+    //         packetProof
+    //       );
+    //       setErrorModal([]);
+    //     } catch (error) {
+    //       sleep(5000);
+    //       console.log("failed, trying again...", error);
+    //       mint = await contract2.mintWithProof(
+    //         hexData,
+    //         userProof,
+    //         packetProof
+    //       );
+    //     }
+    //     break;
+    //   case 42:
+    //     // if (allowance == 0) {
+    //     await dai.methods
+    //       .approve(contract2.address, "1000000000000000000000")
+    //       .send({
+    //         gasPrice: "200000000000",
+    //         gas: 700000,
+    //         from: address,
+    //       });
+    //     // }
+    //     // tries two times in case it fails
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address,
+    //         }
+    //       );
+    //       console.log(mint);
 
-    let mint;
-    switch (network.chainId) {
-      case 97: 
-        case 80001:
-        // tries two times in case it fails
-        if (allowance == 0) {
-          await dai.methods
-            .approve(contract2.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: address,
-            });
-        }
-        try {
-          mint = await contract2.mintWithProof(
-            hexData,
-            userProof,
-            packetProof,
-          );
-        } catch (error) {
-          sleep(5000);
-          console.log("failed, trying again...", error);
-          mint = await contract2.mintWithProof(
-            hexData,
-            userProof,
-            packetProof,
-          );
-        }
-        break;
-      case 42:
-        // if (allowance == 0) {
-        await dai.methods
-          .approve(contract2.address, "1000000000000000000000")
-          .send({
-            gasPrice: "200000000000",
-            gas: 700000,
-            from: address,
-          });
-        // }
-        // tries two times in case it fails
-        try {
-          mint = await contract2.mintWithProof(
-            hexData,
-            userProof,
-            packetProof,
-            {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address,
-            }
-          );
-          console.log(mint);
-        } catch (error) {
-          console.log("failed, trying again...", error);
-          sleep(5000);
-          mint = await contract2.mintWithProof(
-            hexData,
-            userProof,
-            packetProof,
-            {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address,
-            }
-          );
-        }
-        break;
-    }
+    //     } catch (error) {
+    //       console.log("failed, trying again...", error);
+    //       sleep(5000);
+    //       mint = await contract2.mintWithProof(
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address,
+    //         }
+    //       );
+    //     }
+    //     break;
+    // }
+    setErrorModal([]);
     console.log(mint);
+    await mint?.wait(2);
     setTransaction({
-      hash:mint?.hash,
+      hash: mint?.hash,
       value: mint?.value._hex,
-      block: mint?.blockNumber
-    })
+      block: mint?.blockNumber,
+    });
     setStep(6);
   };
 
@@ -486,7 +483,7 @@ function Create() {
     if (tokenData.name === "" || image === null) {
       setError(true);
     } else {
-      setStep(2);
+      setStep(1);
       const cid: any = await handleUpload();
       if (cid !== false) {
         await createMetadata(cid);
@@ -498,12 +495,32 @@ function Create() {
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
-      <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
-        <div className="bg-white shadow-xl rounded-lg px-3 py-4">
-          <span className="text-black font-bold text-xl">
-            {step === 6 ? "NFT Created" : "Create NFT"}
-          </span>
-          {step === 2 ? (
+
+      <div className="flex justify-center items-center md:mt-18 mt-8 w-full">
+        <div className="bg-white shadow-xl rounded-lg px-3 py-4 w-11/12 md:w-6/12 2xl:w-5/12">
+          <ProgressLine steps={6} step={step} />
+          <div className="text-black font-bold text-xl flex">
+            {step === 0
+              ? "Create NFT"
+              : step === 4
+              ? "Metadata Created"
+              : step === 6
+              ? "NFT Minted"
+              : "Creating NFT"}
+            {step === 3 || step === 6 ? (
+              <div
+                className="ml-3 flex items-center cursor-pointer hover:scale-125 transform transition-all ease-in"
+                onClick={() => setShowQr(true)}
+              >
+                <QrcodeIcon className="w-5" />
+                <span className="text-gray-500 font-light text-xs">
+                  show qr
+                </span>
+              </div>
+            ) : null}
+          </div>
+
+          {step === 1 ? (
             <div className="flex flex-col items-center">
               <div
                 className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
@@ -514,7 +531,7 @@ function Create() {
               </p>
             </div>
           ) : null}
-          {step === -1 ? (
+          {step === 2 ? (
             <div className="flex flex-col items-center">
               <div
                 className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
@@ -523,8 +540,8 @@ function Create() {
               <p className="animate-pulse mt-4">{message}</p>
             </div>
           ) : null}
-          {step == 3 ? (
-            <div className="flex-col flex mt-3">
+          {step == 0 ? (
+            <div className="flex-col flex mt-3 w-full">
               <div className="flex-col flex mt-3">
                 <a className="text-gray-600 text-sm font-bold">
                   NFT Name
@@ -549,6 +566,7 @@ function Create() {
                 <input
                   id="TITLE"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
+                  onKeyPress={key}
                   onChange={(e) => {
                     setTokenData({
                       ...tokenData,
@@ -558,18 +576,21 @@ function Create() {
                   value={tokenData.description}
                 ></input>
               </div>
-              <div
-                onClick={clickInput}
-                className="p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out mt-3"
-              >
-                <p className="flex justify-center items-center">
+              <div className="flex justify-center items-center mt-6">
+                <p
+                  onClick={clickInput}
+                  className="flex justify-center items-center p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out"
+                >
                   Select Image
                 </p>
               </div>
-              <ErrorMessage
-                message="Please fill the blanks and select an Image"
-                show={error}
-              />
+              <div className="flex items-center justify-center mt-6">
+                <ErrorMessage
+                  message="Please fill the blanks and select an Image"
+                  show={error}
+                />
+              </div>
+
               {localImage != null ? (
                 <div className="flex items-center justify-center pt-3">
                   <img
@@ -599,6 +620,15 @@ function Create() {
               </div>
             </div>
           ) : null}
+          {step === 4 ? (
+            <div className="flex flex-col items-center">
+              <div
+                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                role="status"
+              ></div>
+              <p className="animate-pulse mt-4">{message}</p>
+            </div>
+          ) : null}
           {step === 5 ? (
             <div className="flex flex-col items-center">
               <div
@@ -608,107 +638,209 @@ function Create() {
               <p className="animate-pulse mt-4">{message}</p>
             </div>
           ) : null}
-          {step == 4 ? (
-            <div className="">
-              <div className="flex flex-col items-start mt-3">
-                <a className="text-gray-600 text-sm">NFT Name</a>
-                <span className="text-lg font-medium mb-2">
+          {step == 3 ? (
+            <div className="grid grid-cols-1 space-y-2">
+              <div className="my-3">
+                <p className="text-lg font-medium">
+                  The Metadata has been stored, do you want to mint a
+                  NFT with this metadata?
+                </p>
+              </div>
+
+              {/* name */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  NFT Name
+                </span>
+                <p className="text-md font-medium">
                   {tokenData.name}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">Description</a>
-                <span className="text-lg font-medium mb-2">
+              {/* description */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  Description
+                </span>
+                <p className="text-md font-medium truncate">
                   {tokenData.description}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">Image CID</a>
-                <span className="text-lg font-medium mb-2">
+              {/* image */}
+              <div
+                className=""
+                onClick={() =>
+                  navigator.clipboard.writeText(tokenData.imageCid)
+                }
+              >
+                <span className="text-gray-600 text-sm">
+                  Image CID
+                </span>
+                <p className="text-md font-medium truncate">
                   {tokenData.imageCid}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">Metadata CID</a>
-                <span className="text-lg font-medium mb-2">
+              {/* Metadata Cid */}
+              <div
+                className=""
+                onClick={() =>
+                  navigator.clipboard.writeText(tokenData.tokenCid)
+                }
+              >
+                <span className="text-gray-600 text-sm">
+                  Metadata CID
+                </span>
+                <p className="text-md font-medium truncate">
                   {tokenData.tokenCid}
-                </span>
+                </p>
+              </div>
 
-                <div className="flex items-center justify-center mt-3 w-full">
-                  <div>
-                    <img
-                      className="nft-img"
-                      src={`data:image/jpeg;base64,${localImage}`}
-                      style={{ maxWidth: "120px" }}
-                      alt="readyLocal"
-                    />
-                    <p
-                      onClick={bindContracts}
-                      className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+              {/* image to show */}
+              <div className="flex items-center justify-center mt-3 w-full">
+                <div className="grid grid-cols-1 w-full place-items-center">
+                  <img
+                    className="nft-img"
+                    src={`data:image/jpeg;base64,${localImage}`}
+                    style={{ maxWidth: "120px" }}
+                    alt="readyLocal"
+                  />
+                  <p
+                    onClick={() => bindContracts()}
+                    className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4 w-1/4"
+                  >
+                    Mint
+                  </p>
+
+                  {/* qr code */}
+                  {showQr && (
+                    <div
+                      className="pb-3 mt-4"
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`
+                        )
+                      }
                     >
-                      Mint
-                    </p>
-                  </div>
+                      <QRCode
+                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`}
+                        size={150}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           ) : null}
           {step == 6 ? (
-            <div className="">
-              <div className="flex flex-col items-start mt-3">
-                <a className="text-gray-600 text-sm">NFT Name</a>
-                <span className="text-lg font-medium mb-2">
+            <div className="grid grid-cols-1 space-y-2">
+              <div className="my-3">
+                <p className="text-lg font-medium">
+                  The NFT has been minted, take a screenshot or save
+                  the QR
+                </p>
+              </div>
+
+              {/* name */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  NFT Name
+                </span>
+                <p className="text-md font-medium">
                   {tokenData.name}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">Description</a>
-                <span className="text-lg font-medium mb-2">
+              {/* description */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  Description
+                </span>
+                <p className="text-md font-medium truncate">
                   {tokenData.description}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">Image CID</a>
-                <span className="text-lg font-medium mb-2">
+              {/* image */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  Image CID
+                </span>
+                <p className="text-md font-medium truncate">
                   {tokenData.imageCid}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">Metadata CID</a>
-                <span className="text-lg font-medium mb-2">
+              {/* Metadata Cid */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  Metadata CID
+                </span>
+                <p className="text-md font-medium truncate">
                   {tokenData.tokenCid}
-                </span>
+                </p>
+              </div>
 
-                
-                <a className="text-gray-600 text-sm">Transaction hash</a>
-                <span className="text-lg font-medium mb-2">
+              {/* transaction Hash */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  Transaction Hash
+                </span>
+                <p className="text-md font-medium truncate">
                   {transaction.hash}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">Transaction Fee</a>
-                <span className="text-lg font-medium mb-2">
-                  {transaction.value}
+              {/* Transaction Block */}
+              <div className="">
+                <span className="text-gray-600 text-sm">
+                  Transaction Block
                 </span>
-
-                <a className="text-gray-600 text-sm">Block</a>
-                <span className="text-lg font-medium mb-2">
+                <p className="text-md font-medium truncate">
                   {transaction.block}
-                </span>
+                </p>
+              </div>
 
-                <a className="text-gray-600 text-sm">From</a>
-                <span className="text-lg font-medium mb-2">
+              {/* Transaction from */}
+              <div className="">
+                <span className="text-gray-600 text-sm">From</span>
+                <p className="text-md font-medium truncate">
                   {address}
-                </span>
+                </p>
+              </div>
 
-                <div className="flex items-center justify-center mt-3 w-full">
-                  <div>
-                    <img
-                      className="nft-img"
-                      src={`data:image/jpeg;base64,${localImage}`}
-                      style={{ maxWidth: "120px" }}
-                      alt="readyLocal"
-                    />
-                    <p
-                      onClick={() => router.push("/")}
-                      className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+              {/* image to show */}
+              <div className="flex items-center justify-center mt-3 w-full">
+                <div className="grid grid-cols-1 w-full place-items-center">
+                  <img
+                    className="nft-img"
+                    src={`data:image/jpeg;base64,${localImage}`}
+                    style={{ maxWidth: "120px" }}
+                    alt="readyLocal"
+                  />
+                  <p
+                    onClick={() => router.push("/")}
+                    className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+                  >
+                    Close
+                  </p>
+                  {/* qr code */}
+                  {showQr && (
+                    <div
+                      className="pb-3 mt-4"
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`
+                        )
+                      }
                     >
-                      Close
-                    </p>
-                  </div>
+                      <QRCode
+                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`}
+                        size={150}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

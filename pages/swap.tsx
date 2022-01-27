@@ -314,7 +314,7 @@ const router = useRouter()
               ? "Transfer Metadata To"
               : step === 3
               ? "NFT sent"
-              : "Transfer Metadata Source"}
+              : "Merge Metadata"}
           </span>
 
           {step === -1 ? (
