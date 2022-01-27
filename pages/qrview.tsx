@@ -1,10 +1,9 @@
-import { BadgeCheckIcon } from "@heroicons/react/solid";
+import { BadgeCheckIcon, XCircleIcon } from "@heroicons/react/solid";
 import { ethers } from "ethers";
 import { useRouter } from "next/router";
-import { sign } from "node:crypto";
-import { copyFileSync } from "node:fs";
-import { json } from "node:stream/consumers";
 import React, { useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
+import { addressState } from "../atoms/addressAtom";
 import Header from "../components/Header";
 import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
 import useProvider from "../hooks/useProvider";
@@ -19,10 +18,11 @@ function Qrview() {
     image: "",
     root: "",
   });
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState('');
   const router = useRouter();
   const provider = useProvider();
   const { address, did, cid }: any = router.query;
+  const addressToCheck = useRecoilValue(addressState)
 
   if (address) {
     Ancon = new AnconProtocol(provider, address);
@@ -67,8 +67,10 @@ function Qrview() {
 
     // verify the message
     const verify = ethers.utils.verifyMessage(digest, signature);
-    if (verify === address) {
-      setShow(true);
+    if (verify === addressToCheck) {
+      setShow('owner');
+    }else{
+      setShow('not')
     }
   };
   return (
@@ -113,11 +115,19 @@ function Qrview() {
           </div>
 
           {/* icon */}
-          {show && (
+          {show === 'owner' && (
             <div className="grid mt-4 grid-cols-1 place-items-center">
               <BadgeCheckIcon className="w-10 text-green-700" />
               <p className="text-green-700">
                 You are this Metadata Owner
+              </p>
+            </div>
+          )}
+          {show === 'not' && (
+            <div className="grid mt-4 grid-cols-1 place-items-center">
+              <XCircleIcon className="w-10 text-red-700" />
+              <p className="text-red-700">
+                You NOT are this Metadata Owner
               </p>
             </div>
           )}
