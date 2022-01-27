@@ -71,12 +71,11 @@ function Create() {
   // hooks
   const router = useRouter();
   const provider: any = useProvider();
-  if (provider){
+  if (provider) {
     Ancon = new AnconProtocol(provider, address);
-    Ancon.initialize()
+    Ancon.initialize();
   }
-    const clickInput = () =>
-      document.getElementById("nft-img").click();
+  const clickInput = () => document.getElementById("nft-img").click();
 
   const key = (event: any) => {
     if (event.key === "Enter") {
@@ -305,7 +304,27 @@ function Create() {
     setShowQr(false);
     console.log("Beginning of BINDCONTRACTS()");
     // initalize the web3 sockets
-    const mint = await Ancon.mintNft(packet.packet, user.key);
+
+    try {
+      const mint = await Ancon.mintNft(packet.packet, user.key);
+      setErrorModal([]);
+      console.log(mint);
+      await mint?.wait(2);
+      setTransaction({
+        hash: mint?.hash,
+        value: mint?.value._hex,
+        block: mint?.blockNumber,
+      });
+      setStep(6);
+    } catch (error) {
+      setErrorModal([
+        "Something went wrong please try again",
+        "Try again",
+        "/create",
+        "Enroll Account",
+        "/enroll",
+      ]);
+    }
     // const _web3 = new Web3(provider);
     // _web3.eth.defaultAccount = address;
     // const web3 = _web3;
@@ -451,15 +470,8 @@ function Create() {
     //     }
     //     break;
     // }
-    setErrorModal([]);
-    console.log(mint);
-    await mint?.wait(2);
-    setTransaction({
-      hash: mint?.hash,
-      value: mint?.value._hex,
-      block: mint?.blockNumber,
-    });
-    setStep(6);
+
+    
   };
 
   //
