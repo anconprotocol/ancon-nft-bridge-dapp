@@ -89,9 +89,10 @@ export default class AnconProtocol {
     const rawDid = await fetch(
       `https://api.ancon.did.pa/v0/did/raw:did:ethr:${this.network.name}:${this.address}`
     );
+    
     const encodedDid = await rawDid.json();
-    const content: any = await Object?.values(encodedDid.content)[0];
-    encodedDid["content"] = content;
+    const content: any = await Object?.values(encodedDid.contentHash)[0];
+    encodedDid.contentHash = content
     return encodedDid;
   }
 
@@ -218,6 +219,7 @@ export default class AnconProtocol {
     const rawResponse = await fetch(url, requestOptions);
     //   jsoned response
     const response = await rawResponse.json();
+    
 
     this.postProofCid = response.cid;
 
@@ -227,21 +229,21 @@ export default class AnconProtocol {
     switch (enrolling) {
       case true:
         const did = await this.getDidTransaction();
-        const content: any = await Object?.values(did.content)[0];
+        console.log(did)
         result = {
-          did: did.content,
-          proofKey: did.key,
-          proofHeight: did.height,
-          cid,
+          contentCid: did.contentHash as string,
+          proofKey: did.key as string,
+          proofHeight: did.height as string,
+          proofCid:cid,
           ipfs,
         };
         break;
       default:
         const dag = await this.fetchDag(cid);
         result = {
-          cid,
+          proofCid:cid,
           ipfs,
-          did: dag.cid,
+          contentCid: dag.cid,
           proofKey: dag.proofKey,
           proofHeight: dag.proofHeight,
         };
@@ -261,6 +263,7 @@ export default class AnconProtocol {
       `https://api.ancon.did.pa/v0/proof/${key}?height=${height}`
     );
     const result = await rawResult.json();
+    console.log(result)
     const abiedProof = await this.toAbiProof({
       ...result[0].Proof.exist,
     });
@@ -272,7 +275,8 @@ export default class AnconProtocol {
       `https://api.ancon.did.pa/v0/dagjson/${id}/`
     );
     const response = await rawResponse.json();
-    const cid = await Object?.values(response.content)[0];
+    console.log(response)
+    const cid = await Object?.values(response.contentHash)[0];
     return {
       cid: cid as string,
       proofKey: response.key as string,
@@ -333,26 +337,27 @@ export default class AnconProtocol {
     );
 
     // wait for the header to be updated
-    const filter = anconContractReader.filters.HeaderUpdated();
-    const from = await this.prov.getBlockNumber();
-    let result = await anconContractReader.queryFilter(filter, from);
-    let time = Date.now();
-    const maxTime = Date.now() + 180000;
-    const relayHash = await anconContractReader.getProtocolHeader(
-      this.moniker
-    );
-    if (hash !== relayHash) {
-      console.log("hashes differ", height);
-      while (time < maxTime) {
-        result = await anconContractReader.queryFilter(filter, from);
-        console.log(result);
-        if (result.length > 0) {
-          break;
-        }
-        time = Date.now();
-        await sleep(10000);
-      }
-    }
+    // const filter = anconContractReader.filters.HeaderUpdated();
+    // const from = await this.prov.getBlockNumber();
+    // let result = await anconContractReader.queryFilter(filter, from);
+    // let time = Date.now();
+    // const maxTime = Date.now() + 180000;
+    // const relayHash = await anconContractReader.getProtocolHeader(
+    //   this.moniker
+    // );
+    // if (hash !== relayHash) {
+    //   console.log("hashes differ", height);
+    //   while (time < maxTime) {
+    //     result = await anconContractReader.queryFilter(filter, from);
+    //     console.log(result);
+    //     if (result.length > 0) {
+    //       break;
+    //     }
+    //     time = Date.now();
+    //     await sleep(10000);
+    //   }
+    // }
+    await this.getPastEvents()
 
     console.log("test");
     // check the allowance
@@ -433,6 +438,7 @@ export default class AnconProtocol {
     }
     await enroll?.wait(1);
     console.log("enrolled");
+    console.log(enroll)
     return enroll;
     // } catch (error) {
     //   console.log("error", error);
@@ -631,6 +637,7 @@ export default class AnconProtocol {
       `https://api.ancon.did.pa/v0/dag/${cid}/?namespace=anconprotocol/users/${address}`
     );
     const data = await rawData.json();
+      console.log(data)
     data["root"] = await await Object?.values(data.root)[0];
     return data;
   }

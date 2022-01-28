@@ -92,9 +92,6 @@ function Enroll() {
         const recoveredAddress = getPubKey[0];
         const sentAddress = getPubKey[1]
 
-        // const pubkey = "getPubKey[2];";
-        // const recoveredAddress = "";
-        // const sentAddress = "";
         setMessage("Validating proof...");
         // if the address are equal procced to get the proof
         // if (recoveredAddress === sentAddress) {
@@ -123,8 +120,7 @@ function Enroll() {
     // encode the pub key
     const base58Encode = ethers.utils.base58.encode(pubkey);
 
-    // take out the 0x from the address
-    const NoHexAddress = address.substring(2);
+
 
     const prov = new ethers.providers.Web3Provider(provider)
     // initialize the signer
@@ -165,18 +161,19 @@ function Enroll() {
         console.log('data',data)
         
         //save the cid to state
-        setDIDCid(data.did);
+        setDIDCid(data.contentCid);
 
         const proof = await Ancon.getProof(data.proofKey, data.proofHeight)
         console.log("getproff", proof);
 
         // enroll to L2
         let enroll;
+        console.log('did', data)
         setMessage(
           "Preparing to enroll the account, please wait this proccess can take several minutes"
         );
         setTimeout(async () => {
-          enroll = await Ancon.EnrollL2Account(data.did,proof)
+          enroll = await Ancon.EnrollL2Account(data.contentCid,proof)
           setStep(2)
         }, 30000);
       };

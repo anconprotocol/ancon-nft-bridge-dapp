@@ -227,7 +227,7 @@ function Create() {
           requestOptions
         );
 
-        const metadataCid = metadata.did;
+        const metadataCid = metadata.contentCid;
 
         // show the modal
         setErrorModal(["Waiting for wallet action......"]);
@@ -286,8 +286,8 @@ function Create() {
         setTokenData({
           ...tokenData,
           imageCid: cidI,
-          tokenCid: metadataCid,
-          metadaCid: metadata.cid,
+          tokenCid: metadata.proofCid,
+          metadaCid: metadata.contentCid,
         });
         setStep(3);
       };
@@ -731,12 +731,12 @@ function Create() {
                       className="pb-3 mt-4"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`
+                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`
                         )
                       }
                     >
                       <QRCode
-                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`}
+                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`}
                         size={150}
                       />
                     </div>
@@ -843,12 +843,12 @@ function Create() {
                       className="pb-3 mt-4"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`
+                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`
                         )
                       }
                     >
                       <QRCode
-                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`}
+                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`}
                         size={150}
                       />
                     </div>
