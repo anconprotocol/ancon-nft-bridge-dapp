@@ -99,10 +99,7 @@ function Create() {
     const chain = await GetChain(network);
     console.log("past events", network, chain);
     try {
-      const contract1 = await AnconProtocol__factory.connect(
-        chain.ancon,
-        prov
-      );
+      const contract1 = await AnconProtocol__factory.connect(chain.ancon, prov);
 
       const filter = await contract1.filters.HeaderUpdated(
         web3.utils.keccak256("anconprotocol")
@@ -141,6 +138,7 @@ function Create() {
   const handleUpload = async () => {
     try {
       // check if user if enrolled
+      debugger;
       const domain = await getDomainName();
       if (domain === false) {
         setErrorModal([
@@ -200,9 +198,7 @@ function Create() {
 
     // sign the message
     const signature = await Ancon.signer.signMessage(
-      ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(JSON.stringify(payload))
-      )
+      ethers.utils.arrayify(ethers.utils.toUtf8Bytes(JSON.stringify(payload)))
     );
 
     // hide the modal
@@ -222,10 +218,7 @@ function Create() {
     try {
       // creates the metadata in ancon protocol
       const PostRequest = async () => {
-        const metadata = await Ancon.postProof(
-          "dagjson",
-          requestOptions
-        );
+        const metadata = await Ancon.postProof("dagjson", requestOptions);
 
         const metadataCid = metadata.contentCid;
 
@@ -239,9 +232,7 @@ function Create() {
         );
 
         // sign the data
-        let s = await Ancon.signer.signMessage(
-          arrayify(toUtf8Bytes(hexdata))
-        );
+        let s = await Ancon.signer.signMessage(arrayify(toUtf8Bytes(hexdata)));
 
         // hide the modal
         setErrorModal([]);
@@ -269,10 +260,7 @@ function Create() {
         };
 
         // post the second proof
-        const proof = await Ancon.postProof(
-          "dagjson",
-          requestOptions2
-        );
+        const proof = await Ancon.postProof("dagjson", requestOptions2);
 
         // save the keys
         setUser({ key: proof.proofKey, height: proof.proofHeight });
@@ -470,15 +458,11 @@ function Create() {
     //     }
     //     break;
     // }
-
-    
   };
 
   //
   // handles the change of the image
-  const onImageChange = (
-    event: React.ChangeEvent<HTMLInputElement> | any
-  ) => {
+  const onImageChange = (event: React.ChangeEvent<HTMLInputElement> | any) => {
     setImage(event.target.files[0]);
     setError(false);
     if (event.target.files && event.target.files[0]) {
@@ -538,9 +522,7 @@ function Create() {
                 className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
                 role="status"
               ></div>
-              <p className="animate-pulse mt-4">
-                Uploading Image to IPFS
-              </p>
+              <p className="animate-pulse mt-4">Uploading Image to IPFS</p>
             </div>
           ) : null}
           {step === 2 ? (
@@ -555,9 +537,7 @@ function Create() {
           {step == 0 ? (
             <div className="flex-col flex mt-3 w-full">
               <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  NFT Name
-                </a>
+                <a className="text-gray-600 text-sm font-bold">NFT Name</a>
                 <input
                   type="text"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
@@ -572,9 +552,7 @@ function Create() {
               </div>
 
               <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  Description
-                </a>
+                <a className="text-gray-600 text-sm font-bold">Description</a>
                 <input
                   id="TITLE"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
@@ -654,26 +632,20 @@ function Create() {
             <div className="grid grid-cols-1 space-y-2">
               <div className="my-3">
                 <p className="text-lg font-medium">
-                  The Metadata has been stored, do you want to mint a
-                  NFT with this metadata?
+                  The Metadata has been stored, do you want to mint a NFT with
+                  this metadata?
                 </p>
               </div>
 
               {/* name */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  NFT Name
-                </span>
-                <p className="text-md font-medium">
-                  {tokenData.name}
-                </p>
+                <span className="text-gray-600 text-sm">NFT Name</span>
+                <p className="text-md font-medium">{tokenData.name}</p>
               </div>
 
               {/* description */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  Description
-                </span>
+                <span className="text-gray-600 text-sm">Description</span>
                 <p className="text-md font-medium truncate">
                   {tokenData.description}
                 </p>
@@ -686,9 +658,7 @@ function Create() {
                   navigator.clipboard.writeText(tokenData.imageCid)
                 }
               >
-                <span className="text-gray-600 text-sm">
-                  Image CID
-                </span>
+                <span className="text-gray-600 text-sm">Image CID</span>
                 <p className="text-md font-medium truncate">
                   {tokenData.imageCid}
                 </p>
@@ -701,9 +671,7 @@ function Create() {
                   navigator.clipboard.writeText(tokenData.tokenCid)
                 }
               >
-                <span className="text-gray-600 text-sm">
-                  Metadata CID
-                </span>
+                <span className="text-gray-600 text-sm">Metadata CID</span>
                 <p className="text-md font-medium truncate">
                   {tokenData.tokenCid}
                 </p>
@@ -749,26 +717,19 @@ function Create() {
             <div className="grid grid-cols-1 space-y-2">
               <div className="my-3">
                 <p className="text-lg font-medium">
-                  The NFT has been minted, take a screenshot or save
-                  the QR
+                  The NFT has been minted, take a screenshot or save the QR
                 </p>
               </div>
 
               {/* name */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  NFT Name
-                </span>
-                <p className="text-md font-medium">
-                  {tokenData.name}
-                </p>
+                <span className="text-gray-600 text-sm">NFT Name</span>
+                <p className="text-md font-medium">{tokenData.name}</p>
               </div>
 
               {/* description */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  Description
-                </span>
+                <span className="text-gray-600 text-sm">Description</span>
                 <p className="text-md font-medium truncate">
                   {tokenData.description}
                 </p>
@@ -776,9 +737,7 @@ function Create() {
 
               {/* image */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  Image CID
-                </span>
+                <span className="text-gray-600 text-sm">Image CID</span>
                 <p className="text-md font-medium truncate">
                   {tokenData.imageCid}
                 </p>
@@ -786,9 +745,7 @@ function Create() {
 
               {/* Metadata Cid */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  Metadata CID
-                </span>
+                <span className="text-gray-600 text-sm">Metadata CID</span>
                 <p className="text-md font-medium truncate">
                   {tokenData.tokenCid}
                 </p>
@@ -796,9 +753,7 @@ function Create() {
 
               {/* transaction Hash */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  Transaction Hash
-                </span>
+                <span className="text-gray-600 text-sm">Transaction Hash</span>
                 <p className="text-md font-medium truncate">
                   {transaction.hash}
                 </p>
@@ -806,9 +761,7 @@ function Create() {
 
               {/* Transaction Block */}
               <div className="">
-                <span className="text-gray-600 text-sm">
-                  Transaction Block
-                </span>
+                <span className="text-gray-600 text-sm">Transaction Block</span>
                 <p className="text-md font-medium truncate">
                   {transaction.block}
                 </p>
@@ -817,9 +770,7 @@ function Create() {
               {/* Transaction from */}
               <div className="">
                 <span className="text-gray-600 text-sm">From</span>
-                <p className="text-md font-medium truncate">
-                  {address}
-                </p>
+                <p className="text-md font-medium truncate">{address}</p>
               </div>
 
               {/* image to show */}
