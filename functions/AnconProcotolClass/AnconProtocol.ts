@@ -242,7 +242,7 @@ export default class AnconProtocol {
         break;
       default:
         const dag = await this.fetchDag(cid);
-        console.log(dag)
+        console.log(dag);
         result = {
           proofCid: cid,
           ipfs,
@@ -338,28 +338,6 @@ export default class AnconProtocol {
     const hash = ethers.utils.hexlify(
       ethers.utils.base64.decode(lasthash.lastHash.hash)
     );
-
-    // wait for the header to be updated
-    // const filter = anconContractReader.filters.HeaderUpdated();
-    // const from = await this.prov.getBlockNumber();
-    // let result = await anconContractReader.queryFilter(filter, from);
-    // let time = Date.now();
-    // const maxTime = Date.now() + 180000;
-    // const relayHash = await anconContractReader.getProtocolHeader(
-    //   this.moniker
-    // );
-    // if (hash !== relayHash) {
-    //   console.log("hashes differ", height);
-    //   while (time < maxTime) {
-    //     result = await anconContractReader.queryFilter(filter, from);
-    //     console.log(result);
-    //     if (result.length > 0) {
-    //       break;
-    //     }
-    //     time = Date.now();
-    //     await sleep(10000);
-    //   }
-    // }
     await this.getPastEvents();
 
     console.log("test");
@@ -481,10 +459,6 @@ export default class AnconProtocol {
     );
     console.log("[MONIKER]", this.moniker);
     console.log("[LastHash]", lasthash.lastHash.version);
-    // let relayHash = await AnconReader.relayerHashTable(
-    //   this.moniker,
-    //   lasthash.lastHash.version
-    // );
     let sequence = lasthash.lastHash.version;
     // console.log(decodedlastHash, relayHash);
     let time = Date.now();
@@ -494,13 +468,6 @@ export default class AnconProtocol {
       try {
         sequence += 1;
         result = await AnconReader.queryFilter(filter, from);
-        // relayHash = await AnconReader.relayerHashTable(
-        //   this.moniker,
-        //   lasthash.lastHash.version
-        // // );
-        // console.log(result, relayHash);
-        // console.log(decodedlastHash == relayHash);
-        // if (decodedlastHash == relayHash) {
         if (result.length > 0) {
           break;
         }
@@ -561,16 +528,6 @@ export default class AnconProtocol {
     switch (this.network.chainId) {
       case 97:
       case 80001:
-        // tries two times in case it fails
-        // if (allowance == 0) {
-        //   await dai.methods
-        //     .approve(xdvSigner.address, "1000000000000000000000")
-        //     .send({
-        //       gasPrice: "22000000000",
-        //       gas: 400000,
-        //       from: this.address,
-        //     });
-        // }
         try {
           mint = await xdvSigner.mintWithProof(
             hexData,
@@ -588,15 +545,6 @@ export default class AnconProtocol {
         }
         break;
       case 42:
-        // if (allowance == 0) {
-        // await dai.methods
-        //   .approve(xdvSigner.address, "1000000000000000000000")
-        //   .send({
-        //     gasPrice: "200000000000",
-        //     gas: 700000,
-        //     from: this.address,
-        //   });
-        // }
         // tries two times in case it fails
         try {
           mint = await xdvSigner.mintWithProof(
