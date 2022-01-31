@@ -91,7 +91,9 @@ export default class AnconProtocol {
     );
 
     const encodedDid = await rawDid.json();
-    const content: any = await Object?.values(encodedDid.contentHash)[0];
+    const content: any = await Object?.values(
+      encodedDid.contentHash
+    )[0];
     encodedDid.contentHash = content;
     return encodedDid;
   }
@@ -110,9 +112,13 @@ export default class AnconProtocol {
    * @returns retunrn the to abi Proof
    */
   toAbiProof(proof: any) {
-    proof.key = ethers.utils.hexlify(ethers.utils.base64.decode(proof.key));
+    proof.key = ethers.utils.hexlify(
+      ethers.utils.base64.decode(proof.key)
+    );
 
-    proof.value = ethers.utils.hexlify(ethers.utils.base64.decode(proof.value));
+    proof.value = ethers.utils.hexlify(
+      ethers.utils.base64.decode(proof.value)
+    );
 
     proof.leaf.prefix = ethers.utils.hexlify(
       ethers.utils.base64.decode(proof.leaf.prefix)
@@ -121,17 +127,23 @@ export default class AnconProtocol {
     proof.path = proof.path.map((x: any) => {
       let suffix;
       if (!!x.suffix) {
-        suffix = ethers.utils.hexlify(ethers.utils.base64.decode(x.suffix));
+        suffix = ethers.utils.hexlify(
+          ethers.utils.base64.decode(x.suffix)
+        );
         return {
           valid: true,
-          prefix: ethers.utils.hexlify(ethers.utils.base64.decode(x.prefix)),
+          prefix: ethers.utils.hexlify(
+            ethers.utils.base64.decode(x.prefix)
+          ),
           suffix: suffix,
           hash: 1,
         };
       } else {
         return {
           valid: true,
-          prefix: ethers.utils.hexlify(ethers.utils.base64.decode(x.prefix)),
+          prefix: ethers.utils.hexlify(
+            ethers.utils.base64.decode(x.prefix)
+          ),
           hash: 1,
           suffix: "0x",
         };
@@ -152,7 +164,9 @@ export default class AnconProtocol {
    */
   async getPubKey(transactionHash: string) {
     // gets the transaction
-    const transaction: any = await this.prov.getTransaction(transactionHash);
+    const transaction: any = await this.prov.getTransaction(
+      transactionHash
+    );
     // joins the sig
     const sig = ethers.utils.joinSignature({
       r: transaction.r,
@@ -180,7 +194,10 @@ export default class AnconProtocol {
 
     const pubkey = ethers.utils.recoverPublicKey(msgBytes, sig);
 
-    const recoveredAddress = ethers.utils.recoverAddress(msgBytes, sig);
+    const recoveredAddress = ethers.utils.recoverAddress(
+      msgBytes,
+      sig
+    );
 
     return [recoveredAddress, transaction.from, pubkey];
   }
@@ -209,6 +226,7 @@ export default class AnconProtocol {
 
     const cid: string = response.cid;
     const ipfs: string = response.ipfs;
+    console.log("enroll", enrolling);
     let result;
     switch (enrolling) {
       case true:
@@ -224,6 +242,7 @@ export default class AnconProtocol {
         break;
       default:
         const dag = await this.fetchDag(cid);
+        console.log(dag)
         result = {
           proofCid: cid,
           ipfs,
@@ -307,7 +326,10 @@ export default class AnconProtocol {
 
     // make a Web3 prov to call the dai contract
 
-    const dai = new this.provWeb3.eth.Contract(AnconToken.abi, this.daiAddress);
+    const dai = new this.provWeb3.eth.Contract(
+      AnconToken.abi,
+      this.daiAddress
+    );
 
     // get the height
     const did = await this.getDidTransaction();
@@ -338,7 +360,6 @@ export default class AnconProtocol {
     //     await sleep(10000);
     //   }
     // }
-    debugger;
     await this.getPastEvents();
 
     console.log("test");
@@ -349,7 +370,6 @@ export default class AnconProtocol {
     console.log("test");
     // enroll based on the network
     let enroll;
-    debugger;
     switch (this.network.chainId) {
       case 97:
         if (allowance == 0) {
@@ -441,7 +461,9 @@ export default class AnconProtocol {
     );
 
     // filter the contract
-    const filter = await AnconReader.filters.HeaderUpdated(this.moniker);
+    const filter = await AnconReader.filters.HeaderUpdated(
+      this.moniker
+    );
 
     // get the from
     const from = await this.prov.getBlockNumber();
@@ -494,14 +516,23 @@ export default class AnconProtocol {
   async mintNft(hexData: string, userProofKey: string) {
     console.log("beggining minting");
 
-    const xdvReader = XDVNFT__factory.connect(this.xdvnftAdress, this.prov);
-    const xdvSigner = XDVNFT__factory.connect(this.xdvnftAdress, this.signer);
+    const xdvReader = XDVNFT__factory.connect(
+      this.xdvnftAdress,
+      this.prov
+    );
+    const xdvSigner = XDVNFT__factory.connect(
+      this.xdvnftAdress,
+      this.signer
+    );
     const anconReader = AnconProtocol__factory.connect(
       this.anconAddress,
       this.prov
     );
 
-    const dai = new this.provWeb3.eth.Contract(AnconToken.abi, this.daiAddress);
+    const dai = new this.provWeb3.eth.Contract(
+      AnconToken.abi,
+      this.daiAddress
+    );
 
     // check the allowance
     const allowance = await dai.methods
@@ -541,11 +572,19 @@ export default class AnconProtocol {
             });
         }
         try {
-          mint = await xdvSigner.mintWithProof(hexData, userProof, packetProof);
+          mint = await xdvSigner.mintWithProof(
+            hexData,
+            userProof,
+            packetProof
+          );
         } catch (error) {
           sleep(5000);
           console.log("failed, trying again...", error);
-          mint = await xdvSigner.mintWithProof(hexData, userProof, packetProof);
+          mint = await xdvSigner.mintWithProof(
+            hexData,
+            userProof,
+            packetProof
+          );
         }
         break;
       case 42:
@@ -591,7 +630,6 @@ export default class AnconProtocol {
   }
 
   async getDomainName() {
-    debugger;
     const rawResponse = await fetch(
       `https://api.ancon.did.pa/v0/did/did:ethr:${this.network.name}:${this.address}`
     );

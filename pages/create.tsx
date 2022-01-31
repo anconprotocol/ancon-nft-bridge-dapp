@@ -38,9 +38,6 @@ export function sleep(ms: any) {
 }
 function Create() {
   // web3
-  let prov: ethers.providers.Web3Provider;
-  let signer: ethers.providers.JsonRpcSigner;
-  let network: ethers.providers.Network;
   let Ancon: AnconProtocol;
   // state
   const [step, setStep] = useState(0);
@@ -77,11 +74,7 @@ function Create() {
   }
   const clickInput = () => document.getElementById("nft-img").click();
 
-  const key = (event: any) => {
-    if (event.key === "Enter") {
-      handleSetMessageUpload();
-    }
-  };
+  
   //step 0 //
 
   // STEP 0  gets the public key and handle the get did//
@@ -92,39 +85,6 @@ function Create() {
 
   // step 1 //
 
-  const getPastEvents = async () => {
-    const prov = new ethers.providers.Web3Provider(provider);
-    const web3 = new Web3(provider);
-    const network = await prov.getNetwork();
-    const chain = await GetChain(network);
-    console.log("past events", network, chain);
-    try {
-      const contract1 = await AnconProtocol__factory.connect(chain.ancon, prov);
-
-      const filter = await contract1.filters.HeaderUpdated(
-        web3.utils.keccak256("anconprotocol")
-      );
-
-      const from = await prov.getBlockNumber();
-
-      let result = await contract1.queryFilter(filter, from);
-
-      let time = Date.now();
-      const maxTime = Date.now() + 120000;
-      while (time < maxTime) {
-        result = await contract1.queryFilter(filter, from);
-        console.log(result);
-        if (result.length > 0) {
-          break;
-        }
-        time = Date.now();
-        await sleep(10000);
-      }
-    } catch (error) {
-      console.log("error", error);
-    }
-    return true;
-  };
   // step 2 //
   // loading screen
 
@@ -138,7 +98,7 @@ function Create() {
   const handleUpload = async () => {
     try {
       // check if user if enrolled
-      debugger;
+      ;
       const domain = await getDomainName();
       if (domain === false) {
         setErrorModal([
@@ -221,7 +181,7 @@ function Create() {
         const metadata = await Ancon.postProof("dagjson", requestOptions);
 
         const metadataCid = metadata.contentCid;
-
+        console.log(metadata)
         // show the modal
         setErrorModal(["Waiting for wallet action......"]);
 
@@ -261,7 +221,7 @@ function Create() {
 
         // post the second proof
         const proof = await Ancon.postProof("dagjson", requestOptions2);
-
+        console.log(proof)
         // save the keys
         setUser({ key: proof.proofKey, height: proof.proofHeight });
         setPacket({ ...packet, packet: hexdata });
@@ -313,151 +273,6 @@ function Create() {
         "/enroll",
       ]);
     }
-    // const _web3 = new Web3(provider);
-    // _web3.eth.defaultAccount = address;
-    // const web3 = _web3;
-    // prov = new ethers.providers.Web3Provider(provider);
-    // signer = await prov.getSigner();
-    // network = await prov.getNetwork();
-
-    // const contractAddress: any = await GetChain(network);
-    // const contract1 = XDVNFT__factory.connect(
-    //   contractAddress.xdv,
-    //   prov
-    // );
-    // const contract2 = XDVNFT__factory.connect(
-    //   contractAddress.xdv,
-    //   signer
-    // );
-    // const contract3 = AnconProtocol__factory.connect(
-    //   contractAddress.ancon,
-    //   prov
-    // );
-
-    // const dai = new web3.eth.Contract(
-    //   AnconToken.abi,
-    //   contractAddress.dai
-    // );
-
-    // // check the allowance
-    // const allowance = await dai.methods
-    //   .allowance(address, contract2.address)
-    //   .call();
-    // await sleep(7000);
-
-    // const memonik = web3.utils.keccak256("anconprotocol");
-    // // checking hashes
-    // const rawLastHash = await fetch(
-    //   "https://api.ancon.did.pa/v0/proofs/lasthash"
-    // );
-    // const lasthash = await rawLastHash.json();
-    // const relayHash = await contract3.getProtocolHeader(memonik);
-    // console.log(
-    //   "last hash",
-    //   ethers.utils.hexlify(
-    //     ethers.utils.base64.decode(lasthash.lastHash.hash)
-    //   )
-    // );
-    // console.log("relay hash", relayHash);
-
-    // // get the key and height
-    // const Did = await GetDid(network.name, address);
-    // const key = Did.key;
-
-    // /* prepare the packet and user proof
-    //  */
-    // // prepare packet proof
-    // const rawPacketProof = await fetch(
-    //   `https://api.ancon.did.pa/v0/proof/${user.key}?height=${lasthash.lastHash.version}`
-    // );
-    // let packetProof = await rawPacketProof.json();
-    // packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
-
-    // // prepare user proof
-    // const rawUserProof = await fetch(
-    //   `https://api.ancon.did.pa/v0/proof/${key}?height=${lasthash.lastHash.version}`
-    // );
-    // let userProof = await rawUserProof.json();
-    // userProof = toAbiProof({ ...userProof[0].Proof.exist });
-
-    // // get the hexdata
-    // const hexData = packet.packet;
-
-    // // let mint;
-    // // show the modal
-    // setErrorModal([
-    //   "Please complete the 2 following wallet actions...",
-    // ]);
-    // switch (network.chainId) {
-    //   case 97:
-    //   case 80001:
-    //     // tries two times in case it fails
-    //     if (allowance == 0) {
-    //       await dai.methods
-    //         .approve(contract2.address, "1000000000000000000000")
-    //         .send({
-    //           gasPrice: "22000000000",
-    //           gas: 400000,
-    //           from: address,
-    //         });
-    //     }
-    //     try {
-    //       mint = await contract2.mintWithProof(
-    //         hexData,
-    //         userProof,
-    //         packetProof
-    //       );
-    //       setErrorModal([]);
-    //     } catch (error) {
-    //       sleep(5000);
-    //       console.log("failed, trying again...", error);
-    //       mint = await contract2.mintWithProof(
-    //         hexData,
-    //         userProof,
-    //         packetProof
-    //       );
-    //     }
-    //     break;
-    //   case 42:
-    //     // if (allowance == 0) {
-    //     await dai.methods
-    //       .approve(contract2.address, "1000000000000000000000")
-    //       .send({
-    //         gasPrice: "200000000000",
-    //         gas: 700000,
-    //         from: address,
-    //       });
-    //     // }
-    //     // tries two times in case it fails
-    //     try {
-    //       mint = await contract2.mintWithProof(
-    //         hexData,
-    //         userProof,
-    //         packetProof,
-    //         {
-    //           gasPrice: "200000000000",
-    //           gasLimit: 900000,
-    //           from: address,
-    //         }
-    //       );
-    //       console.log(mint);
-
-    //     } catch (error) {
-    //       console.log("failed, trying again...", error);
-    //       sleep(5000);
-    //       mint = await contract2.mintWithProof(
-    //         hexData,
-    //         userProof,
-    //         packetProof,
-    //         {
-    //           gasPrice: "200000000000",
-    //           gasLimit: 900000,
-    //           from: address,
-    //         }
-    //       );
-    //     }
-    //     break;
-    // }
   };
 
   //
@@ -556,7 +371,6 @@ function Create() {
                 <input
                   id="TITLE"
                   className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onKeyPress={key}
                   onChange={(e) => {
                     setTokenData({
                       ...tokenData,
