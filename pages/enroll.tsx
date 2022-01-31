@@ -1,23 +1,19 @@
 import { ethers } from "ethers";
-import { Router, useRouter } from "next/router";
+import {  useRouter } from "next/router";
 import { useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
-import EnrollL2Account from "../functions/EnrollL2Account";
-import GetPublicKey from "../functions/GetPublicKey";
 import getTransaction from "../functions/GetTransaction";
-import toAbiProof from "../functions/ToAbiProof";
 import useProvider from "../hooks/useProvider";
-import GetDid from "../functions/GetDid";
 import Step0 from "../sections/enroll/EnrollStep0";
 import EnrollStep2 from "../sections/enroll/EnrollStep2";
 import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
+import Web3 from "web3";
 
 function Enroll() {
   // web3
-  let prov: ethers.providers.Web3Provider;
   let signer: ethers.providers.JsonRpcSigner;
   let network: ethers.providers.Network;
   // state
@@ -33,22 +29,21 @@ function Enroll() {
 
   //custom hooks
   const provider = useProvider();
-  
+
   const router = useRouter();
 
   // ancon
-  let Ancon:AnconProtocol;
+  let Ancon: AnconProtocol;
 
   /*
    step 0 
    */
   // check if domain already exists
   const getDomainName = async () => {
-    
-    const prov = new ethers.providers.Web3Provider(provider)
+    const prov = new ethers.providers.Web3Provider(provider);
 
     // get the network
-    const    network = await prov.getNetwork();
+    const network = await prov.getNetwork();
 
     const rawResponse = await fetch(
       `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
@@ -82,25 +77,31 @@ function Enroll() {
           provider
         );
 
-        Ancon = new AnconProtocol(provider, address)
+        Ancon = new AnconProtocol(
+          provider,
+          address,
+          Web3.utils.keccak256("anconprotocol"),
+          "api.ancon.did.pa/v0/"
+        );
         await Ancon.initialize();
+        
         // the pubkey from ancon
-        const getPubKey = await Ancon.getPubKey(trans)
+        const getPubKey = await Ancon.getPubKey(trans);
 
-        console.log('getoub', getPubKey)
+        
         const pubkey = getPubKey[2];
         const recoveredAddress = getPubKey[0];
-        const sentAddress = getPubKey[1]
+        const sentAddress = getPubKey[1];
 
         setMessage("Validating proof...");
         // if the address are equal procced to get the proof
-        // if (recoveredAddress === sentAddress) {
-          setTimeout(() => {
-            handleProof(pubkey);
-          }, 2000);
-        // } else {
-        //   setError(true);
-        // }
+        if (recoveredAddress === sentAddress) {
+        setTimeout(() => {
+          handleProof(pubkey);
+        }, 2000);
+        } else {
+          setError(true);
+        }
       } else {
         setErrorModal([
           "This Address is already enrolled please try again with another one or procced to create a NFT",
@@ -120,9 +121,7 @@ function Enroll() {
     // encode the pub key
     const base58Encode = ethers.utils.base58.encode(pubkey);
 
-
-
-    const prov = new ethers.providers.Web3Provider(provider)
+    const prov = new ethers.providers.Web3Provider(provider);
     // initialize the signer
     signer = prov.getSigner();
 
@@ -157,24 +156,35 @@ function Enroll() {
     try {
       const getDid = async () => {
         // post the data
-        const data = await Ancon.postProof('did',requestOptions,true)
-        console.log('data',data)
-        
+        console.log('posting')
+        const data = await Ancon.postProof(
+          "did",
+          requestOptions,
+          true
+        );
+        console.log("data", data);
+
         //save the cid to state
         setDIDCid(data.contentCid);
 
-        const proof = await Ancon.getProof(data.proofKey, data.proofHeight)
+        const proof = await Ancon.getProof(
+          data.proofKey,
+          data.proofHeight
+        );
         console.log("getproff", proof);
 
         // enroll to L2
         let enroll;
-        console.log('did', data)
+        console.log("did", data);
         setMessage(
           "Preparing to enroll the account, please wait this proccess can take several minutes"
         );
         setTimeout(async () => {
-          enroll = await Ancon.EnrollL2Account(data.contentCid,proof)
-          setStep(2)
+          enroll = await Ancon.enrollL2Account(
+            data.contentCid,
+            proof
+          );
+          setStep(2);
         }, 30000);
       };
 
