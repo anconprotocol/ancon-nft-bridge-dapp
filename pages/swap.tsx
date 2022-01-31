@@ -278,14 +278,14 @@ const router = useRouter()
       .allowance(address, protocol.address)
       .call();
     if (allowance == 0) {
-      const tx = await dai.methods
-        .approve(protocol.address, "1000000000000000000")
-        .send({
-          gasPrice: "22000000000",
-          gas: 400000,
-          from: address,
-        });
-      await tx.wait(1);
+      // const tx = await dai.methods
+      //   .approve(protocol.address, "1000000000000000000")
+      //   .send({
+      //     gasPrice: "22000000000",
+      //     gas: 400000,
+      //     from: address,
+      //   });
+      // await tx.wait(1);
     }
 
     /* call the contract */

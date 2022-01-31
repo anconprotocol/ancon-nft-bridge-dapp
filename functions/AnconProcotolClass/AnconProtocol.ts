@@ -373,13 +373,13 @@ export default class AnconProtocol {
     switch (this.network.chainId) {
       case 97:
         if (allowance == 0) {
-          await dai.methods
-            .approve(contract2.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: this.address,
-            });
+          // await dai.methods
+          //   .approve(contract2.address, "1000000000000000000000")
+          //   .send({
+          //     gasPrice: "22000000000",
+          //     gas: 400000,
+          //     from: this.address,
+          //   });
         }
         enroll = await contract2.enrollL2Account(
           this.moniker,
@@ -395,13 +395,13 @@ export default class AnconProtocol {
         break;
       case 42:
         // if (allowance == 0) {
-        await dai.methods
-          .approve(contract2.address, "1000000000000000000000")
-          .send({
-            gasPrice: "400000000000",
-            gas: 700000,
-            from: this.address,
-          });
+        // await dai.methods
+        //   .approve(contract2.address, "1000000000000000000000")
+        //   .send({
+        //     gasPrice: "400000000000",
+        //     gas: 700000,
+        //     from: this.address,
+        //   });
         // }
         enroll = await contract2.enrollL2Account(
           this.moniker,
@@ -418,13 +418,13 @@ export default class AnconProtocol {
         break;
       case 80001:
         // if (allowance == 0) {
-        await dai.methods
-          .approve(contract2.address, "1000000000000000000000")
-          .send({
-            gasPrice: "22000000000",
-            gas: 400000,
-            from: this.address,
-          });
+        // await dai.methods
+        //   .approve(contract2.address, "1000000000000000000000")
+        //   .send({
+        //     gasPrice: "22000000000",
+        //     gas: 400000,
+        //     from: this.address,
+        //   });
         // }
         enroll = await contract2.enrollL2Account(
           this.moniker,
@@ -562,15 +562,15 @@ export default class AnconProtocol {
       case 97:
       case 80001:
         // tries two times in case it fails
-        if (allowance == 0) {
-          await dai.methods
-            .approve(xdvSigner.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: this.address,
-            });
-        }
+        // if (allowance == 0) {
+        //   await dai.methods
+        //     .approve(xdvSigner.address, "1000000000000000000000")
+        //     .send({
+        //       gasPrice: "22000000000",
+        //       gas: 400000,
+        //       from: this.address,
+        //     });
+        // }
         try {
           mint = await xdvSigner.mintWithProof(
             hexData,
@@ -589,13 +589,13 @@ export default class AnconProtocol {
         break;
       case 42:
         // if (allowance == 0) {
-        await dai.methods
-          .approve(xdvSigner.address, "1000000000000000000000")
-          .send({
-            gasPrice: "200000000000",
-            gas: 700000,
-            from: this.address,
-          });
+        // await dai.methods
+        //   .approve(xdvSigner.address, "1000000000000000000000")
+        //   .send({
+        //     gasPrice: "200000000000",
+        //     gas: 700000,
+        //     from: this.address,
+        //   });
         // }
         // tries two times in case it fails
         try {
