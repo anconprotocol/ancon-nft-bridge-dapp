@@ -292,10 +292,10 @@ export default class AnconProtocol {
   }
 
   async fetchDag(id: string) {
-    try {
-      const rawResponse = await fetch(
-        `https://${this.anconEndpoint}dagjson/${id}/`
-      );
+    const rawResponse = await fetch(
+      `https://${this.anconEndpoint}dagjson/${id}/`
+    );
+    if (rawResponse.status != 400) {
       const response = await rawResponse.json();
 
       const cid = await Object?.values(response.contentHash)[0];
@@ -304,13 +304,12 @@ export default class AnconProtocol {
         proofKey: response.key as string,
         proofHeight: response.height as string,
       };
-    } catch (error) {
-      return {
-        cid: "error",
-        proofKey: "error",
-        proofHeight: "error",
-      };
     }
+    return {
+      cid: "error",
+      proofKey: "error",
+      proofHeight: "error",
+    };
   }
 
   /**
@@ -367,7 +366,8 @@ export default class AnconProtocol {
       UTF8_cid,
       proof
     );
-    const rate = gasLimit.toNumber() * 1.2;
+    const decimalRate = gasLimit.toNumber() * 1.2;
+    const rate = Math.floor(decimalRate);
     // enroll based on the network
     let enroll;
     switch (this.network.chainId) {
@@ -455,7 +455,7 @@ export default class AnconProtocol {
       try {
         sequence += 1;
         result = await AnconReader.queryFilter(filter, from);
-        console.log(result)
+        console.log(result);
         if (result.length > 0) {
           break;
         }
@@ -498,14 +498,17 @@ export default class AnconProtocol {
     // prepare user proof
     const userProof = await this.getProof(did.key, version);
 
+    console.log('estimating gas', packetProof, userProof)
     // estimate gas
     const gasLimit = await xdvSigner.estimateGas.mintWithProof(
       hexData,
       userProof,
       packetProof
     );
-    const rate = gasLimit.toNumber() * 1.2;
+    const decimalRate = gasLimit.toNumber() * 1.2;
+    const rate = Math.floor(decimalRate);
     // start minting
+    console.log('estimated ready', decimalRate, rate)
     let mint;
     switch (this.network.chainId) {
       case 97:
