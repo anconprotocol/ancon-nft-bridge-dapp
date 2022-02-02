@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
+import Web3 from "web3";
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
@@ -26,16 +27,22 @@ function Qrview() {
   const router = useRouter();
   const provider = useProvider();
   const { address, did, cid }: any = router.query;
+  // console.log(router.query)
   const addressToCheck = useRecoilValue(addressState);
   const setErrorModal = useSetRecoilState(errorState);
   if (address) {
-    Ancon = new AnconProtocol(provider, address);
+    Ancon = new AnconProtocol(
+      provider,
+      address,
+      Web3.utils.keccak256("anconprotocol"),
+      "api.ancon.did.pa/v0/"
+    );
     Ancon.initialize();
   }
 
   const getMetadata = async () => {
     if (address) {
-      const data = await Ancon.getMetadata(did, address);
+      const data = await Ancon.getMetadata(cid, address);
       setMetadata({ ...data });
     }
   };
@@ -53,11 +60,9 @@ function Qrview() {
       const { signature, ...trashData } = await rawSignature.json();
 
       const rawData = await fetch(
-        `https://api.ancon.did.pa/v0/dag/${did}/?namespace=anconprotocol/users/${address}`
+        `https://api.ancon.did.pa/v0/dag/${cid}/contentHash`
       );
       const data = await rawData.json();
-
-      console.log(data, trashData);
       // struct the data in order
       const destructuredData = {
         name: data.name,
@@ -72,7 +77,7 @@ function Qrview() {
       );
 
       // verify the message
-      console.log(digest, signature);
+
       const verify = ethers.utils.verifyMessage(digest, signature);
       if (verify == addressToCheck) {
         setShow("owner");
@@ -88,9 +93,6 @@ function Qrview() {
     }
   };
 
-  const verifyBlockchain = async() => {
-    
-  }
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
       <Header />
@@ -121,6 +123,7 @@ function Qrview() {
             {/* Image */}
             <div>
               <h4 className="font-medium text-gray-600">Image</h4>
+              
               <p className="truncate">{metadata.image}</p>
             </div>
           </div>
@@ -138,7 +141,7 @@ function Qrview() {
             <div className="grid mt-4 grid-cols-1 place-items-center">
               <XCircleIcon className="w-10 text-red-700" />
               <p className="text-red-700">
-              Signature could not be verified 
+                Signature could not be verified
               </p>
             </div>
           )}
@@ -149,12 +152,6 @@ function Qrview() {
               className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
             >
               Verify Signature
-            </button>
-            <button
-              onClick={verify}
-              className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
-            >
-              Verify blockchain existence
             </button>
           </div>
         </div>

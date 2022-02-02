@@ -108,30 +108,9 @@ function Create() {
         ]);
         throw "not enrolled";
       } else {
-        // make the client
-        const storage = new Web3Storage({
-          token: getAccessToken(),
-        });
-        // show the root cid as soon as it's ready
-        const onRootCidReady = (cid: string) => {
-          console.log("uploading files with cid:", cid);
-        };
-
-        // when each chunk is stored, update the percentage complete and display
-        const totalSize = image.size;
-        let uploaded = 0;
-
-        const onStoredChunk = (size: number) => {
-          uploaded += size;
-          const pct = totalSize / uploaded;
-          console.log(`Uploading... ${pct.toFixed(2)}% complete`);
-        };
-
-        const imageCid: string = await storage.put([image], {
-          onRootCidReady,
-          onStoredChunk,
-        });
-        setTokenData({ ...tokenData, imageCid });
+        // upload the file
+        const imageCid = await Ancon.uploadFile([image]);
+        console.log(imageCid);
         return imageCid;
       }
     } catch (error) {
@@ -252,7 +231,7 @@ function Create() {
       };
       PostRequest();
     } catch (error) {
-      console.log('error', error)
+      console.log("error", error);
       setErrorModal([
         "Something went wrong please try again",
         "Try again",
@@ -621,8 +600,6 @@ function Create() {
                 </p>
               </div>
 
-             
-
               {/* Transaction from */}
               <div className="">
                 <span className="text-gray-600 text-sm">From</span>
@@ -652,12 +629,12 @@ function Create() {
                       className="pb-3 mt-4"
                       onClick={() =>
                         navigator.clipboard.writeText(
-                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`
+                          `${process.env.NEXT_PUBLIC_env}/nftView?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`
                         )
                       }
                     >
                       <QRCode
-                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`}
+                        value={`${process.env.NEXT_PUBLIC_env}/nftView?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`}
                         size={150}
                       />
                     </div>

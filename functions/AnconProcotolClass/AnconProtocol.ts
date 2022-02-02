@@ -250,6 +250,7 @@ export default class AnconProtocol {
         break;
       default:
         const dag = await this.fetchDag(cid);
+        console.log("dag", dag);
         if (dag.cid == "error") {
           result = {
             proofCid: cid,
@@ -295,9 +296,8 @@ export default class AnconProtocol {
     const rawResponse = await fetch(
       `https://${this.anconEndpoint}dagjson/${id}/`
     );
-    if (rawResponse.status != 400) {
-      const response = await rawResponse.json();
-
+    const response = await rawResponse.json();
+    if (response.error != "cid too short") {
       const cid = await Object?.values(response.contentHash)[0];
       return {
         cid: cid as string,
@@ -498,7 +498,7 @@ export default class AnconProtocol {
     // prepare user proof
     const userProof = await this.getProof(did.key, version);
 
-    console.log('estimating gas', packetProof, userProof)
+    console.log("estimating gas", packetProof, userProof);
     // estimate gas
     const gasLimit = await xdvSigner.estimateGas.mintWithProof(
       hexData,
@@ -508,7 +508,7 @@ export default class AnconProtocol {
     const decimalRate = gasLimit.toNumber() * 1.2;
     const rate = Math.floor(decimalRate);
     // start minting
-    console.log('estimated ready', decimalRate, rate)
+    console.log("estimated ready", decimalRate, rate);
     let mint;
     switch (this.network.chainId) {
       case 97:
@@ -578,12 +578,54 @@ export default class AnconProtocol {
 
   async getMetadata(cid: string, address: string) {
     const rawData = await fetch(
-      `https://${this.anconEndpoint}dag/${cid}/?namespace=anconprotocol/users/${address}`
+      `https://${this.anconEndpoint}dag/${cid}/contentHash`
     );
     const data = await rawData.json();
 
     data["root"] = await await Object?.values(data.root)[0];
     return data;
+  }
+
+  async uploadFile(file: any) {
+    const body = new FormData();
+    console.log(file);
+    body.append("file", file[0]);
+    let ipfsRes;
+    let ipfsResBody;
+    try {
+      ipfsRes = await fetch(
+        "https://" + this.anconEndpoint + "file",
+        {
+          method: "post",
+          body: body,
+        }
+      );
+      console.log(ipfsRes);
+      ipfsResBody = await ipfsRes.json();
+    } catch (error) {
+      console.log("confirmation error", error);
+    }
+    return ipfsResBody.cid;
+  }
+
+  async verifyBlockchainExistence(proof: any) {
+    const anconSigner = AnconProtocol__factory.connect(
+      this.xdvnftAdress,
+      this.signer
+    );
+    const anconReader = AnconProtocol__factory.connect(
+      this.xdvnftAdress,
+      this.prov
+    );
+    console.log(typeof this.moniker, this.moniker)
+    console.log(proof.key, proof.value)
+    const verify = await anconReader.verifyProofWithKV(
+      this.moniker,
+      proof.key,
+      proof.value,
+      proof
+    )
+    console.log('[verify]',verify)
   }
 }
 
