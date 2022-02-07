@@ -1,5 +1,4 @@
 import { BadgeCheckIcon, XCircleIcon } from "@heroicons/react/solid";
-import { sign } from "crypto";
 import { ethers } from "ethers";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
@@ -8,13 +7,9 @@ import Web3 from "web3";
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
-import AnconProtocol, {
-  sleep,
-} from "../functions/AnconProcotolClass/AnconProtocol";
-import useProvider from "../hooks/useProvider";
+import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
 
 function Qrview() {
-  let Ancon: AnconProtocol;
   const [metadata, setMetadata] = useState({
     name: "",
     description: "",
@@ -25,24 +20,20 @@ function Qrview() {
   });
   const [show, setShow] = useState("");
   const router = useRouter();
-  const provider = useProvider();
+
   const { address, did, cid }: any = router.query;
   // console.log(router.query)
   const addressToCheck = useRecoilValue(addressState);
   const setErrorModal = useSetRecoilState(errorState);
-  if (address) {
-    Ancon = new AnconProtocol(
-      provider,
-      address,
-      Web3.utils.keccak256("anconprotocol"),
-      "api.ancon.did.pa/v0/"
-    );
-    Ancon.initialize();
-  }
 
   const getMetadata = async () => {
     if (address) {
-      const data = await Ancon.getMetadata(cid, address);
+      const rawData = await fetch(
+        `https://api.ancon.did.pa/v0/dag/${cid}/contentHash`
+      );
+      const data = await rawData.json();
+
+      data["root"] = await await Object?.values(data.root)[0];
       setMetadata({ ...data });
     }
   };
@@ -93,7 +84,57 @@ function Qrview() {
     }
   };
 
+  const toAbiProof = async (proof: any) => {
+    console.log(proof)
+    proof.key = ethers.utils.hexlify(
+      ethers.utils.base64.decode(proof.key)
+    );
+
+    proof.value = ethers.utils.hexlify(
+      ethers.utils.base64.decode(proof.value)
+    );
+
+    proof.leaf.prefix = ethers.utils.hexlify(
+      ethers.utils.base64.decode(proof.leaf.prefix)
+    );
+    proof.leaf.hash = 1;
+    proof.path = proof.path.map((x: any) => {
+      let suffix;
+      if (!!x.suffix) {
+        suffix = ethers.utils.hexlify(
+          ethers.utils.base64.decode(x.suffix)
+        );
+        return {
+          valid: true,
+          prefix: ethers.utils.hexlify(
+            ethers.utils.base64.decode(x.prefix)
+          ),
+          suffix: suffix,
+          hash: 1,
+        };
+      } else {
+        return {
+          valid: true,
+          prefix: ethers.utils.hexlify(
+            ethers.utils.base64.decode(x.prefix)
+          ),
+          hash: 1,
+          suffix: "0x",
+        };
+      }
+    });
+    proof.leaf.prehash_key = 0;
+    proof.leaf.len = proof.leaf.length;
+    proof.valid = true;
+    proof.leaf.valid = true;
+
+    return proof;
+  };
+
   const verifyBlockchain = async () => {
+    try {
+      
+    
     const rawResponse = await fetch(
       `https://api.ancon.did.pa/v0/dag/${cid}/`
     );
@@ -105,8 +146,30 @@ function Qrview() {
     const lasthash = await rawLastHash.json();
     const version = lasthash.lastHash.version;
 
-    const proof = await Ancon.getProof(response.key, response.height);
-    const verify = await Ancon.verifyBlockchainExistence(proof);
+    const rawProof = await fetch(
+      `https://api.ancon.did.pa/v0/proof/${response.key}?height=${response.height}`
+    );
+
+    const proof = await rawProof.json();
+    const abiedProof = await toAbiProof(proof[0].Proof.exist);
+
+    const prov = new ethers.providers.JsonRpcProvider(
+      "https://data-seed-prebsc-1-s1.binance.org:8545/"
+    );
+    // verify proof
+    const anconReader = AnconProtocol__factory.connect(
+      process.env.NEXT_PUBLIC_ANCON_bnbt as string,
+      prov
+    );
+    const verify = await anconReader.verifyProofWithKV(
+      Web3.utils.keccak256('anconprotocol'),
+      proof.key,
+      proof.value,
+      proof
+    )
+  } catch (error) {
+      console.log('coudnt verify', error)
+  }
   };
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
@@ -141,12 +204,12 @@ function Qrview() {
               <p className="truncate">{`https://api.ancon.did.pa/v0/file/${metadata.image}/`}</p>
             </div>
             <div className="flex items-center justify-center">
-                <img
-                  src={`https://api.ancon.did.pa/v0/file/${metadata.image}/`}
-                  alt="nft-image"
-                  className="rounded w-3/5"
-                />
-              </div>
+              <img
+                src={`https://api.ancon.did.pa/v0/file/${metadata.image}/`}
+                alt="nft-image"
+                className="rounded w-3/5"
+              />
+            </div>
           </div>
 
           {/* icon */}

@@ -4,17 +4,13 @@ import { ethers } from "ethers";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import Web3 from "web3";
+
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
-import AnconProtocol, {
-  sleep,
-} from "../functions/AnconProcotolClass/AnconProtocol";
-import useProvider from "../hooks/useProvider";
 
 function Qrview() {
-  let Ancon: AnconProtocol;
+
   const [metadata, setMetadata] = useState({
     name: "",
     description: "",
@@ -25,24 +21,19 @@ function Qrview() {
   });
   const [show, setShow] = useState("");
   const router = useRouter();
-  const provider = useProvider();
   const { address, did, cid }: any = router.query;
   // console.log(router.query)
   const addressToCheck = useRecoilValue(addressState);
   const setErrorModal = useSetRecoilState(errorState);
-  if (address) {
-    Ancon = new AnconProtocol(
-      provider,
-      address,
-      Web3.utils.keccak256("anconprotocol"),
-      "api.ancon.did.pa/v0/"
-    );
-    Ancon.initialize();
-  }
 
   const getMetadata = async () => {
     if (address) {
-      const data = await Ancon.getMetadata(cid, address);
+      const rawData = await fetch(
+        `https://api.ancon.did.pa/v0/dag/${cid}/contentHash`
+      );
+      const data = await rawData.json();
+  
+      data["root"] = await await Object?.values(data.root)[0];
       setMetadata({ ...data });
     }
   };
