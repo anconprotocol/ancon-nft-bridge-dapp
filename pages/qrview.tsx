@@ -70,7 +70,7 @@ function Qrview() {
       // verify the message
 
       const verify = ethers.utils.verifyMessage(digest, signature);
-      if (verify == addressToCheck) {
+      if (verify == address) {
         setShow("owner");
       } else {
         setShow("not");

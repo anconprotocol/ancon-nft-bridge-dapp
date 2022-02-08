@@ -239,7 +239,6 @@ export default class AnconProtocol {
     switch (enrolling) {
       case true:
         const did = await this.getDidTransaction();
-
         result = {
           contentCid: did.contentHash as string,
           proofKey: did.key as string,
@@ -460,7 +459,7 @@ export default class AnconProtocol {
           break;
         }
         time = Date.now();
-        await sleep(1000);
+        await sleep(3000);
       } catch (error) {
         console.log("error", error);
       }

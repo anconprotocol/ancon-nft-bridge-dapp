@@ -152,7 +152,6 @@ function Qrview() {
 
     const proof = await rawProof.json();
     const abiedProof = await toAbiProof(proof[0].Proof.exist);
-
     const prov = new ethers.providers.JsonRpcProvider(
       "https://data-seed-prebsc-1-s1.binance.org:8545/"
     );
@@ -163,10 +162,11 @@ function Qrview() {
     );
     const verify = await anconReader.verifyProofWithKV(
       Web3.utils.keccak256('anconprotocol'),
-      proof.key,
-      proof.value,
-      proof
+      abiedProof.key,
+      abiedProof.value,
+      abiedProof
     )
+    console.log('verify', verify)
   } catch (error) {
       console.log('coudnt verify', error)
   }
