@@ -1,16 +1,19 @@
 import { BadgeCheckIcon, XCircleIcon } from "@heroicons/react/solid";
 import { sign } from "crypto";
 import { ethers } from "ethers";
+import { setHttpAgentOptions } from "next/dist/server/config";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
+import Web3 from "web3";
 
 import { addressState } from "../atoms/addressAtom";
 import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
+import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
+import useProvider from "../hooks/useProvider";
 
-function Qrview() {
-
+function Mint() {
   const [metadata, setMetadata] = useState({
     name: "",
     description: "",
@@ -19,9 +22,12 @@ function Qrview() {
     image: "",
     root: "",
   });
-  const [show, setShow] = useState("");
+  const [transaction, setTransaction] = useState("");
+  const [show, setShow] = useState("able");
   const router = useRouter();
-  const { address, did, cid }: any = router.query;
+  const { address, height, cid, hexdata, user }: any = router.query;
+  // console.log(router.query)
+  const provider = useProvider();
   // console.log(router.query)
   const addressToCheck = useRecoilValue(addressState);
   const setErrorModal = useSetRecoilState(errorState);
@@ -32,7 +38,7 @@ function Qrview() {
         `https://tensta.did.pa/v0/dag/${cid}/contentHash`
       );
       const data = await rawData.json();
-  
+
       data["root"] = await await Object?.values(data.root)[0];
       setMetadata({ ...data });
     }
@@ -70,8 +76,21 @@ function Qrview() {
       // verify the message
 
       const verify = ethers.utils.verifyMessage(digest, signature);
-      if (verify == address) {
-        setShow("owner");
+      if (verify == addressToCheck) {
+        try {
+          const rawLastHash = await fetch(
+            `https://tensta.did.pa/v0/proofs/lasthash`
+          );
+          const lasthash = await rawLastHash.json();
+          console.log(lasthash.lastHash.version, height)
+          if (lasthash.lastHash.version > height) {
+            setShow("owner");
+          }else(
+            setShow('not')
+          )
+        } catch (error) {
+          console.log("error", error);
+        }
       } else {
         setShow("not");
       }
@@ -81,6 +100,26 @@ function Qrview() {
         "Try again",
         "`/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`",
       ]);
+    }
+  };
+
+  const mint = async () => {
+    try {
+      console.log('minting')
+      const ancon = new AnconProtocol(
+        provider,
+        addressToCheck,
+        Web3.utils.keccak256("tensta"),
+        "tensta.did.pa/v0/"
+      );
+      await ancon.initialize();
+      const mint = await ancon.mintNft(hexdata, user);
+      console.log(mint);
+      await mint?.wait(2);
+      setTransaction(mint?.hash as string);
+      setShow("minted");
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -114,41 +153,74 @@ function Qrview() {
             {/* Image */}
             <div>
               <h4 className="font-medium text-gray-600">Image</h4>
-              
+
               <p className="truncate">{metadata.image}</p>
             </div>
           </div>
+          <div className="flex items-center justify-center">
+            <img
+              src={`https://tensta.did.pa/v0/file/${metadata.image}/`}
+              alt="nft-image"
+              className="rounded w-3/5"
+            />
+          </div>
+          {show === "minted" && (
+            <div>
+              {/* transaction hash */}
+              <div>
+                <h4 className="font-medium text-gray-600">
+                  Transaction Hash
+                </h4>
+                <p>{metadata.description}</p>
+              </div>
+            </div>
+          )}
 
           {/* icon */}
           {show === "owner" && (
             <div className="grid mt-4 grid-cols-1 place-items-center">
               <BadgeCheckIcon className="w-10 text-green-700" />
               <p className="text-green-700">
-                Signature verified succesfully
+                The token is ready to be minted.
               </p>
             </div>
           )}
+          {show === "owner" && (
+            <div className="flex items-center justify-center mt-3 space-x-3">
+              <button
+                onClick={mint}
+                className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+              >
+                Mint
+              </button>
+            </div>
+          )}
+
           {show === "not" && (
             <div className="grid mt-4 grid-cols-1 place-items-center">
               <XCircleIcon className="w-10 text-red-700" />
               <p className="text-red-700">
-                Signature could not be verified
+                Token cannot be minted yet
               </p>
             </div>
           )}
+
           {/* button */}
-          <div className="flex items-center justify-center mt-3 space-x-3">
-            <button
-              onClick={verify}
-              className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
-            >
-              Verify Signature
-            </button>
-          </div>
+          {(show === "able" || show === 'not') && (
+            <div className="flex items-center justify-center mt-3 space-x-3">
+              <button
+                onClick={verify}
+                className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
+              >
+                Verify Signature
+              </button>
+            </div>
+          )}
+        
         </div>
       </div>
     </main>
   );
 }
 
-export default Qrview;
+export default Mint;

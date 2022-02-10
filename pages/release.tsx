@@ -65,7 +65,7 @@ export default function Release() {
 
     // post the new proof
     const rawPostProof = await fetch(
-      "https://api.ancon.did.pa/v0/dagjson",
+      "https://tensta.did.pa/v0/dagjson",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +82,7 @@ export default function Release() {
 
     // fetch the proof
     const rawGetProof = await fetch(
-      `https://api.ancon.did.pa/v0/dagjson/${key}/`
+      `https://tensta.did.pa/v0/dagjson/${key}/`
     );
     const getProof = await rawGetProof.json();
     console.log("getproff", getProof);
@@ -97,14 +97,14 @@ export default function Release() {
     const did = await GetDid(Network.name,address);
     //  packet proof
     const rawPacketProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
+      `https://tensta.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
     );
     let packetProof = await rawPacketProof.json();
     packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
     //  user proof
     const rawUserProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${did.key}?height=${packetHeight}`
+      `https://tensta.did.pa/v0/proof/${did.key}?height=${packetHeight}`
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });

@@ -46,7 +46,7 @@ function Enroll() {
     const network = await prov.getNetwork();
 
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
+      `https://tensta.did.pa/v0/did/did:ethr:${network.name}:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -80,8 +80,8 @@ function Enroll() {
         Ancon = new AnconProtocol(
           provider,
           address,
-          Web3.utils.keccak256("anconprotocol"),
-          "api.ancon.did.pa/v0/"
+          Web3.utils.keccak256("tensta"),
+          "tensta.did.pa/v0/"
         );
         await Ancon.initialize();
         

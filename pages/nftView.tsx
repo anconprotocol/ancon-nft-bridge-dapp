@@ -29,7 +29,7 @@ function Qrview() {
   const getMetadata = async () => {
     if (address) {
       const rawData = await fetch(
-        `https://api.ancon.did.pa/v0/dag/${cid}/contentHash`
+        `https://tensta.did.pa/v0/dag/${cid}/contentHash`
       );
       const data = await rawData.json();
 
@@ -46,12 +46,12 @@ function Qrview() {
     // const did = await Ancon.getDidTransaction();
     try {
       const rawSignature = await fetch(
-        `https://api.ancon.did.pa/v0/dag/${cid}/`
+        `https://tensta.did.pa/v0/dag/${cid}/`
       );
       const { signature, ...trashData } = await rawSignature.json();
 
       const rawData = await fetch(
-        `https://api.ancon.did.pa/v0/dag/${cid}/contentHash`
+        `https://tensta.did.pa/v0/dag/${cid}/contentHash`
       );
       const data = await rawData.json();
       // struct the data in order
@@ -136,18 +136,18 @@ function Qrview() {
       
     
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/v0/dag/${cid}/`
+      `https://tensta.did.pa/v0/dag/${cid}/`
     );
     const response = await rawResponse.json();
     // get the last hash
     const rawLastHash = await fetch(
-      `https://api.ancon.did.pa/v0/proofs/lasthash`
+      `https://tensta.did.pa/v0/proofs/lasthash`
     );
     const lasthash = await rawLastHash.json();
     const version = lasthash.lastHash.version;
 
     const rawProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${response.key}?height=${response.height}`
+      `https://tensta.did.pa/v0/proof/${response.key}?height=${response.height}`
     );
 
     const proof = await rawProof.json();
@@ -201,11 +201,11 @@ function Qrview() {
             {/* Image */}
             <div>
               <h4 className="font-medium text-gray-600">Image</h4>
-              <p className="truncate">{`https://api.ancon.did.pa/v0/file/${metadata.image}/`}</p>
+              <p className="truncate">{`https://tensta.did.pa/v0/file/${metadata.image}/`}</p>
             </div>
             <div className="flex items-center justify-center">
               <img
-                src={`https://api.ancon.did.pa/v0/file/${metadata.image}/`}
+                src={`https://tensta.did.pa/v0/file/${metadata.image}/`}
                 alt="nft-image"
                 className="rounded w-3/5"
               />

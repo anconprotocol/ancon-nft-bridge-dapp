@@ -8,7 +8,6 @@ import Header from "../components/Header";
 import ErrorMessage from "../components/ErrorMessage";
 
 // web3
-import { Web3Storage } from "web3.storage";
 import { ethers } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { addressState } from "../atoms/addressAtom";
@@ -23,9 +22,6 @@ import QRCode from "react-qr-code";
 import { QrcodeIcon } from "@heroicons/react/solid";
 import ProgressLine from "../components/ProgressLine";
 
-//Contracts
-const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
-
 // fix the type error for document in nextjs
 declare let document: any;
 export function sleep(ms: any) {
@@ -36,6 +32,7 @@ function Create() {
   let Ancon: AnconProtocol;
   // state
   const [step, setStep] = useState(0);
+  const [waitStep, setWaitStep] = useState(false);
   const [localImage, setLocalImage] = useState<any | null>(null);
   const [image, setImage] = useState<any | null>(null);
   const [error, setError] = useState(false);
@@ -67,8 +64,8 @@ function Create() {
     Ancon = new AnconProtocol(
       provider,
       address,
-      Web3.utils.keccak256("anconprotocol"),
-      "api.ancon.did.pa/v0/"
+      Web3.utils.keccak256("tensta"),
+      "tensta.did.pa/v0/"
     );
     Ancon.initialize();
   }
@@ -82,17 +79,10 @@ function Create() {
     return status;
   };
 
-  // step 1 //
-
   // step 2 //
   // loading screen
 
   // step3 //
-  // retrieve the ipfs access token
-  const getAccessToken = () => {
-    const apikey: any = process.env.NEXT_PUBLIC_API_KEY_STORAGE;
-    return apikey;
-  };
   // uploads the file to the ipfs
   const handleUpload = async () => {
     try {
@@ -149,12 +139,17 @@ function Create() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         path: "/",
-        from: address,
+        from: `did:ethr:${Ancon.network.name}:${address}`,
         signature,
         data: payload,
       }),
     };
     try {
+      setMessage(
+        "Creating Metadata, please wait this process can up to 30 minutes. Don't close this page"
+      );
+      setStep(2);
+      setWaitStep(true);
       // creates the metadata in ancon protocol
       const PostRequest = async () => {
         const metadata = await Ancon.postProof(
@@ -185,22 +180,17 @@ function Create() {
         setErrorModal([]);
         console.log("61 seconds");
 
-        setMessage(
-          "Creating Metadata, please wait this process can take several minutes."
-        );
-        setStep(2);
-
         // wait for the header to change
+        // console.log("event", eventWaiter);
         let eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
-
         // handle the second request options
         const requestOptions2 = {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             path: "/",
-            from: address,
+            from: `did:ethr:${Ancon.network.name}:${address}`,
             signature: s,
             data: hexdata,
           }),
@@ -215,18 +205,18 @@ function Create() {
         // save the keys
         setUser({ key: proof.proofKey, height: proof.proofHeight });
         setPacket({ ...packet, packet: hexdata });
-
-        console.log("wait for the event");
-        eventWaiter = await Ancon.getPastEvents();
-        console.log("event", eventWaiter);
-
-        setMessage("Minting NFT...");
         setTokenData({
           ...tokenData,
           imageCid: cidI,
           tokenCid: metadata.proofCid,
           metadaCid: metadata.contentCid,
         });
+        console.log("wait for the event");
+        eventWaiter = await Ancon.getPastEvents();
+        console.log("event", eventWaiter);
+
+        setMessage("Minting NFT...");
+        setWaitStep(false);
         setStep(3);
       };
       PostRequest();
@@ -349,6 +339,36 @@ function Create() {
               <p className="animate-pulse mt-4">{message}</p>
             </div>
           ) : null}
+          {waitStep === true && (
+            <div className="flex justify-center items-center">
+              <div>
+                <div
+                  className="pb-3 mt-4 flex justify-center"
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
+                    )
+                  }
+                >
+                  <QRCode
+                    value={`${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`}
+                    size={150}
+                  />
+                </div>
+                <p
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
+                    )
+                  }
+                  className="text-blue-600 underline cursor-pointer active:text-blue-800 active:scale-105 select-none transform transition-all duration-150"
+                >
+                  Please click here to save the link and comeback
+                  later when the token can be minted
+                </p>
+              </div>
+            </div>
+          )}
           {step == 0 ? (
             <div className="flex-col flex mt-3 w-full">
               <div className="flex-col flex mt-3">

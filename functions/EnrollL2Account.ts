@@ -55,7 +55,7 @@ async function EnrollL2Account(
 
     // check the hashes
     const rawLastHash = await fetch(
-      "https://api.ancon.did.pa/v0/proofs/lasthash"
+      "https://tensta.did.pa/v0/proofs/lasthash"
     );
     const lasthash = await rawLastHash.json();
 

@@ -448,7 +448,7 @@ export default class AnconProtocol {
     let sequence = lasthash.lastHash.version;
 
     let time = Date.now();
-    const maxTime = Date.now() + 120000;
+    const maxTime = Date.now() + 350000;
     let relayHash = "0x";
     while (time < maxTime) {
       try {
@@ -459,7 +459,7 @@ export default class AnconProtocol {
           break;
         }
         time = Date.now();
-        await sleep(3000);
+        await sleep(30000);
       } catch (error) {
         console.log("error", error);
       }
@@ -616,8 +616,6 @@ export default class AnconProtocol {
       this.xdvnftAdress,
       this.prov
     );
-    console.log(typeof this.moniker, this.moniker)
-    console.log(proof.key, proof.value)
     const verify = await anconReader.verifyProofWithKV(
       this.moniker,
       proof.key,

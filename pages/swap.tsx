@@ -175,7 +175,7 @@ const router = useRouter()
     // check if the metadata resolves
     try {
       const rawMetadaUri = await fetch(
-        `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
+        `https://tensta.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
       );
     } catch (error) {
       setStep(-1);
@@ -211,14 +211,14 @@ const router = useRouter()
     };
     // make a put to the dag
     const rawPut = await fetch(
-      `https://api.ancon.did.pa/v0/dag`,
+      `https://tensta.did.pa/v0/dag`,
       requestOptions
     );
     const put = await rawPut.json();
 
     // fetch the proof with the put cid
     const rawGetProof = await fetch(
-      `https://api.ancon.did.pa/v0/dagjson/${put.cid}/?namespace=anconprotocol/users/${address}`
+      `https://tensta.did.pa/v0/dagjson/${put.cid}/?namespace=anconprotocol/users/${address}`
     );
     const getProof = await rawGetProof.json();
 
@@ -259,14 +259,14 @@ const router = useRouter()
 
     //  packet proof
     const rawPacketProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
+      `https://tensta.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
     );
     let packetProof = await rawPacketProof.json();
     packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
     //  user proof
     const rawUserProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${did.key}?height=${packetHeight}`
+      `https://tensta.did.pa/v0/proof/${did.key}?height=${packetHeight}`
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });  
