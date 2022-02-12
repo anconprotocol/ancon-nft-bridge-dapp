@@ -134,7 +134,7 @@ export default function Release() {
     //     });
     // }
     try {
-     const gasLimit =await xdvSigner.estimateGas.releaseWithProof(hexdata,userProof,packetProof);
+     const gasLimit =await xdvSigner.estimateGas.releaseWithProof(Web3.utils.keccak256('tensta'),hexdata,userProof,packetProof);
       const release = await xdvSigner.releaseWithProof(
         hexdata,
         userProof,
