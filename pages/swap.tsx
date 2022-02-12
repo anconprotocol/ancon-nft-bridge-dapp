@@ -291,6 +291,7 @@ const router = useRouter()
     /* call the contract */
     try {
       const lock = await contract2.lockWithProof(
+        Web3.utils.keccak256('tensta'),
         hexdata,
         userProof,
         packetProof,
