@@ -19,17 +19,19 @@ function Qrview() {
     root: "",
   });
   const [show, setShow] = useState("");
+  const [signatures, setSignatures] = useState(false);
+  const [block, setBlock] = useState(false);
   const router = useRouter();
 
   const { address, did, cid }: any = router.query;
   // console.log(router.query)
   const addressToCheck = useRecoilValue(addressState);
   const setErrorModal = useSetRecoilState(errorState);
-
+  let apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
   const getMetadata = async () => {
     if (address) {
       const rawData = await fetch(
-        `https://tensta.did.pa/v0/dag/${cid}/contentHash`
+        `${apiEndpoint}dag/${cid}/contentHash`
       );
       const data = await rawData.json();
 
@@ -46,12 +48,12 @@ function Qrview() {
     // const did = await Ancon.getDidTransaction();
     try {
       const rawSignature = await fetch(
-        `https://tensta.did.pa/v0/dag/${cid}/`
+        `${apiEndpoint}dag/${cid}/`
       );
       const { signature, ...trashData } = await rawSignature.json();
 
       const rawData = await fetch(
-        `https://tensta.did.pa/v0/dag/${cid}/contentHash`
+        `${apiEndpoint}dag/${cid}/contentHash`
       );
       const data = await rawData.json();
       // struct the data in order
@@ -72,6 +74,7 @@ function Qrview() {
       const verify = ethers.utils.verifyMessage(digest, signature);
       if (verify == addressToCheck) {
         setShow("owner");
+        setSignatures(true);
       } else {
         setShow("not");
       }
@@ -85,7 +88,6 @@ function Qrview() {
   };
 
   const toAbiProof = async (proof: any) => {
-    console.log(proof)
     proof.key = ethers.utils.hexlify(
       ethers.utils.base64.decode(proof.key)
     );
@@ -133,43 +135,44 @@ function Qrview() {
 
   const verifyBlockchain = async () => {
     try {
-      
-    
-    const rawResponse = await fetch(
-      `https://tensta.did.pa/v0/dag/${cid}/`
-    );
-    const response = await rawResponse.json();
-    // get the last hash
-    const rawLastHash = await fetch(
-      `https://tensta.did.pa/v0/proofs/lasthash`
-    );
-    const lasthash = await rawLastHash.json();
-    const version = lasthash.lastHash.version;
+      const rawResponse = await fetch(
+        `${apiEndpoint}dag/${cid}/`
+      );
+      const response = await rawResponse.json();
+      // get the last hash
+      const rawLastHash = await fetch(
+        `${apiEndpoint}proofs/lasthash`
+      );
+      const lasthash = await rawLastHash.json();
+      const version = lasthash.lastHash.version;
 
-    const rawProof = await fetch(
-      `https://tensta.did.pa/v0/proof/${response.key}?height=${response.height}`
-    );
+      const rawProof = await fetch(
+        `${apiEndpoint}proof/${response.key}?height=${version}`
+      );
 
-    const proof = await rawProof.json();
-    const abiedProof = await toAbiProof(proof[0].Proof.exist);
-    const prov = new ethers.providers.JsonRpcProvider(
-      "https://data-seed-prebsc-1-s1.binance.org:8545/"
-    );
-    // verify proof
-    const anconReader = AnconProtocol__factory.connect(
-      process.env.NEXT_PUBLIC_ANCON_bnbt as string,
-      prov
-    );
-    const verify = await anconReader.verifyProofWithKV(
-      Web3.utils.keccak256('anconprotocol'),
-      abiedProof.key,
-      abiedProof.value,
-      abiedProof
-    )
-    console.log('verify', verify)
-  } catch (error) {
-      console.log('coudnt verify', error)
-  }
+      const proof = await rawProof.json();
+      const abiedProof = await toAbiProof(proof[0].Proof.exist);
+      const prov = new ethers.providers.JsonRpcProvider(
+        "https://data-seed-prebsc-1-s1.binance.org:8545/"
+      );
+      // verify proof
+      const anconReader = AnconProtocol__factory.connect(
+        process.env.NEXT_PUBLIC_ANCON_bnbt as string,
+        prov
+      );
+      const verify = await anconReader.verifyProofWithKV(
+        Web3.utils.keccak256("tensta"),
+        abiedProof.key,
+        abiedProof.value,
+        abiedProof
+      );
+      if (verify === true) {
+        setBlock(true);
+        setShow("owner");
+      }
+    } catch (error) {
+      console.log("coudnt verify", error);
+    }
   };
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4">
@@ -201,11 +204,11 @@ function Qrview() {
             {/* Image */}
             <div>
               <h4 className="font-medium text-gray-600">Image</h4>
-              <p className="truncate">{`https://tensta.did.pa/v0/file/${metadata.image}/`}</p>
+              <p className="truncate">{`${apiEndpoint}file/${metadata.image}/`}</p>
             </div>
             <div className="flex items-center justify-center">
               <img
-                src={`https://tensta.did.pa/v0/file/${metadata.image}/`}
+                src={`${apiEndpoint}file/${metadata.image}/`}
                 alt="nft-image"
                 className="rounded w-3/5"
               />
@@ -217,7 +220,11 @@ function Qrview() {
             <div className="grid mt-4 grid-cols-1 place-items-center">
               <BadgeCheckIcon className="w-10 text-green-700" />
               <p className="text-green-700">
-                Signature verified succesfully
+                {signatures === true
+                  ? block === true
+                    ? "Signature is verified and Metadata exists on Blockchain"
+                    : "Signature is verified"
+                  : ""}
               </p>
             </div>
           )}
@@ -225,7 +232,7 @@ function Qrview() {
             <div className="grid mt-4 grid-cols-1 place-items-center">
               <XCircleIcon className="w-10 text-red-700" />
               <p className="text-red-700">
-                Signature could not be verified
+                Signature or Existence could not be verified
               </p>
             </div>
           )}

@@ -16,6 +16,7 @@ function Enroll() {
   // web3
   let signer: ethers.providers.JsonRpcSigner;
   let network: ethers.providers.Network;
+  const apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
   // state
   const [step, setStep] = useState(0);
   const [error, setError] = useState(false);
@@ -81,7 +82,7 @@ function Enroll() {
           provider,
           address,
           Web3.utils.keccak256("tensta"),
-          "tensta.did.pa/v0/"
+          apiEndpoint
         );
         await Ancon.initialize();
         
@@ -121,13 +122,6 @@ function Enroll() {
     // encode the pub key
     const base58Encode = ethers.utils.base58.encode(pubkey);
 
-    const prov = new ethers.providers.Web3Provider(provider);
-    // initialize the signer
-    signer = prov.getSigner();
-
-    // get the network
-    network = await prov.getNetwork();
-
     const message = `#Welcome to Ancon Protocol!
     
     For more information read the docs https://anconprotocol.github.io/docs/
@@ -138,12 +132,12 @@ function Enroll() {
     by signing this message you accept the terms and conditions of Ancon Protocol
     `;
 
-    const signature = await signer.signMessage(
+    const signature = await Ancon.signer.signMessage(
       ethers.utils.arrayify(ethers.utils.toUtf8Bytes(message))
     );
     //post to get the did
     const payload = {
-      ethrdid: `did:ethr:${network.name}:${address}`,
+      ethrdid: `did:ethr:${Ancon.network.name}:${address}`,
       pub: base58Encode,
       signature: signature,
       message: message,

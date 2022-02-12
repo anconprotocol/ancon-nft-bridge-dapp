@@ -94,7 +94,7 @@ export default class AnconProtocol {
    */
   async getDidTransaction() {
     const rawDid = await fetch(
-      `https://${this.anconEndpoint}did/raw:did:ethr:${this.network.name}:${this.address}`
+      `${this.anconEndpoint}did/raw:did:ethr:${this.network.name}:${this.address}`
     );
 
     const encodedDid = await rawDid.json();
@@ -107,7 +107,7 @@ export default class AnconProtocol {
 
   async signMessage() {
     const rawDid = await fetch(
-      `https://${this.anconEndpoint}did/raw:did:ethr:${this.network.name}:${this.address}`
+      `${this.anconEndpoint}did/raw:did:ethr:${this.network.name}:${this.address}`
     );
     const encodedDid = await rawDid.json();
     return encodedDid;
@@ -223,7 +223,7 @@ export default class AnconProtocol {
     enrolling?: boolean
   ) {
     //   url to be called
-    const url = `https://${this.anconEndpoint}${proofEndpoint}`;
+    const url = `${this.anconEndpoint}${proofEndpoint}`;
 
     // fetch
     const rawResponse = await fetch(url, requestOptions);
@@ -281,7 +281,7 @@ export default class AnconProtocol {
    */
   async getProof(key: string, height: string) {
     const rawResult = await fetch(
-      `https://${this.anconEndpoint}proof/${key}?height=${height}`
+      `${this.anconEndpoint}proof/${key}?height=${height}`
     );
     const result = await rawResult.json();
 
@@ -293,7 +293,7 @@ export default class AnconProtocol {
 
   async fetchDag(id: string) {
     const rawResponse = await fetch(
-      `https://${this.anconEndpoint}dagjson/${id}/`
+      `${this.anconEndpoint}dagjson/${id}/`
     );
     const response = await rawResponse.json();
     if (response.error != "cid too short") {
@@ -341,7 +341,7 @@ export default class AnconProtocol {
 
     // check the hashes
     const rawLastHash = await fetch(
-      `https://${this.anconEndpoint}proofs/lasthash`
+      `${this.anconEndpoint}proofs/lasthash`
     );
     const lasthash = await rawLastHash.json();
 
@@ -438,7 +438,7 @@ export default class AnconProtocol {
 
     // checking hashes
     const rawLastHash = await fetch(
-      `https://${this.anconEndpoint}proofs/lasthash`
+      `${this.anconEndpoint}proofs/lasthash`
     );
     const lasthash = await rawLastHash.json();
     const decodedlastHash = ethers.utils.hexlify(
@@ -473,18 +473,13 @@ export default class AnconProtocol {
       this.signer
     );
 
-    const dai = new this.provWeb3.eth.Contract(
-      AnconToken.abi,
-      this.daiAddress
-    );
-
     await sleep(7000);
 
     const did = await this.getDidTransaction();
 
     // get the last hash
     const rawLastHash = await fetch(
-      `https://${this.anconEndpoint}proofs/lasthash`
+      `${this.anconEndpoint}proofs/lasthash`
     );
     const lasthash = await rawLastHash.json();
     const version = lasthash.lastHash.version;
@@ -500,6 +495,7 @@ export default class AnconProtocol {
     console.log("estimating gas", packetProof, userProof);
     // estimate gas
     const gasLimit = await xdvSigner.estimateGas.mintWithProof(
+      this.moniker,
       hexData,
       userProof,
       packetProof
@@ -508,12 +504,50 @@ export default class AnconProtocol {
     const rate = Math.floor(decimalRate);
     // start minting
     console.log("estimated ready", decimalRate, rate);
+    console.log("verifying");
+    const anconSigner = AnconProtocol__factory.connect(
+      this.anconAddress,
+      this.signer
+    );
+    const spec = await anconSigner.getIavlSpec();
+
+    console.log("spec", spec);
+    const decodedlastHash = ethers.utils.hexlify(
+      ethers.utils.base64.decode(lasthash.lastHash.hash)
+    );
+    console.log("decoded", decodedlastHash);
+    try {
+      const verifyUser = await anconSigner.verify(
+        userProof,
+        spec,
+        decodedlastHash,
+        userProof.key,
+        userProof.value
+      );
+      console.log(verifyUser);
+    } catch (error) {
+      console.log("error", error);
+    }
+    try {
+      const verifyPacket = await anconSigner.verify(
+        packetProof,
+        spec,
+        decodedlastHash,
+        packetProof.key,
+        packetProof.value
+      );
+      console.log(verifyPacket);
+    } catch (error) {
+      console.log("error", error);
+    }
+
     let mint;
     switch (this.network.chainId) {
       case 97:
       case 80001:
         try {
           mint = await xdvSigner.mintWithProof(
+            this.moniker,
             hexData,
             userProof,
             packetProof,
@@ -525,6 +559,7 @@ export default class AnconProtocol {
           sleep(5000);
           console.log("failed, trying again...", error);
           mint = await xdvSigner.mintWithProof(
+            this.moniker,
             hexData,
             userProof,
             packetProof
@@ -535,6 +570,7 @@ export default class AnconProtocol {
         // tries two times in case it fails
         try {
           mint = await xdvSigner.mintWithProof(
+            this.moniker,
             hexData,
             userProof,
             packetProof,
@@ -549,6 +585,7 @@ export default class AnconProtocol {
           console.log("failed, trying again...", error);
           sleep(5000);
           mint = await xdvSigner.mintWithProof(
+            this.moniker,
             hexData,
             userProof,
             packetProof,
@@ -561,12 +598,13 @@ export default class AnconProtocol {
         }
         break;
     }
+
     return mint;
   }
 
   async getDomainName() {
     const rawResponse = await fetch(
-      `https://${this.anconEndpoint}did/did:ethr:${this.network.name}:${this.address}`
+      `${this.anconEndpoint}did/did:ethr:${this.network.name}:${this.address}`
     );
     const response = await rawResponse.json();
     if (rawResponse.status === 400) {
@@ -577,7 +615,7 @@ export default class AnconProtocol {
 
   async getMetadata(cid: string, address: string) {
     const rawData = await fetch(
-      `https://${this.anconEndpoint}dag/${cid}/contentHash`
+      `${this.anconEndpoint}dag/${cid}/contentHash`
     );
     const data = await rawData.json();
 
@@ -592,13 +630,10 @@ export default class AnconProtocol {
     let ipfsRes;
     let ipfsResBody;
     try {
-      ipfsRes = await fetch(
-        "https://" + this.anconEndpoint + "file",
-        {
-          method: "post",
-          body: body,
-        }
-      );
+      ipfsRes = await fetch(this.anconEndpoint + "file", {
+        method: "post",
+        body: body,
+      });
       console.log(ipfsRes);
       ipfsResBody = await ipfsRes.json();
     } catch (error) {
@@ -621,8 +656,8 @@ export default class AnconProtocol {
       proof.key,
       proof.value,
       proof
-    )
-    console.log('[verify]',verify)
+    );
+    console.log("[verify]", verify);
   }
 }
 

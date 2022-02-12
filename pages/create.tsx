@@ -30,6 +30,7 @@ export function sleep(ms: any) {
 function Create() {
   // web3
   let Ancon: AnconProtocol;
+  const apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
   // state
   const [step, setStep] = useState(0);
   const [waitStep, setWaitStep] = useState(false);
@@ -65,7 +66,7 @@ function Create() {
       provider,
       address,
       Web3.utils.keccak256("tensta"),
-      "tensta.did.pa/v0/"
+      apiEndpoint
     );
     Ancon.initialize();
   }
@@ -182,8 +183,6 @@ function Create() {
 
         // wait for the header to change
         // console.log("event", eventWaiter);
-        let eventWaiter = await Ancon.getPastEvents();
-        console.log("event", eventWaiter);
         // handle the second request options
         const requestOptions2 = {
           method: "POST",
@@ -212,7 +211,7 @@ function Create() {
           metadaCid: metadata.contentCid,
         });
         console.log("wait for the event");
-        eventWaiter = await Ancon.getPastEvents();
+        let eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
 
         setMessage("Minting NFT...");
