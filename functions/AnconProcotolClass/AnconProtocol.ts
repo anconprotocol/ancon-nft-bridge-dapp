@@ -345,17 +345,6 @@ export default class AnconProtocol {
     );
     const lasthash = await rawLastHash.json();
 
-    // make a Web3 prov to call the dai contract
-
-    const dai = new this.provWeb3.eth.Contract(
-      AnconToken.abi,
-      this.daiAddress
-    );
-
-    // get the height
-    const did = await this.getDidTransaction();
-    const height = did.height;
-
     await this.getPastEvents();
 
     // estimate gas
@@ -503,43 +492,10 @@ export default class AnconProtocol {
     const decimalRate = gasLimit.toNumber() * 1.2;
     const rate = Math.floor(decimalRate);
     // start minting
-    console.log("estimated ready", decimalRate, rate);
-    console.log("verifying");
     const anconSigner = AnconProtocol__factory.connect(
       this.anconAddress,
       this.signer
     );
-    const spec = await anconSigner.getIavlSpec();
-
-    console.log("spec", spec);
-    const decodedlastHash = ethers.utils.hexlify(
-      ethers.utils.base64.decode(lasthash.lastHash.hash)
-    );
-    console.log("decoded", decodedlastHash);
-    try {
-      const verifyUser = await anconSigner.verify(
-        userProof,
-        spec,
-        decodedlastHash,
-        userProof.key,
-        userProof.value
-      );
-      console.log(verifyUser);
-    } catch (error) {
-      console.log("error", error);
-    }
-    try {
-      const verifyPacket = await anconSigner.verify(
-        packetProof,
-        spec,
-        decodedlastHash,
-        packetProof.key,
-        packetProof.value
-      );
-      console.log(verifyPacket);
-    } catch (error) {
-      console.log("error", error);
-    }
 
     let mint;
     switch (this.network.chainId) {
@@ -643,10 +599,6 @@ export default class AnconProtocol {
   }
 
   async verifyBlockchainExistence(proof: any) {
-    const anconSigner = AnconProtocol__factory.connect(
-      this.xdvnftAdress,
-      this.signer
-    );
     const anconReader = AnconProtocol__factory.connect(
       this.xdvnftAdress,
       this.prov
@@ -658,6 +610,82 @@ export default class AnconProtocol {
       proof
     );
     console.log("[verify]", verify);
+  }
+  async verifyProofs(userProofKey: string) {
+    // get did
+    const did = await this.getDidTransaction();
+
+    // get the last hash
+    const rawLastHash = await fetch(
+      `${this.anconEndpoint}proofs/lasthash`
+    );
+    const lasthash = await rawLastHash.json();
+    const version = lasthash.lastHash.version;
+    const decodedlastHash = ethers.utils.hexlify(
+      ethers.utils.base64.decode(lasthash.lastHash.hash)
+    );
+    /* prepare the packet and user proof
+     */
+    // prepare packet proof
+    const packetProof = await this.getProof(userProofKey, version);
+
+    // prepare user proof
+    const userProof = await this.getProof(did.key, version);
+
+    
+
+    const anconSigner = AnconProtocol__factory.connect(
+      this.anconAddress,
+      this.signer
+    );
+    const anconReader = AnconProtocol__factory.connect(
+      this.anconAddress,
+      this.prov
+    );
+
+    const spec = await anconSigner.getIavlSpec();
+
+    const hash = await anconReader.getProtocolHeader(this.moniker)
+    console.log('hash', hash, decodedlastHash)
+    // veirfy proof
+    const verify = [];
+    try {
+      const verifyUser: any = await anconSigner.verify(
+        userProof,
+        spec,
+        hash,
+        userProof.key,
+        userProof.value
+      );
+      if (verifyUser.length === 0) {
+        verify.push("user");
+        console.log(verifyUser)
+      }
+    } catch (error) {
+      console.log("error1", error);
+      return false;
+    }
+    try {
+      const verifyPacket: any = await anconSigner.verify(
+        packetProof,
+        spec,
+        hash,
+        packetProof.key,
+        packetProof.value
+      );
+
+      if (verifyPacket.length === 0) {
+        verify.push("packet");
+        console.log(verifyPacket)
+      }
+    } catch (error) {
+      console.log("error2", error);
+      return false;
+    }
+    if (verify.length === 2) {
+      return true;
+    }
+    return false;
   }
 }
 

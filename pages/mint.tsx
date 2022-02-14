@@ -11,6 +11,7 @@ import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
 import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
 import useProvider from "../hooks/useProvider";
+import { AnconProtocol__factory } from "../types/ethers-contracts";
 
 function Mint() {
   let ancon: AnconProtocol;
@@ -22,7 +23,9 @@ function Mint() {
     image: "",
     root: "",
   });
-  const [transaction, setTransaction] = useState("");
+  const [transaction, setTransaction] = useState(
+    ""
+  );
   const [show, setShow] = useState("able");
   const [mintProperties, setMintProperties] = useState({
     hexdata: "",
@@ -42,7 +45,7 @@ function Mint() {
         provider,
         addressToCheck,
         Web3.utils.keccak256("tensta"),
-        "tensta.did.pa/v0/"
+        "https://tensta.did.pa/v0/"
       );
       await ancon.initialize();
     };
@@ -55,7 +58,7 @@ function Mint() {
       );
       const data = await rawData.json();
       data["root"] = await await Object?.values(data.root)[0];
-      setMetadata({ ...data });
+      // setMetadata({ ...data });
     }
   };
 
@@ -100,16 +103,14 @@ function Mint() {
       if (verify == addressToCheck) {
         try {
           // checking hashes
-          const rawLastHash = await fetch(
-            `https://tensta.did.pa/v0/proofs/lasthash`
-          );
-          const lasthash = await rawLastHash.json();
-          console.log(lasthash.lastHash.version, height);
-          if (lasthash.lastHash.version >= height) {
+          const verifyProof = await ancon.verifyProofs(user);
+
+          if (verifyProof) {
             setShow("owner");
           } else setShow("not");
         } catch (error) {
           console.log("error", error);
+          setShow("not");
         }
       } else {
         setShow("not");
@@ -121,31 +122,6 @@ function Mint() {
         "`/qrview?address=${address}&did=${tokenData.tokenCid}&cid=${tokenData.metadaCid}`",
       ]);
     }
-  };
-
-  const nextStep = async () => {
-    const hexdata = ethers.utils.defaultAbiCoder.encode(
-      ["address", "string"],
-      [addressToCheck, cid]
-    );
-    // sign the data
-    const s = await ancon.signer.signMessage(
-      ethers.utils.arrayify(ethers.utils.toUtf8Bytes(hexdata))
-    );
-    const requestOptions2 = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        path: "/",
-        from: `did:ethr:${ancon.network.name}:${addressToCheck}`,
-        signature: s,
-        data: hexdata,
-      }),
-    };
-    const proof = await ancon.postProof("dagjson", requestOptions2);
-    setMintProperties({ hexdata, userKey: proof.proofKey });
-    setShow("wait");
-    console.log();
   };
 
   const mint = async () => {
@@ -197,11 +173,16 @@ function Mint() {
                 </div>
 
                 {show === "minted" && (
-                  <div>
+                  <div
+                    onClick={() =>
+                      navigator.clipboard.writeText(`${transaction}`)
+                    }
+                    className="cursor-pointer hover:underline hover:text-blue-400"
+                  >
                     <h4 className="font-medium text-gray-600">
                       Transaction Hash
                     </h4>
-                    <p>{metadata.description}</p>
+                    <p className="truncate">{transaction}</p>
                   </div>
                 )}
                 {/* Image */}
@@ -238,7 +219,7 @@ function Mint() {
                 onClick={mint}
                 className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
               >
-                mint
+                Mint
               </button>
             </div>
           )}
@@ -247,7 +228,7 @@ function Mint() {
             <div className="grid mt-4 grid-cols-1 place-items-center">
               <XCircleIcon className="w-10 text-red-700" />
               <p className="text-red-700">
-                Token cannot be minted yet
+                Token cannot be minted yet, please try again later.
               </p>
             </div>
           )}
