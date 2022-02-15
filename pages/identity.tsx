@@ -53,12 +53,12 @@ function identity() {
   const unlockEncryption = async () => {
     try {
       const response = await fetch(
-        "https://api.ancon.did.pa/v0/dagjson/" + validationRequest.creds + "/"
+        "https://tensta.did.pa/v0/dagjson/" + validationRequest.creds + "/"
       );
       
       const enc = await response.json();
       const encr = await fetch(
-        "https://api.ancon.did.pa/v0/dagjson/" + enc.content["/"] + "/"
+        "https://tensta.did.pa/v0/dagjson/" + enc.content["/"] + "/"
       );
       const encrypted = await encr.json();
       const wallet = await ethers.Wallet.fromEncryptedJson(
@@ -66,12 +66,12 @@ function identity() {
         inputPin
       );
       const tx = await fetch(
-        "https://api.ancon.did.pa/v0/dagjson/" + validationRequest.content + "/",{
+        "https://tensta.did.pa/v0/dagjson/" + validationRequest.content + "/",{
         }
       );
       const txResponse = await tx.json();
       const content = await fetch(
-        "https://api.ancon.did.pa/v0/dagjson/" + txResponse.content["/"] + "/",{
+        "https://tensta.did.pa/v0/dagjson/" + txResponse.content["/"] + "/",{
         }
       );
       const payload = await content.json();
@@ -127,7 +127,7 @@ function identity() {
     
     
     formData.append("file", f);
-    const upload = await fetch("https://api.ancon.did.pa/v0/file", {
+    const upload = await fetch("https://tensta.did.pa/v0/file", {
       method: "POST",
       body: formData,
     });
@@ -142,7 +142,7 @@ function identity() {
     );
 
 
-    const rawDagPost = await fetch("https://api.ancon.did.pa/v0/dagjson", {
+    const rawDagPost = await fetch("https://tensta.did.pa/v0/dagjson", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -160,7 +160,7 @@ function identity() {
         ethers.utils.arrayify(ethers.utils.toUtf8Bytes(creds))
       );
 
-      const rawDagPost = await fetch("https://api.ancon.did.pa/v0/dagjson", {
+      const rawDagPost = await fetch("https://tensta.did.pa/v0/dagjson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

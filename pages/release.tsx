@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { keccak256 } from "ethers/lib/utils";
+import { arrayify, keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -46,30 +46,26 @@ export default function Release() {
       contractAddresses.ancon,
       prov
     );
-    const wxdv =  WXDV__factory.connect(contractAddresses.wxdv, signer);
     const contractId = await protocol.getContractIdentifier();
     const nonce=keccak256(
       ethers.utils.defaultAbiCoder.encode(["uint256",'bytes32'],[Math.floor(Math.random()*100000000000) ,contractId]))
 
     const hexdata = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "string", "address","bytes32"],
-      [parseInt(tokenId), cid, address, nonce ]
+      ["uint256", "string", "bytes","bytes","bytes32"],
+      [(tokenId), cid, arrayify(address),arrayify(xdvSigner.address) ,contractId ]
     );
-    const hash = ethers.utils.solidityKeccak256(
-      ["uint256", "string", "address","bytes32"],
-      [parseInt(tokenId), cid, address, nonce]
-    );
+
 
     // sign the data
     const s = await signer.signMessage(
       ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
+        ethers.utils.toUtf8Bytes(hexdata)
       )
     );
 
     // post the new proof
     const rawPostProof = await fetch(
-      "https://api.ancon.did.pa/v0/dagjson",
+      "https://tensta.did.pa/v0/dagjson",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +73,7 @@ export default function Release() {
           path: "/",
           from: address,
           signature: s,
-          data: [hexdata],
+          data: hexdata,
         }),
       }
     );
@@ -86,11 +82,11 @@ export default function Release() {
 
     // fetch the proof
     const rawGetProof = await fetch(
-      `https://api.ancon.did.pa/v0/dagjson/${key}/`
+      `https://tensta.did.pa/v0/dagjson/${key}/`
     );
     const getProof = await rawGetProof.json();
     console.log("getproff", getProof);
-    const newCid = await Object?.values(getProof.content)[0];
+
     const packetKey = getProof.key;
     const packetHeight = getProof.height;
 
@@ -101,14 +97,14 @@ export default function Release() {
     const did = await GetDid(Network.name,address);
     //  packet proof
     const rawPacketProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
+      `https://tensta.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
     );
     let packetProof = await rawPacketProof.json();
     packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
     //  user proof
     const rawUserProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${did.key}?height=${packetHeight}`
+      `https://tensta.did.pa/v0/proof/${did.key}?height=${packetHeight}`
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });
@@ -128,22 +124,6 @@ export default function Release() {
       .allowance(address, protocol.address)
       .call();
     //if (allowance == 0) {
-      const tx = await dai.methods
-        .approve(protocol.address, "1000000000000000000")
-        .send({
-          gasPrice: "50000000000",
-          gas: 400000,
-          from: address,
-        });
-      
-      const tx2 = await dai.methods
-        .approve(wxdv.address, "1000000000000000000")
-        .send({
-          gasPrice: "50000000000",
-          gas: 400000,
-          from: address,
-        });
-      
   //  }
     //   await dai.methods
     //     .approve(xdvSigner.address, "1000000000000000000000")
@@ -154,14 +134,15 @@ export default function Release() {
     //     });
     // }
     try {
+     const gasLimit =await xdvSigner.estimateGas.releaseWithProof(Web3.utils.keccak256('tensta'),hexdata,userProof,packetProof);
       const release = await xdvSigner.releaseWithProof(
-        packetProof.key,
-        packetProof.value,
+        Web3.utils.keccak256('tensta'),
+        hexdata,
         userProof,
         packetProof,
-        hash,{
+         {
           gasPrice: "50000000000",
-          gasLimit: 400000,
+          gasLimit,
           from: address,
         }
       );
@@ -179,7 +160,7 @@ export default function Release() {
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
         <div className="bg-white shadow-xl rounded-lg px-3 py-4">
           <span className="text-black font-bold text-xl">
-            Release Token
+            Transfer Metadata Ownership - Destination 
           </span>
           {step === 0 ? (
             <div>

@@ -5,13 +5,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export": "npm  run build && next export -o _static"
   },
   "dependencies": {
     "@badrap/bar-of-progress": "^0.1.2",
     "@heroicons/react": "^1.0.5",
     "@tanker/file-reader": "^2.26.0",
+    "@types/elliptic": "^6.4.14",
     "eciesjs": "^0.3.12",
+    "elliptic": "^6.5.4",
     "ethers": "^5.5.2",
     "ethr-did": "^2.1.5",
     "next": "12.0.7",

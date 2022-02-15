@@ -72,7 +72,7 @@ function RegisterDAG() {
     const    network = await prov.getNetwork();
 
     const rawResponse = await fetch(
-      `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
+      `https://tensta.did.pa/v0/did/did:ethr:${network.name}:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -210,7 +210,7 @@ function RegisterDAG() {
       // creates the metadata
       const PostRequest = async () => {
         const rawMetadata = await fetch(
-          "https://api.ancon.did.pa/v0/dagjson",
+          "https://tensta.did.pa/v0/dagjson",
           requestOptions
         );
         const metadata = await rawMetadata.json();
@@ -221,7 +221,7 @@ function RegisterDAG() {
         setTokenData({ ...tokenData, tokenCid: id });
         console.log("didCID", id);
         const dagRequest = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${id}/`
+          `https://tensta.did.pa/v0/dagjson/${id}/`
         );
 
         const dag = await dagRequest.json();
@@ -257,7 +257,7 @@ function RegisterDAG() {
         // await sleep(61000);
 
         const rawPostProof = await fetch(
-          "https://api.ancon.did.pa/v0/dagjson",
+          "https://tensta.did.pa/v0/dagjson",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -274,7 +274,7 @@ function RegisterDAG() {
         console.log("date", postProof, key);
 
         const rawGetProof = await fetch(
-          `https://api.ancon.did.pa/v0/dagjson/${key}/`
+          `https://tensta.did.pa/v0/dagjson/${key}/`
         );
         const getProof = await rawGetProof.json();
         console.log();
@@ -350,7 +350,7 @@ function RegisterDAG() {
     const memonik = web3.utils.keccak256('anconprotocol')
     // checking hashes
     const rawLastHash = await fetch(
-      "https://api.ancon.did.pa/v0/proofs/lasthash"
+      "https://tensta.did.pa/v0/proofs/lasthash"
     );
     const lasthash = await rawLastHash.json();
     const relayHash = await contract3.getProtocolHeader(memonik);
@@ -363,21 +363,21 @@ function RegisterDAG() {
     console.log("relay hash", relayHash);
 
     // get the key and height
-    const Did = await GetDid(address);
+    const Did = await GetDid(network.name,address);
     const key = Did.key;
 
     /* prepare the packet and user proof
      */
     // prepare packet proof
     const rawPacketProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
+      `https://tensta.did.pa/v0/proof/${user.key}?height=${user.height}`
     );
     let packetProof = await rawPacketProof.json();
     packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
     // prepare user proof
     const rawUserProof = await fetch(
-      `https://api.ancon.did.pa/v0/proof/${key}?height=${user.height}`
+      `https://tensta.did.pa/v0/proof/${key}?height=${user.height}`
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });
@@ -391,79 +391,79 @@ function RegisterDAG() {
       [address, tokenData.tokenCid]
     );
 
-    let mint;
-    switch (network.chainId) {
-      case 97:
-        // tries two times in case it fails
-        if (allowance == 0) {
-          await dai.methods
-            .approve(contract2.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: address,
-            });
-        }
-        try {
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash
-          );
-        } catch (error) {
-          console.log("failed, trying again...", error);
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash
-          );
-        }
-        break;
-      case 42:
-        // if (allowance == 0) {
-        await dai.methods
-          .approve(contract2.address, "1000000000000000000000")
-          .send({
-            gasPrice: "200000000000",
-            gas: 700000,
-            from: address,
-          });
-        // }
-        // tries two times in case it fails
-        try {
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash,
-            {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address
-            }
-          );
-          console.log(mint)
-        } catch (error) {
-          console.log("failed, trying again...", error);
-          mint = await contract2.mintWithProof(
-            packetProof.key,
-            hexData,
-            userProof,
-            packetProof,
-            hash, {
-              gasPrice: "200000000000",
-              gasLimit: 900000,
-              from: address
-            }
-          );
-        }
-        break;
-    }
+    // let mint;
+    // switch (network.chainId) {
+    //   case 97:
+    //     // tries two times in case it fails
+    //     if (allowance == 0) {
+    //       await dai.methods
+    //         .approve(contract2.address, "1000000000000000000000")
+    //         .send({
+    //           gasPrice: "22000000000",
+    //           gas: 400000,
+    //           from: address,
+    //         });
+    //     }
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     } catch (error) {
+    //       console.log("failed, trying again...", error);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     }
+    //     break;
+    //   case 42:
+    //     // if (allowance == 0) {
+    //     await dai.methods
+    //       .approve(contract2.address, "1000000000000000000000")
+    //       .send({
+    //         gasPrice: "200000000000",
+    //         gas: 700000,
+    //         from: address,
+    //       });
+    //     // }
+    //     // tries two times in case it fails
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address
+    //         }
+    //       );
+    //       console.log(mint)
+    //     } catch (error) {
+    //       console.log("failed, trying again...", error);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash, {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address
+    //         }
+    //       );
+    //     }
+    //     break;
+    // }
     
     setStep(6);
   };

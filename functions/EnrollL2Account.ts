@@ -55,7 +55,7 @@ async function EnrollL2Account(
 
     // check the hashes
     const rawLastHash = await fetch(
-      "https://api.ancon.did.pa/v0/proofs/lasthash"
+      "https://tensta.did.pa/v0/proofs/lasthash"
     );
     const lasthash = await rawLastHash.json();
 
@@ -113,13 +113,13 @@ async function EnrollL2Account(
     switch (network.chainId) {
       case 97:
         if (allowance == 0) {
-          await dai.methods
-            .approve(contract2.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: address,
-            });
+          // await dai.methods
+          //   .approve(contract2.address, "1000000000000000000000")
+          //   .send({
+          //     gasPrice: "22000000000",
+          //     gas: 400000,
+          //     from: address,
+          //   });
         }
         enroll = await contract2.enrollL2Account(
           provi.utils.keccak256("anconprotocol"),
@@ -134,12 +134,12 @@ async function EnrollL2Account(
         break;
       case 42:
         // if (allowance == 0) {
-        await dai.methods
-          .approve(contract2.address, "1000000000000000000000")
-          .send({
-            gasPrice: "400000000000",
-            gas: 700000,
-          });
+        // await dai.methods
+        //   .approve(contract2.address, "1000000000000000000000")
+        //   .send({
+        //     gasPrice: "400000000000",
+        //     gas: 700000,
+        //   });
         // }
         enroll = await contract2.enrollL2Account(
           provi.utils.keccak256("anconprotocol"),
@@ -154,14 +154,14 @@ async function EnrollL2Account(
         break;
       case 80001:
         // if (allowance == 0) {
-          console.log('o800')
-          await dai.methods
-            .approve(contract2.address, "1000000000000000000000")
-            .send({
-              gasPrice: "22000000000",
-              gas: 400000,
-              from: address,
-            });
+          // console.log('o800')
+          // await dai.methods
+          //   .approve(contract2.address, "1000000000000000000000")
+          //   .send({
+          //     gasPrice: "22000000000",
+          //     gas: 400000,
+          //     from: address,
+          //   });
         // }
         enroll = await contract2.enrollL2Account(
           provi.utils.keccak256("anconprotocol"),

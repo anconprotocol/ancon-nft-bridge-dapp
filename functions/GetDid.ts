@@ -5,7 +5,7 @@
  */
 async function GetDid(networkName:string, address:string) {
   const rawDid = await fetch(
-    `https://api.ancon.did.pa/v0/did/raw:did:ethr:${networkName}:${address}`
+    `https://tensta.did.pa/v0/did/raw:did:ethr:${networkName}:${address}`
   );
   const encodedDid = await rawDid.json();
   return encodedDid
