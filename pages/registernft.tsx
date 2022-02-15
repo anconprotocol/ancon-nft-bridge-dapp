@@ -31,7 +31,7 @@ declare let document: any;
 export function sleep(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-function RegisterDAG() {
+function RegisterNFT() {
   // web3
   let prov: ethers.providers.Web3Provider;
   let signer: ethers.providers.JsonRpcSigner;
@@ -63,7 +63,6 @@ function RegisterDAG() {
 
   //step 0 //
 
-  // STEP 0  gets the public key and handle the get did//
   const getDomainName = async () => {
     
     const prov = new ethers.providers.Web3Provider(provider)
@@ -80,9 +79,7 @@ function RegisterDAG() {
       return false;
     }
     return false;
-  };
-
-  // step 1 //
+  };  // step 1 //
 
   const getPastEvents = async () => {
     const prov = new ethers.providers.Web3Provider(provider);
@@ -504,14 +501,14 @@ function RegisterDAG() {
       <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
         <div className="bg-white shadow-xl rounded-lg px-3 py-4">
           <span className="text-black font-bold text-xl">
-            {step === 6 ? "NFT Created" : "Register DAG"}
+            {step === 6 ? "NFT Created" : "Register NFT token address"}
           </span>
   
           {step == 3 ? (
             <div className="flex-col flex mt-3">
               <div className="flex-col flex mt-3">
                 <a className="text-gray-600 text-sm font-bold">
-                  Moniker
+                  NFT Address
                 </a>
                 <input
                   type="text"
@@ -526,22 +523,7 @@ function RegisterDAG() {
                 ></input>
               </div>
 
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  DAG ecdsa address
-                </a>
-                <input
-                  id="TITLE"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTokenData({
-                      ...tokenData,
-                      description: e.target.value,
-                    });
-                  }}
-                  value={tokenData.description}
-                ></input>
-              </div>
+           
               <div className="flex items-center justify-center mt-3">
                 <div>
                   <p
@@ -658,4 +640,4 @@ function RegisterDAG() {
   );
 }
 
-export default RegisterDAG;
+export default RegisterNFT;

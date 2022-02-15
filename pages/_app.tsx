@@ -5,7 +5,7 @@ import Modal from "../components/Modal";
 import ErrorModal from "../components/ErrorModal";
 import ProgressBar from "@badrap/bar-of-progress";
 import { Router } from "next/router";
-import Footer from "../components/Footer";
+import Script from "next/script";
 
 const progress = new ProgressBar({
   size: 4,
@@ -22,7 +22,6 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Modal />
       <ErrorModal />
       <Component {...pageProps} />
-      <Footer />
     </RecoilRoot>
   );
 }

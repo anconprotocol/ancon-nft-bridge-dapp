@@ -50,7 +50,7 @@ function Step0({
                 className="rounded-t bg-primary-600 hover:bg-primary-500 py-2 px-4 block whitespace-no-wrap transition-all duration-250 ease-out"
                 href="#"
               >
-                Binance Smart Chain testnet
+                Binance Smart Chain Tesnet
               </a>
             </li>
             <li

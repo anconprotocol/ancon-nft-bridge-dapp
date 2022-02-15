@@ -9,7 +9,9 @@ function useProvider() {
     } else if (window.web3) {
       provider = window.web3.currentProvider;
       // console.log("provider", provider);
-    } 
+    } else {
+      window.alert("no connected");
+    }
     return provider;
   }
 }

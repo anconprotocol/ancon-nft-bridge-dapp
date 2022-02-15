@@ -10,16 +10,16 @@ function EnrollStep2({ address, DIDCid, router }: StepProps) {
     <div className="flex items-center justify-center mt-3">
       <div className="grid grid-cols-1">
         <a className="text-gray-600 text-sm">Domain Name</a>
-        <span className="text-lg font-medium mb-2">{address.substring(0,30)}...</span>
+        <span className="text-lg font-medium mb-2">{address}</span>
 
         <a className="text-gray-600 text-sm">DID Cid</a>
-        <p className="sm:inline hidden font-medium mb-3">
+        <p className="hidden md:inline text-lg font-medium mb-2">
           {DIDCid}
         </p>
-        <p className="sm:hidden text-lg">
+        <p className="md:hidden text-lg">
           {DIDCid.substring(0, 30)}...
         </p>
-        <p className="sm:hidden text-lg">...{DIDCid.substring(30)}</p>
+        <p className="md:hidden text-lg">...{DIDCid.substring(30)}</p>
 
         <div className="flex items-center justify-center mt-3 w-full">
           <div>
