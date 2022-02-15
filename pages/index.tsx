@@ -29,7 +29,7 @@ export default function Home() {
             
           />
           <ButtonCard
-            title="Transfer Ownership"
+            title="Swap"
             url="swap"
             img={<SwitchHorizontalIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
           />
@@ -39,14 +39,18 @@ export default function Home() {
             url="identity"
             img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
           />
-{/*           
+          
           <ButtonCard
             title="Register DAG Network"            
             url="registerdag"
             img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
-          /> */}
+          />
 
-
+           <ButtonCard
+            title="Register NFT token"            
+            url="registernft"
+            img={<UsersIcon className="w-12 sm:w-20 text-white flex items-center sm:mt-4 2xl:w-32" />}
+          />
           
         </section>
       </main>

@@ -28,49 +28,48 @@ function Login() {
     const web3 = new Web3(provider);
     prov = new ethers.providers.Web3Provider(provider);
     let Network: any = await prov.getNetwork();
-    Network = await Network.chainId;
-    console.log(Network);
+    Network = await Network.chainId
+    console.log(Network)
     switch (Network) {
       case 97:
-        Network = "Binance testnet";
+        Network = "Binance Tesnet";
         break;
 
       case 42:
-        Network = "Kovan testnet";
+        Network = "Kovan Tesnet";
         break;
       case 80001:
-        Network = "Mumbai testnet";
-        break;
-      default:
-        try {
-          const net = await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x61" }],
-          });
-          console.log("net", net);
-        } catch (switchError: any) {
-          // This error code indicates that the chain has not been added to MetaMask.
-          if (switchError.code === 4902) {
-            try {
-              await window.ethereum.request({
-                method: "wallet_addEthereumChain",
-                params: [
-                  {
-                    chainId: "0x61",
-                    chainName: "Binance SC testnet",
-                    rpcUrls: [
-                      "https://data-seed-prebsc-1-s1.binance.org:8545/",
-                    ],
-                  },
-                ],
-              });
-            } catch (addError) {
-              // handle "add" error
-            }
+        Network = "Mumbai Tesnet"
+        break
+      default: 
+      try {
+        const net = await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: "0x61" }],
+        });
+        console.log('net', net)
+      } catch (switchError:any) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: '0x61',
+                  chainName: 'Binance SC Tesnet',
+                  rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
+                   
+                },
+              ],
+            });
+          } catch (addError) {
+            // handle "add" error
           }
-          // handle other "switch" errors
         }
-        Network = "Binance Smart Chain";
+        // handle other "switch" errors
+      }
+      Network = 'Binance Smart Chain'
     }
     setNetwork(Network);
     const accountsArray = await web3.eth.getAccounts();
@@ -88,38 +87,32 @@ function Login() {
   // handles the usual Login every time a user refreshes
   const handleUsualLogin = async () => {
     // console.log(provider._state.accounts)
-    console.log("trying1");
-    try {
-      if (
-        provider._state.isUnlocked === false ||
-        provider._state.isConnected === false
-      ) {
-        // console.log("outside try");
-        try {
-          const notConnected: any = onLogin(provider);
-          console.log("trying");
-          if (notConnected) {
-            setShow(true);
-          }
-        } catch (error) {
-          console.log("out cat");
-          setShow(true);
+    if (
+      provider._state.isUnlocked === false ||
+      provider._state.isConnected === false
+    ) {
+      // console.log("outside try");
+      try {
+        const notConnected: any = onLogin(provider);
+        if (notConnected) {
+          throw "not connected";
         }
-      } else {
-        // console.log("else prov");
-        if (provider) {
-          if (provider !== window.ethereum) {
-            setShow(true);
-          }
-          //   call the provider
-          await provider.request({
-            method: "eth_requestAccounts",
-          });
-          onLogin(provider);
-        }
+      } catch (error) {
+        console.log("out cat");
+        setShow(true);
       }
-    } catch (error) {
-      console.log("error", error);
+    } else {
+      // console.log("else prov");
+      if (provider) {
+        if (provider !== window.ethereum) {
+          window.alert("no provided");
+        }
+        //   call the provider
+        await provider.request({
+          method: "eth_requestAccounts",
+        });
+        onLogin(provider);
+      }
     }
   };
 
@@ -146,19 +139,15 @@ function Login() {
   }
   if (typeof window !== "undefined") {
     // browser code
-    try {
-      window.ethereum.on("accountsChanged", function (accounts: any) {
-        console.log("changed account");
-        setAddress(accounts[0]);
-        router.reload();
-      });
-      window.ethereum.on("chainChanged", (chainId: any) => {
-        console.log("changed account", chainId);
-        router.reload();
-      });
-    } catch (error) {
-      console.log("error handling change, [not connected]", error);
-    }
+    window.ethereum.on("accountsChanged", function (accounts: any) {
+      console.log("changed account");
+      setAddress(accounts[0]);
+      router.reload();
+    });
+    window.ethereum.on('chainChanged', (chainId:any) => {
+      console.log("changed account",chainId);
+      router.reload();
+    });
   }
   useEffect(() => {
     setTimeout(() => {
@@ -174,16 +163,13 @@ function Login() {
   return (
     <>
       {account && (
-        <div
-          className="grid select-none"
-          onClick={() => navigator.clipboard.writeText(account)}
-        >
+        <div className="grid select-none" onClick={() => navigator.clipboard.writeText(account)}>
           <div className="flex cursor-pointer transform active:scale-105 active:text-green-900 transition-all ease-out duration-200">
-            <span className="select-none">
-              {account.substring(0, 5)}...
-              {account.substring(account.length - 4)}
-            </span>
-            <DuplicateIcon className="w-5 text-gray-600" />
+          <span className="select-none">
+            {account.substring(0, 5)}...
+            {account.substring(account.length - 4)}
+          </span>
+          <DuplicateIcon className="w-5 text-gray-600" />
           </div>
           <span className="font-light text-gray-600">{network}</span>
         </div>

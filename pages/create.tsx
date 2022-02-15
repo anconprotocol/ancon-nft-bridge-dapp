@@ -8,19 +8,23 @@ import Header from "../components/Header";
 import ErrorMessage from "../components/ErrorMessage";
 
 // web3
+import { Web3Storage } from "web3.storage";
 import { ethers } from "ethers";
 import useProvider from "../hooks/useProvider";
 import { addressState } from "../atoms/addressAtom";
-
 import { errorState } from "../atoms/errorAtom";
+import { AnconProtocol__factory } from "../types/ethers-contracts/factories/AnconProtocol__factory";
+
+// functions
+import toAbiProof from "../functions/ToAbiProof";
 // web3
+import { XDVNFT__factory } from "../types/ethers-contracts";
 import Web3 from "web3";
+import GetDid from "../functions/GetDid";
+import GetChain from "../functions/GetChain";
 
-import { arrayify, toUtf8Bytes } from "ethers/lib/utils";
-
-import QRCode from "react-qr-code";
-import { QrcodeIcon } from "@heroicons/react/solid";
-import ProgressLine from "../components/ProgressLine";
+//Contracts
+const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 
 // fix the type error for document in nextjs
 declare let document: any;
@@ -30,62 +34,107 @@ export function sleep(ms: any) {
 import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
 
 function Create() {
- // web3
- let Ancon: AnconProtocol;
- const apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
- // state
- const [step, setStep] = useState(0);
- const [waitStep, setWaitStep] = useState(false);
- const [localImage, setLocalImage] = useState<any | null>(null);
- const [image, setImage] = useState<any | null>(null);
- const [error, setError] = useState(false);
- const [message, setMessage] = useState("");
- const [tokenData, setTokenData] = useState({
-   name: "",
-   description: "",
-   imageCid: "",
-   tokenCid: "",
-   metadaCid: "",
- });
+  // web3
+  let prov: ethers.providers.Web3Provider;
+  let signer: ethers.providers.JsonRpcSigner;
+  let network: ethers.providers.Network;
+  let Ancon: AnconProtocol;
+  // state
+  const [step, setStep] = useState(3);
+  const [localImage, setLocalImage] = useState<any | null>(null);
+  const [image, setImage] = useState<any | null>(null);
+  const [error, setError] = useState(false);
+  const [message, setMessage] = useState("");
+  const [tokenData, setTokenData] = useState({
+    name: "",
+    description: "",
+    imageCid: "",
+    tokenCid: "",
+    proofKey: "",
+  });
 
- const [transaction, setTransaction] = useState<any>({
-   hash: "",
-   value: "",
-   block: "",
- });
- const [packet, setPacket] = useState({ proof: "", packet: "" });
- const [user, setUser] = useState({ key: "", height: "" });
- const [showQr, setShowQr] = useState(false);
- // atoms
- const [address, setAddress] = useRecoilState(addressState);
- const setErrorModal = useSetRecoilState(errorState);
- // const DIDcid = useRecoilValue(DidState)
- // hooks
- const router = useRouter();
- const provider: any = useProvider();
- if (provider) {
-   Ancon = new AnconProtocol(
-     provider,
-     address,
-     Web3.utils.keccak256("tensta"),
-     apiEndpoint
-   );
-   Ancon.initialize();
- }
+  const [transaction, setTransaction] = useState<any>({
+    hash: "",
+    value: "",
+    block: "",
+  });
+  const [packet, setPacket] = useState({ proof: "", packet: "" });
+  const [user, setUserProof] = useState({ key: "", height: "" });
+  // atoms
+  const [address, setAddress] = useRecoilState(addressState);
+  const setErrorModal = useSetRecoilState(errorState);
+  // const DIDcid = useRecoilValue(DidState)
+  // hooks
+  const router = useRouter();
+  const provider: any = useProvider();
   const clickInput = () => document.getElementById("nft-img").click();
 
   //step 0 //
 
   // STEP 0  gets the public key and handle the get did//
   const getDomainName = async () => {
-    const status = await Ancon.getDomainName();
-    return status;
+    const prov = new ethers.providers.Web3Provider(provider);
+    Ancon = new AnconProtocol(provider, address);
+    Ancon.getNetwork();
+    // get the network
+    const network = await prov.getNetwork();
+
+    const rawResponse = await fetch(
+      `https://api.ancon.did.pa/v0/did/did:ethr:${network.name}:${address}`
+    );
+    const response = await rawResponse.json();
+    console.log("response", rawResponse);
+    if (rawResponse.status === 400) {
+      return false;
+    }
+    return true;
   };
 
+  // step 1 //
+
+  const getPastEvents = async () => {
+    const prov = new ethers.providers.Web3Provider(provider);
+    const web3 = new Web3(provider);
+    const network = await prov.getNetwork();
+    const chain = await GetChain(network);
+    console.log("past events", network, chain);
+    try {
+      const contract1 = await AnconProtocol__factory.connect(
+        chain.ancon,
+        prov
+      );
+
+      const filter = await contract1.filters.HeaderUpdated();
+
+      const from = await prov.getBlockNumber();
+
+      let result = await contract1.queryFilter(filter, from);
+
+      let time = Date.now();
+      const maxTime = Date.now() + 120000;
+      while (time < maxTime) {
+        result = await contract1.queryFilter(filter, from);
+        console.log(result);
+        if (result.length > 0) {
+          break;
+        }
+        time = Date.now();
+        await sleep(10000);
+      }
+    } catch (error) {
+      console.log("error", error);
+    }
+    return true;
+  };
   // step 2 //
   // loading screen
 
   // step3 //
+  // retrieve the ipfs access token
+  const getAccessToken = () => {
+    const apikey: any = process.env.NEXT_PUBLIC_API_KEY_STORAGE;
+    return apikey;
+  };
   // uploads the file to the ipfs
   const handleUpload = async () => {
     try {
@@ -101,9 +150,30 @@ function Create() {
         ]);
         throw "not enrolled";
       } else {
-        // upload the file
-        const imageCid = await Ancon.uploadFile([image]);
-        console.log(imageCid);
+        // make the client
+        const storage = new Web3Storage({
+          token: getAccessToken(),
+        });
+        // show the root cid as soon as it's ready
+        const onRootCidReady = (cid: string) => {
+          console.log("uploading files with cid:", cid);
+        };
+
+        // when each chunk is stored, update the percentage complete and display
+        const totalSize = image.size;
+        let uploaded = 0;
+
+        const onStoredChunk = (size: number) => {
+          uploaded += size;
+          const pct = totalSize / uploaded;
+          console.log(`Uploading... ${pct.toFixed(2)}% complete`);
+        };
+
+        const imageCid: string = await storage.put([image], {
+          onRootCidReady,
+          onStoredChunk,
+        });
+        setTokenData({ ...tokenData, imageCid });
         return imageCid;
       }
     } catch (error) {
@@ -115,9 +185,9 @@ function Create() {
   // step4 //
   // creates the metadata
   const createMetadata = async (cidI: string) => {
-    setErrorModal(["Waiting for wallet action..."]);
-
-    // prepare de payload
+    const prov = new ethers.providers.Web3Provider(provider);
+    const NoHexAddress = address.substring(2);
+    const signer = await prov.getSigner();
     const payload = {
       name: tokenData.name,
       description: tokenData.description,
@@ -127,139 +197,282 @@ function Create() {
     };
 
     // sign the message
-    const signature = await Ancon.signer.signMessage(
+    const signature = await signer.signMessage(
       ethers.utils.arrayify(
         ethers.utils.toUtf8Bytes(JSON.stringify(payload))
       )
     );
-
-    // hide the modal
-    setErrorModal([]);
-
-    // prepare the request
+    const DIDcid = localStorage.getItem("DIDCid");
+    console.log("did", DIDcid);
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         path: "/",
-        from: `did:ethr:${Ancon.network.name}:${address}`,
+        from: address,
         signature,
         data: payload,
       }),
     };
     try {
-      setMessage(
-        "Creating Metadata, please wait this process can up to 30 minutes. Don't close this page"
-      );
-      setStep(2);
-      setWaitStep(true);
-      // creates the metadata in ancon protocol
+      // creates the metadata
       const PostRequest = async () => {
-        const metadata = await Ancon.postProof(
+        // post to ancon
+        const metadataPost = await Ancon.postProof(
           "dagjson",
           requestOptions
         );
-        if (metadata.contentCid === "error") {
-          throw "error";
-        }
+        console.log("metadata", metadataPost);
+        const id: any = await metadataPost.cid;
 
-        const metadataCid = metadata.contentCid;
-        console.log(metadata);
-        // show the modal
-        setErrorModal(["Waiting for wallet action......"]);
+        setTokenData({ ...tokenData, tokenCid: id });
 
-        // hexdata
+        const metadataCid = await metadataPost.did;
+
+        // prepare hex data to be signed
         let hexdata = ethers.utils.defaultAbiCoder.encode(
           ["address", "string"],
           [address, metadataCid]
         );
 
-        // sign the data
-        let s = await Ancon.signer.signMessage(
-          arrayify(toUtf8Bytes(hexdata))
+        // sign data
+        let s = await signer.signMessage(
+          ethers.utils.arrayify(
+            ethers.utils.toUtf8Bytes(JSON.stringify([hexdata]))
+          )
         );
 
-        // hide the modal
-        setErrorModal([]);
+        console.log("dag", metadataPost, metadataCid);
         console.log("61 seconds");
+        setMessage(
+          "Creating Metadata, please wait this process can take several minutes."
+        );
+        setStep(-1);
+        let eventWaiter = await Ancon.getPastEvents();
+        console.log("event", eventWaiter);
 
-        // wait for the header to change
-        // console.log("event", eventWaiter);
-        // handle the second request options
+        // create the second request options
         const requestOptions2 = {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             path: "/",
-            from: `did:ethr:${Ancon.network.name}:${address}`,
+            from: address,
             signature: s,
-            data: hexdata,
+            data: [hexdata],
           }),
         };
 
-        // post the second proof
-        const proof = await Ancon.postProof(
+        const postProof = await Ancon.postProof(
           "dagjson",
           requestOptions2
         );
-        console.log(proof);
-        // save the keys
-        setUser({ key: proof.proofKey, height: proof.proofHeight });
+
+        console.log("31 seconds");
+        setUserProof({
+          key: postProof.proofKey,
+          height: postProof.proofHeight,
+        });
         setPacket({ ...packet, packet: hexdata });
+        eventWaiter = await Ancon.getPastEvents();
+        console.log("event", eventWaiter);
+
+        console.log("fetch");
+        setMessage("Minting NFT...");
         setTokenData({
           ...tokenData,
           imageCid: cidI,
-          tokenCid: metadata.proofCid,
-          metadaCid: metadata.contentCid,
+          tokenCid: metadataCid,
         });
-        console.log("wait for the event");
-        let eventWaiter = await Ancon.getPastEvents();
-        console.log("event", eventWaiter);
-
-        setMessage("Minting NFT...");
-        setWaitStep(false);
-        setStep(3);
+        setStep(4);
       };
       PostRequest();
     } catch (error) {
-      console.log("error", error);
-      setErrorModal([
-        "Something went wrong please try again",
-        "Try again",
-        "/create",
-        "Enroll Account",
-        "/enroll",
-      ]);
-      setStep(0);
+      console.log("err", error);
+      console.log("error");
+      setStep(3);
     }
   };
 
+  // step 5 //
+  const mintNft = async () => {
+    const _web3 = new Web3(provider);
+    _web3.eth.defaultAccount = address;
+    const web3 = _web3;
+    bindContracts();
+  };
+  console.log(step);
+
   const bindContracts = async () => {
     setStep(5);
-    setShowQr(false);
-    console.log("Beginning of BINDCONTRACTS()");
-    // initalize the web3 sockets
+    const mint = await Ancon.mintNft(
+      packet.packet,
+      tokenData.tokenCid,
+      user.key,
+      user.height
+    );
+    // console.log("Beginning of BINDCONTRACTS()");
+    // // initalize the web3 sockets
+    // const _web3 = new Web3(provider);
+    // _web3.eth.defaultAccount = address;
+    // const web3 = _web3;
+    // prov = new ethers.providers.Web3Provider(provider);
+    // signer = await prov.getSigner();
+    // network = await prov.getNetwork();
 
-    try {
-      const mint = await Ancon.mintNft(packet.packet, user.key);
-      setErrorModal([]);
-      console.log(mint);
-      await mint?.wait(2);
-      setTransaction({
-        hash: mint?.hash,
-        value: mint?.value._hex,
-        block: mint?.blockNumber,
-      });
-      setStep(6);
-    } catch (error) {
-      setErrorModal([
-        "Something went wrong please try again",
-        "Try again",
-        "/create",
-        "Enroll Account",
-        "/enroll",
-      ]);
-    }
+    // const contractAddress: any = await GetChain(network);
+    // const contract1 = XDVNFT__factory.connect(
+    //   contractAddress.xdv,
+    //   prov
+    // );
+    // const contract2 = XDVNFT__factory.connect(
+    //   contractAddress.xdv,
+    //   signer
+    // );
+    // const contract3 = AnconProtocol__factory.connect(
+    //   contractAddress.ancon,
+    //   prov
+    // );
+
+    // const dai = new web3.eth.Contract(
+    //   AnconToken.abi,
+    //   contractAddress.dai
+    // );
+
+    // // check the allowance
+    // const allowance = await dai.methods
+    //   .allowance(address, contract2.address)
+    //   .call();
+    // await sleep(7000);
+
+    // const memonik = web3.utils.keccak256("anconprotocol");
+    // // checking hashes
+    // const rawLastHash = await fetch(
+    //   "https://api.ancon.did.pa/v0/proofs/lasthash"
+    // );
+    // const lasthash = await rawLastHash.json();
+    // const relayHash = await contract3.getProtocolHeader(memonik);
+    // console.log(
+    //   "last hash",
+    //   ethers.utils.hexlify(
+    //     ethers.utils.base64.decode(lasthash.lastHash.hash)
+    //   )
+    // );
+    // console.log("relay hash", relayHash);
+
+    // // get the key and height
+    // const Did = await GetDid(network.name, address);
+    // const key = Did.key;
+
+    // /* prepare the packet and user proof
+    //  */
+    // // prepare packet proof
+    // const rawPacketProof = await fetch(
+    //   `https://api.ancon.did.pa/v0/proof/${user.key}?height=${user.height}`
+    // );
+    // let packetProof = await rawPacketProof.json();
+    // packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
+
+    // // prepare user proof
+    // const rawUserProof = await fetch(
+    //   `https://api.ancon.did.pa/v0/proof/${key}?height=${user.height}`
+    // );
+    // let userProof = await rawUserProof.json();
+    // userProof = toAbiProof({ ...userProof[0].Proof.exist });
+
+    // // get the hexdata
+    // const hexData = packet.packet;
+
+    // // hash the data
+    // const hash = ethers.utils.solidityKeccak256(
+    //   ["address", "string"],
+    //   [address, tokenData.tokenCid]
+    // );
+
+    // let mint;
+    // switch (network.chainId) {
+    //   case 97:
+    //   case 80001:
+    //     // tries two times in case it fails
+    //     if (allowance == 0) {
+    //       await dai.methods
+    //         .approve(contract2.address, "1000000000000000000000")
+    //         .send({
+    //           gasPrice: "22000000000",
+    //           gas: 400000,
+    //           from: address,
+    //         });
+    //     }
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     } catch (error) {
+    //       sleep(5000);
+    //       console.log("failed, trying again...", error);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash
+    //       );
+    //     }
+    //     break;
+    //   case 42:
+    //     // if (allowance == 0) {
+    //     await dai.methods
+    //       .approve(contract2.address, "1000000000000000000000")
+    //       .send({
+    //         gasPrice: "200000000000",
+    //         gas: 700000,
+    //         from: address,
+    //       });
+    //     // }
+    //     // tries two times in case it fails
+    //     try {
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address,
+    //         }
+    //       );
+    //       console.log(mint);
+    //     } catch (error) {
+    //       console.log("failed, trying again...", error);
+    //       sleep(5000);
+    //       mint = await contract2.mintWithProof(
+    //         packetProof.key,
+    //         hexData,
+    //         userProof,
+    //         packetProof,
+    //         hash,
+    //         {
+    //           gasPrice: "200000000000",
+    //           gasLimit: 900000,
+    //           from: address,
+    //         }
+    //       );
+    //     }
+    //     break;
+    // }
+    console.log(mint);
+    setTransaction({
+      hash: mint?.hash,
+      value: mint?.value._hex,
+      block: mint?.blockNumber,
+    });
+    setStep(6);
   };
 
   //
@@ -283,7 +496,7 @@ function Create() {
     if (tokenData.name === "" || image === null) {
       setError(true);
     } else {
-      setStep(1);
+      setStep(2);
       const cid: any = await handleUpload();
       if (cid !== false) {
         await createMetadata(cid);
@@ -295,98 +508,54 @@ function Create() {
   return (
     <main className="bg-gray-50 relative h-screen w-full mb-4 dark:bg-red-800">
       <Header />
-
-      <div className="flex justify-center items-center md:mt-18 mt-8 w-full">
-        <div className="bg-white shadow-xl rounded-lg px-3 py-4 w-11/12 md:w-6/12 2xl:w-5/12">
-          <ProgressLine steps={6} step={step} />
-          <div className="text-black font-bold text-xl flex">
-            {step === 0
-              ? "Create NFT"
-              : step === 4
-              ? "Metadata Created"
-              : step === 6
-              ? "NFT Minted"
-              : "Creating NFT"}
-            {step === 3 || step === 6 ? (
-              <div
-                className="ml-3 flex items-center cursor-pointer hover:scale-125 transform transition-all ease-in"
-                onClick={() => setShowQr(true)}
-              >
-                <QrcodeIcon className="w-5" />
-                <span className="text-gray-500 font-light text-xs">
-                  show qr
-                </span>
-              </div>
-            ) : null}
-          </div>
-
-          {step === 1 ? (
-            <div className="flex flex-col items-center">
-              <div
-                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
-                role="status"
-              ></div>
-              <p className="animate-pulse mt-4">
-                Uploading Image to IPFS
-              </p>
-            </div>
-          ) : null}
+      <div className="flex justify-center items-center md:mt-18 2xl:mt-24 mt-8 w-full">
+        <div className="bg-white shadow-xl rounded-lg px-3 py-4 dark:bg-coolGray-800 md:w-6/12 2xl:w-5/12 md:h-full">
+          <span className="text-black font-bold text-xl">
+            {step === 6 ? "NFT Created" : "Create NFT"}
+          </span>
           {step === 2 ? (
-            <div className="flex flex-col items-center">
-              <div
-                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
-                role="status"
-              ></div>
-              <p className="animate-pulse mt-4">{message}</p>
-            </div>
-          ) : null}
-          {waitStep === true && (
-            <div className="flex justify-center items-center">
-              <div>
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center">
                 <div
-                  className="pb-3 mt-4 flex justify-center"
-                  onClick={() =>
-                    navigator.clipboard.writeText(
-                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
-                    )
-                  }
-                >
-                  <QRCode
-                    value={`${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`}
-                    size={150}
-                  />
-                </div>
-                <p
-                  onClick={() =>
-                    navigator.clipboard.writeText(
-                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
-                    )
-                  }
-                  className="text-blue-600 underline cursor-pointer active:text-blue-800 active:scale-105 select-none transform transition-all duration-150"
-                >
-                  Please click here to save the link and comeback
-                  later when the token can be minted
+                  className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                  role="status"
+                ></div>
+                <p className="animate-pulse mt-4">
+                  Uploading Image to IPFS
                 </p>
               </div>
             </div>
-          )}
-          {step == 0 ? (
-            <div className="flex-col flex mt-3 w-full">
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  NFT Name
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTokenData({
-                      ...tokenData,
-                      name: e.target.value,
-                    });
-                  }}
-                  value={tokenData.name}
-                ></input>
+          ) : null}
+          {step === -1 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center">
+                <div
+                  className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                  role="status"
+                ></div>
+                <p className="animate-pulse mt-4">{message}</p>
+              </div>
+            </div>
+          ) : null}
+          {step == 3 ? (
+            <div className="mt-3">
+              <div className="flex justify-center items-center">
+                <div className="flex-col flex mt-3 md:w-2/3">
+                  <a className="text-gray-600 text-sm font-bold">
+                    NFT Name
+                  </a>
+                  <input
+                    type="text"
+                    className="bg-gray-100 rounded-sm h-10 pl-2"
+                    onChange={(e) => {
+                      setTokenData({
+                        ...tokenData,
+                        name: e.target.value,
+                      });
+                    }}
+                    value={tokenData.name}
+                  ></input>
+                </div>
               </div>
               <div className="flex justify-center items-center">
                 <div className="flex-col flex mt-6 md:w-2/3">
@@ -406,21 +575,21 @@ function Create() {
                   ></input>
                 </div>
               </div>
-              <div className="flex justify-center items-center mt-6">
-                <p
-                  onClick={clickInput}
-                  className="flex justify-center items-center p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out"
-                >
-                  Select Image
-                </p>
-              </div>
-              <div className="flex items-center justify-center mt-6">
-                <ErrorMessage
-                  message="Please fill the blanks and select an Image"
-                  show={error}
-                />
-              </div>
 
+              <div className="flex justify-center items-center">
+                <div
+                  onClick={clickInput}
+                  className="mt-6 p-3 rounded-lg border-2 bg-gray-50 shadow-sm cursor-pointer hover:tracking-wider transition-all duration-200 hover:border-primary-500 hover:drop-shadow-lg hover:shadow-primary-500 ease-out"
+                >
+                  <p className="flex justify-center items-center">
+                    Select Image
+                  </p>
+                </div>
+              </div>
+              <ErrorMessage
+                message="Please fill the blanks and select an Image"
+                show={error}
+              />
               {localImage != null ? (
                 <div className="flex items-center justify-center pt-3">
                   <img
@@ -450,15 +619,6 @@ function Create() {
               </div>
             </div>
           ) : null}
-          {step === 4 ? (
-            <div className="flex flex-col items-center">
-              <div
-                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
-                role="status"
-              ></div>
-              <p className="animate-pulse mt-4">{message}</p>
-            </div>
-          ) : null}
           {step === 5 ? (
             <div className="flex flex-col items-center">
               <div
@@ -468,199 +628,110 @@ function Create() {
               <p className="animate-pulse mt-4">{message}</p>
             </div>
           ) : null}
-          {step == 3 ? (
-            <div className="grid grid-cols-1 space-y-2">
-              <div className="my-3">
-                <p className="text-lg font-medium">
-                  The Metadata has been stored, do you want to mint a
-                  NFT with this metadata?
-                </p>
-              </div>
-
-              {/* name */}
-              <div className="">
-                <span className="text-gray-600 text-sm">
-                  NFT Name
-                </span>
-                <p className="text-md font-medium">
+          {step == 4 ? (
+            <div className="flex items-center justify-center">
+              <div className="flex flex-col mt-3">
+                <a className="text-gray-600 text-sm">NFT Name</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.name}
-                </p>
-              </div>
-
-              {/* description */}
-              <div className="">
-                <span className="text-gray-600 text-sm">
-                  Description
                 </span>
-                <p className="text-md font-medium truncate">
+
+                <a className="text-gray-600 text-sm">Description</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.description}
-                </p>
-              </div>
-
-              {/* image */}
-              <div
-                className=""
-                onClick={() =>
-                  navigator.clipboard.writeText(tokenData.imageCid)
-                }
-              >
-                <span className="text-gray-600 text-sm">
-                  Image CID
                 </span>
-                <p className="text-md font-medium truncate">
+
+                <a className="text-gray-600 text-sm">Image CID</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.imageCid}
-                </p>
-              </div>
-
-              {/* Metadata Cid */}
-              <div
-                className=""
-                onClick={() =>
-                  navigator.clipboard.writeText(tokenData.tokenCid)
-                }
-              >
-                <span className="text-gray-600 text-sm">
-                  Metadata CID
                 </span>
-                <p className="text-md font-medium truncate">
+
+                <a className="text-gray-600 text-sm">Metadata CID</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.tokenCid}
-                </p>
-              </div>
+                </span>
 
-              {/* image to show */}
-              <div className="flex items-center justify-center mt-3 w-full">
-                <div className="grid grid-cols-1 w-full place-items-center">
-                  <img
-                    className="nft-img"
-                    src={`data:image/jpeg;base64,${localImage}`}
-                    style={{ maxWidth: "120px" }}
-                    alt="readyLocal"
-                  />
-                  <p
-                    onClick={() => bindContracts()}
-                    className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4 w-1/4"
-                  >
-                    Mint
-                  </p>
-
-                  {/* qr code */}
-                  {showQr && (
-                    <div
-                      className="pb-3 mt-4"
-                      onClick={() =>
-                        navigator.clipboard.writeText(
-                          `${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`
-                        )
-                      }
+                <div className="flex items-center justify-center mt-3 w-full">
+                  <div>
+                    <img
+                      className="nft-img"
+                      src={`data:image/jpeg;base64,${localImage}`}
+                      style={{ maxWidth: "120px" }}
+                      alt="readyLocal"
+                    />
+                    <p
+                      onClick={bindContracts}
+                      className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
                     >
-                      <QRCode
-                        value={`${process.env.NEXT_PUBLIC_env}/qrview?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`}
-                        size={150}
-                      />
-                    </div>
-                  )}
+                      Mint
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           ) : null}
           {step == 6 ? (
-            <div className="grid grid-cols-1 space-y-2">
-              <div className="my-3">
-                <p className="text-lg font-medium">
-                  The NFT has been minted, take a screenshot or save
-                  the QR
-                </p>
-              </div>
-
-              {/* name */}
-              <div className="">
-                <span className="text-gray-600 text-sm">
-                  NFT Name
-                </span>
-                <p className="text-md font-medium">
+            <div className="flex items-center justify-center">
+              <div className="flex flex-col items-start mt-3">
+                <a className="text-gray-600 text-sm">NFT Name</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.name}
-                </p>
-              </div>
-
-              {/* description */}
-              <div className="">
-                <span className="text-gray-600 text-sm">
-                  Description
                 </span>
-                <p className="text-md font-medium truncate">
+
+                <a className="text-gray-600 text-sm">Description</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.description}
-                </p>
-              </div>
-
-              {/* image */}
-              <div className="">
-                <span className="text-gray-600 text-sm">
-                  Image CID
                 </span>
-                <p className="text-md font-medium truncate">
+
+                <a className="text-gray-600 text-sm">Image CID</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.imageCid}
-                </p>
-              </div>
-
-              {/* Metadata Cid */}
-              <div className="">
-                <span className="text-gray-600 text-sm">
-                  Metadata CID
                 </span>
-                <p className="text-md font-medium truncate">
+
+                <a className="text-gray-600 text-sm">Metadata CID</a>
+                <span className="text-lg font-medium mb-2">
                   {tokenData.tokenCid}
-                </p>
-              </div>
-
-              {/* transaction Hash */}
-              <div className="">
-                <span className="text-gray-600 text-sm">
-                  Transaction Hash
                 </span>
-                <p className="text-md font-medium truncate">
+
+                <a className="text-gray-600 text-sm">
+                  Transaction hash
+                </a>
+                <span className="text-lg font-medium mb-2">
                   {transaction.hash}
-                </p>
-              </div>
+                </span>
 
-              {/* Transaction from */}
-              <div className="">
-                <span className="text-gray-600 text-sm">From</span>
-                <p className="text-md font-medium truncate">
+                <a className="text-gray-600 text-sm">
+                  Transaction Fee
+                </a>
+                <span className="text-lg font-medium mb-2">
+                  {transaction.value}
+                </span>
+
+                <a className="text-gray-600 text-sm">Block</a>
+                <span className="text-lg font-medium mb-2">
+                  {transaction.block}
+                </span>
+
+                <a className="text-gray-600 text-sm">From</a>
+                <span className="text-lg font-medium mb-2">
                   {address}
-                </p>
-              </div>
+                </span>
 
-              {/* image to show */}
-              <div className="flex items-center justify-center mt-3 w-full">
-                <div className="grid grid-cols-1 w-full place-items-center">
-                  <img
-                    className="nft-img"
-                    src={`data:image/jpeg;base64,${localImage}`}
-                    style={{ maxWidth: "120px" }}
-                    alt="readyLocal"
-                  />
-                  <p
-                    onClick={() => router.push("/")}
-                    className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
-                  >
-                    Close
-                  </p>
-                  {/* qr code */}
-                  {showQr && (
-                    <div
-                      className="pb-3 mt-4"
-                      onClick={() =>
-                        navigator.clipboard.writeText(
-                          `${process.env.NEXT_PUBLIC_env}/nftView?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`
-                        )
-                      }
+                <div className="flex items-center justify-center mt-3 w-full">
+                  <div>
+                    <img
+                      className="nft-img"
+                      src={`data:image/jpeg;base64,${localImage}`}
+                      style={{ maxWidth: "120px" }}
+                      alt="readyLocal"
+                    />
+                    <p
+                      onClick={() => router.push("/")}
+                      className="bg-purple-700 border-2 border-purple-700 rounded-lg text-white hover:text-black hover:bg-purple-300 transition-all duration-100 hover:shadow-xl active:scale-105 transform cursor-pointer mt-4 flex items-center justify-center py-2 px-4"
                     >
-                      <QRCode
-                        value={`${process.env.NEXT_PUBLIC_env}/nftView?address=${address}&did=${tokenData.metadaCid}&cid=${tokenData.tokenCid}`}
-                        size={150}
-                      />
-                    </div>
-                  )}
+                      Close
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

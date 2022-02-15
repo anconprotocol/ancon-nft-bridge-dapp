@@ -6,16 +6,21 @@ import { errorState } from "../atoms/errorAtom";
 function ErrorModal() {
   const [state, setState] = useRecoilState(errorState);
   const router = useRouter();
+  console.log("router", router.pathname);
 
   return (
     <>
       {state?.length !== 0 ? (
         // center the container
-        <div className="fixed w-full h-full bg-black flex items-center justify-center bg-opacity-90 z-50 select-none px-4">
+        <div className="fixed w-full h-full bg-black flex items-center justify-center bg-opacity-75 z-50 select-none px-4">
           {/* white container */}
           <div className="bg-white py-4 px-4 rounded-lg opacity-100 z-50 relative">
-            <div className="w-full flex justify-between pb-2">
-              <h1 className="font-bold">Important Message!</h1>
+            <div
+              className="w-full flex justify-between pb-2"
+              onClick={() => setState([])}
+            >
+              <h1 className="font-bold">Oh no!</h1>
+              <XIcon className="w-5 text-gray-700" />
             </div>
 
             <p>{state?.[0]}</p>
@@ -30,17 +35,15 @@ function ErrorModal() {
                 >
                   {state[1]}
                 </button>
-                {state?.length > 3 && (
-                  <button
-                    onClick={() => {
-                      router.push(`${state[4]}`);
-                      setState([]);
-                    }}
-                    className="bg-white-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-black hover:bg-gray-200 transition-all duration-150 hover:shadow-xl active:scale-105 transform"
-                  >
-                    {state[3]}
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    router.push(`${state[4]}`);
+                    setState([]);
+                  }}
+                  className="bg-white-700 border-2 border-purple-700 rounded-lg px-4 py-2 text-black hover:bg-gray-200 transition-all duration-150 hover:shadow-xl active:scale-105 transform"
+                >
+                  {state[3]}
+                </button>
               </div>
             ) : null}
           </div>

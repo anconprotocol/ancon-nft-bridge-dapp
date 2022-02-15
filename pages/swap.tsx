@@ -103,7 +103,16 @@ const router = useRouter()
           tempProv
         );
 
+        const filter = await xdvnftContract.filters.Locked();
+
+        const result = await xdvnftContract.queryFilter(
+          filter,
+          trans.blockHash
+        );
+
+        const decode = parseInt(result[0].args[0]._hex, 16);
         setNetwork('bnbt')
+        console.log("result", result);
         
       } catch (error) {
         console.log("not lock");
@@ -165,6 +174,7 @@ const router = useRouter()
       web.contracts.ancon,
       prov
     );
+    const wxdv =  WXDV__factory.connect(web.contracts.wxdv, signer);
     const dai = new web3.eth.Contract(
       AnconToken.abi,
       web.contracts.dai
@@ -175,8 +185,9 @@ const router = useRouter()
     // check if the metadata resolves
     try {
       const rawMetadaUri = await fetch(
-        `https://tensta.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
+        `https://api.ancon.did.pa/v0/dagjson/${tokenUri}/?namespace=anconprotocol/users/${address}`
       );
+      const metadaUri = await rawMetadaUri.json();
     } catch (error) {
       setStep(-1);
       return "error metadata";
@@ -211,14 +222,14 @@ const router = useRouter()
     };
     // make a put to the dag
     const rawPut = await fetch(
-      `https://tensta.did.pa/v0/dag`,
+      `https://api.ancon.did.pa/v0/dag`,
       requestOptions
     );
     const put = await rawPut.json();
 
     // fetch the proof with the put cid
     const rawGetProof = await fetch(
-      `https://tensta.did.pa/v0/dagjson/${put.cid}/?namespace=anconprotocol/users/${address}`
+      `https://api.ancon.did.pa/v0/dagjson/${put.cid}/?namespace=anconprotocol/users/${address}`
     );
     const getProof = await rawGetProof.json();
 
@@ -230,15 +241,16 @@ const router = useRouter()
     const packetKey = getProof.key;
     const packetHeight = getProof.height;
     const contractId = await protocol.getContractIdentifier();
-
+    const nonce=keccak256(
+      ethers.utils.defaultAbiCoder.encode(["uint256",'bytes32'],[Math.floor(Math.random()*100000000000) ,contractId]))
     // encode the hexdata to be sent and hash it
     let hexdata = ethers.utils.defaultAbiCoder.encode(
-      ["uint256","string", "bytes32"],
-      [parseInt(tokenId),cid, contractId]
+      ["uint256", "bytes32"],
+      [parseInt(tokenId), nonce]
     );
     let hash = ethers.utils.solidityKeccak256(
-      ["uint256", "string","bytes32"],
-      [parseInt(tokenId), cid,contractId]
+      ["uint256", "bytes32"],
+      [parseInt(tokenId), nonce]
     );
       const net = await prov.getNetwork()
 
@@ -259,14 +271,14 @@ const router = useRouter()
 
     //  packet proof
     const rawPacketProof = await fetch(
-      `https://tensta.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
+      `https://api.ancon.did.pa/v0/proof/${packetKey}?height=${packetHeight}`
     );
     let packetProof = await rawPacketProof.json();
     packetProof = toAbiProof({ ...packetProof[0].Proof.exist });
 
     //  user proof
     const rawUserProof = await fetch(
-      `https://tensta.did.pa/v0/proof/${did.key}?height=${packetHeight}`
+      `https://api.ancon.did.pa/v0/proof/${did.key}?height=${packetHeight}`
     );
     let userProof = await rawUserProof.json();
     userProof = toAbiProof({ ...userProof[0].Proof.exist });  
@@ -278,28 +290,41 @@ const router = useRouter()
       .allowance(address, protocol.address)
       .call();
     if (allowance == 0) {
-      // const tx = await dai.methods
-      //   .approve(protocol.address, "1000000000000000000")
+      const tx = await dai.methods
+        .approve(protocol.address, "1000000000000000000")
+        .send({
+          gasPrice: "22000000000",
+          gas: 400000,
+          from: address,
+        });
+      await tx.wait(1);
+      // await dai.methods
+      //   .approve(contract3.address, "1000000000000000000")
       //   .send({
       //     gasPrice: "22000000000",
       //     gas: 400000,
       //     from: address,
       //   });
-      // await tx.wait(1);
     }
 
+    try {
+    const approveTx = await contract2.approve(wxdv.address, parseInt(tokenId));
+    await approveTx.wait(1);
+    }catch (error) {
+      // no op
+    }
     /* call the contract */
     try {
       const lock = await contract2.lockWithProof(
-        Web3.utils.keccak256('tensta'),
+        packetProof.key,
         hexdata,
         userProof,
         packetProof,
+        hash
       );
       await lock.wait(1);
       console.log("lock");
       setTransactionHash(lock.hash)
-
     } catch (error) {
       console.log("error", error);
     }
@@ -312,10 +337,10 @@ const router = useRouter()
         <div className="bg-white shadow-xl rounded-lg px-3 py-4">
           <span className="text-black font-bold text-xl">
             {step === 1
-              ? "Transfer Metadata To"
+              ? "Target"
               : step === 3
               ? "NFT sent"
-              : "Merge Metadata"}
+              : "Source"}
           </span>
 
           {step === -1 ? (

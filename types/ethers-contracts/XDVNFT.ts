@@ -81,7 +81,7 @@ export type ExistenceProofStructOutput = [
 
 export interface XDVNFTInterface extends utils.Interface {
   functions: {
-    "anconprotocol()": FunctionFragment;
+    "WXDV()": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "burn(uint256)": FunctionFragment;
@@ -104,18 +104,15 @@ export interface XDVNFTInterface extends utils.Interface {
     "url()": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "onERC721Received(address,address,uint256,bytes)": FunctionFragment;
-    "mintWithProof(bytes32,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
-    "lockWithProof(bytes32,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
-    "releaseWithProof(bytes32,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]))": FunctionFragment;
+    "mintWithProof(bytes,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),bytes32)": FunctionFragment;
+    "lockWithProof(bytes,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),bytes32)": FunctionFragment;
+    "releaseWithProof(bytes,bytes,(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),(bool,bytes,bytes,(bool,uint8,uint8,uint8,uint8,bytes),(bool,uint8,bytes,bytes)[]),bytes32)": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
     "withdrawBalance(address)": FunctionFragment;
     "withdraw(address)": FunctionFragment;
   };
 
-  encodeFunctionData(
-    functionFragment: "anconprotocol",
-    values?: undefined
-  ): string;
+  encodeFunctionData(functionFragment: "WXDV", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "approve",
     values: [string, BigNumberish]
@@ -179,15 +176,33 @@ export interface XDVNFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "mintWithProof",
-    values: [BytesLike, BytesLike, ExistenceProofStruct, ExistenceProofStruct]
+    values: [
+      BytesLike,
+      BytesLike,
+      ExistenceProofStruct,
+      ExistenceProofStruct,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "lockWithProof",
-    values: [BytesLike, BytesLike, ExistenceProofStruct, ExistenceProofStruct]
+    values: [
+      BytesLike,
+      BytesLike,
+      ExistenceProofStruct,
+      ExistenceProofStruct,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "releaseWithProof",
-    values: [BytesLike, BytesLike, ExistenceProofStruct, ExistenceProofStruct]
+    values: [
+      BytesLike,
+      BytesLike,
+      ExistenceProofStruct,
+      ExistenceProofStruct,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "tokenURI",
@@ -199,10 +214,7 @@ export interface XDVNFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "withdraw", values: [string]): string;
 
-  decodeFunctionResult(
-    functionFragment: "anconprotocol",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "WXDV", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
@@ -367,7 +379,7 @@ export interface XDVNFT extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    anconprotocol(overrides?: CallOverrides): Promise<[string]>;
+    WXDV(overrides?: CallOverrides): Promise<[string]>;
 
     /**
      * See {IERC721-approve}.
@@ -528,26 +540,29 @@ export interface XDVNFT extends BaseContract {
     ): Promise<ContractTransaction>;
 
     mintWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     lockWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     releaseWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -570,7 +585,7 @@ export interface XDVNFT extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  anconprotocol(overrides?: CallOverrides): Promise<string>;
+  WXDV(overrides?: CallOverrides): Promise<string>;
 
   /**
    * See {IERC721-approve}.
@@ -728,26 +743,29 @@ export interface XDVNFT extends BaseContract {
   ): Promise<ContractTransaction>;
 
   mintWithProof(
-    moniker: BytesLike,
+    key: BytesLike,
     packet: BytesLike,
     userProof: ExistenceProofStruct,
-    packetProof: ExistenceProofStruct,
+    proof: ExistenceProofStruct,
+    hash: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   lockWithProof(
-    moniker: BytesLike,
+    key: BytesLike,
     packet: BytesLike,
     userProof: ExistenceProofStruct,
-    packetProof: ExistenceProofStruct,
+    proof: ExistenceProofStruct,
+    hash: BytesLike,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   releaseWithProof(
-    moniker: BytesLike,
+    key: BytesLike,
     packet: BytesLike,
     userProof: ExistenceProofStruct,
-    packetProof: ExistenceProofStruct,
+    proof: ExistenceProofStruct,
+    hash: BytesLike,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -767,7 +785,7 @@ export interface XDVNFT extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    anconprotocol(overrides?: CallOverrides): Promise<string>;
+    WXDV(overrides?: CallOverrides): Promise<string>;
 
     /**
      * See {IERC721-approve}.
@@ -914,26 +932,29 @@ export interface XDVNFT extends BaseContract {
     ): Promise<string>;
 
     mintWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     lockWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     releaseWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1021,7 +1042,7 @@ export interface XDVNFT extends BaseContract {
   };
 
   estimateGas: {
-    anconprotocol(overrides?: CallOverrides): Promise<BigNumber>;
+    WXDV(overrides?: CallOverrides): Promise<BigNumber>;
 
     /**
      * See {IERC721-approve}.
@@ -1182,26 +1203,29 @@ export interface XDVNFT extends BaseContract {
     ): Promise<BigNumber>;
 
     mintWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     lockWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     releaseWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1225,7 +1249,7 @@ export interface XDVNFT extends BaseContract {
   };
 
   populateTransaction: {
-    anconprotocol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    WXDV(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     /**
      * See {IERC721-approve}.
@@ -1389,26 +1413,29 @@ export interface XDVNFT extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     mintWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     lockWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     releaseWithProof(
-      moniker: BytesLike,
+      key: BytesLike,
       packet: BytesLike,
       userProof: ExistenceProofStruct,
-      packetProof: ExistenceProofStruct,
+      proof: ExistenceProofStruct,
+      hash: BytesLike,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
