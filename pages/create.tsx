@@ -17,7 +17,7 @@ import { errorState } from "../atoms/errorAtom";
 import Web3 from "web3";
 
 import { arrayify, toUtf8Bytes } from "ethers/lib/utils";
-import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
+
 import QRCode from "react-qr-code";
 import { QrcodeIcon } from "@heroicons/react/solid";
 import ProgressLine from "../components/ProgressLine";
@@ -27,49 +27,51 @@ declare let document: any;
 export function sleep(ms: any) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-function Create() {
-  // web3
-  let Ancon: AnconProtocol;
-  const apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
-  // state
-  const [step, setStep] = useState(0);
-  const [waitStep, setWaitStep] = useState(false);
-  const [localImage, setLocalImage] = useState<any | null>(null);
-  const [image, setImage] = useState<any | null>(null);
-  const [error, setError] = useState(false);
-  const [message, setMessage] = useState("");
-  const [tokenData, setTokenData] = useState({
-    name: "",
-    description: "",
-    imageCid: "",
-    tokenCid: "",
-    metadaCid: "",
-  });
+import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
 
-  const [transaction, setTransaction] = useState<any>({
-    hash: "",
-    value: "",
-    block: "",
-  });
-  const [packet, setPacket] = useState({ proof: "", packet: "" });
-  const [user, setUser] = useState({ key: "", height: "" });
-  const [showQr, setShowQr] = useState(false);
-  // atoms
-  const [address, setAddress] = useRecoilState(addressState);
-  const setErrorModal = useSetRecoilState(errorState);
-  // const DIDcid = useRecoilValue(DidState)
-  // hooks
-  const router = useRouter();
-  const provider: any = useProvider();
-  if (provider) {
-    Ancon = new AnconProtocol(
-      provider,
-      address,
-      Web3.utils.keccak256("tensta"),
-      apiEndpoint
-    );
-    Ancon.initialize();
-  }
+function Create() {
+ // web3
+ let Ancon: AnconProtocol;
+ const apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
+ // state
+ const [step, setStep] = useState(0);
+ const [waitStep, setWaitStep] = useState(false);
+ const [localImage, setLocalImage] = useState<any | null>(null);
+ const [image, setImage] = useState<any | null>(null);
+ const [error, setError] = useState(false);
+ const [message, setMessage] = useState("");
+ const [tokenData, setTokenData] = useState({
+   name: "",
+   description: "",
+   imageCid: "",
+   tokenCid: "",
+   metadaCid: "",
+ });
+
+ const [transaction, setTransaction] = useState<any>({
+   hash: "",
+   value: "",
+   block: "",
+ });
+ const [packet, setPacket] = useState({ proof: "", packet: "" });
+ const [user, setUser] = useState({ key: "", height: "" });
+ const [showQr, setShowQr] = useState(false);
+ // atoms
+ const [address, setAddress] = useRecoilState(addressState);
+ const setErrorModal = useSetRecoilState(errorState);
+ // const DIDcid = useRecoilValue(DidState)
+ // hooks
+ const router = useRouter();
+ const provider: any = useProvider();
+ if (provider) {
+   Ancon = new AnconProtocol(
+     provider,
+     address,
+     Web3.utils.keccak256("tensta"),
+     apiEndpoint
+   );
+   Ancon.initialize();
+ }
   const clickInput = () => document.getElementById("nft-img").click();
 
   //step 0 //
@@ -291,7 +293,7 @@ function Create() {
   };
 
   return (
-    <main className="bg-gray-50 relative h-screen w-full mb-4">
+    <main className="bg-gray-50 relative h-screen w-full mb-4 dark:bg-red-800">
       <Header />
 
       <div className="flex justify-center items-center md:mt-18 mt-8 w-full">
@@ -386,22 +388,23 @@ function Create() {
                   value={tokenData.name}
                 ></input>
               </div>
-
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  Description
-                </a>
-                <input
-                  id="TITLE"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTokenData({
-                      ...tokenData,
-                      description: e.target.value,
-                    });
-                  }}
-                  value={tokenData.description}
-                ></input>
+              <div className="flex justify-center items-center">
+                <div className="flex-col flex mt-6 md:w-2/3">
+                  <a className="text-gray-600 text-sm font-bold">
+                    Description
+                  </a>
+                  <input
+                    id="TITLE"
+                    className="bg-gray-100 rounded-sm h-10 pl-2"
+                    onChange={(e) => {
+                      setTokenData({
+                        ...tokenData,
+                        description: e.target.value,
+                      });
+                    }}
+                    value={tokenData.description}
+                  ></input>
+                </div>
               </div>
               <div className="flex justify-center items-center mt-6">
                 <p

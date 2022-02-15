@@ -461,7 +461,6 @@ export default class AnconProtocol {
       this.xdvnftAdress,
       this.signer
     );
-
     await sleep(7000);
 
     const did = await this.getDidTransaction();
