@@ -30,48 +30,49 @@ export function sleep(ms: any) {
 import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
 
 function Create() {
- // web3
- let Ancon: AnconProtocol;
- const apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
- // state
- const [step, setStep] = useState(0);
- const [waitStep, setWaitStep] = useState(false);
- const [localImage, setLocalImage] = useState<any | null>(null);
- const [image, setImage] = useState<any | null>(null);
- const [error, setError] = useState(false);
- const [message, setMessage] = useState("");
- const [tokenData, setTokenData] = useState({
-   name: "",
-   description: "",
-   imageCid: "",
-   tokenCid: "",
-   metadaCid: "",
- });
+  // web3
+  let Ancon: AnconProtocol;
+  const apiEndpoint: string = process.env
+    .NEXT_PUBLIC_API_CALL as string;
+  // state
+  const [step, setStep] = useState(0);
+  const [waitStep, setWaitStep] = useState(false);
+  const [localImage, setLocalImage] = useState<any | null>(null);
+  const [image, setImage] = useState<any | null>(null);
+  const [error, setError] = useState(false);
+  const [message, setMessage] = useState("");
+  const [tokenData, setTokenData] = useState({
+    name: "",
+    description: "",
+    imageCid: "",
+    tokenCid: "",
+    metadaCid: "",
+  });
 
- const [transaction, setTransaction] = useState<any>({
-   hash: "",
-   value: "",
-   block: "",
- });
- const [packet, setPacket] = useState({ proof: "", packet: "" });
- const [user, setUser] = useState({ key: "", height: "" });
- const [showQr, setShowQr] = useState(false);
- // atoms
- const [address, setAddress] = useRecoilState(addressState);
- const setErrorModal = useSetRecoilState(errorState);
- // const DIDcid = useRecoilValue(DidState)
- // hooks
- const router = useRouter();
- const provider: any = useProvider();
- if (provider) {
-   Ancon = new AnconProtocol(
-     provider,
-     address,
-     Web3.utils.keccak256("tensta"),
-     apiEndpoint
-   );
-   Ancon.initialize();
- }
+  const [transaction, setTransaction] = useState<any>({
+    hash: "",
+    value: "",
+    block: "",
+  });
+  const [packet, setPacket] = useState({ proof: "", packet: "" });
+  const [user, setUser] = useState({ key: "", height: "" });
+  const [showQr, setShowQr] = useState(false);
+  // atoms
+  const [address, setAddress] = useRecoilState(addressState);
+  const setErrorModal = useSetRecoilState(errorState);
+  // const DIDcid = useRecoilValue(DidState)
+  // hooks
+  const router = useRouter();
+  const provider: any = useProvider();
+  if (provider) {
+    Ancon = new AnconProtocol(
+      provider,
+      address,
+      Web3.utils.keccak256("tensta"),
+      apiEndpoint
+    );
+    Ancon.initialize();
+  }
   const clickInput = () => document.getElementById("nft-img").click();
 
   //step 0 //
@@ -103,7 +104,6 @@ function Create() {
       } else {
         // upload the file
         const imageCid = await Ancon.uploadFile([image]);
-        console.log(imageCid);
         return imageCid;
       }
     } catch (error) {
@@ -152,7 +152,7 @@ function Create() {
         "Creating Metadata, please wait this process can up to 30 minutes. Don't close this page"
       );
       setStep(2);
-      setWaitStep(true);
+      
       // creates the metadata in ancon protocol
       const PostRequest = async () => {
         const metadata = await Ancon.postProof(
@@ -164,7 +164,6 @@ function Create() {
         }
 
         const metadataCid = metadata.contentCid;
-        console.log(metadata);
         // show the modal
         setErrorModal(["Waiting for wallet action......"]);
 
@@ -202,7 +201,7 @@ function Create() {
           "dagjson",
           requestOptions2
         );
-        console.log(proof);
+        console.log(proof)
         // save the keys
         setUser({ key: proof.proofKey, height: proof.proofHeight });
         setPacket({ ...packet, packet: hexdata });
@@ -213,12 +212,13 @@ function Create() {
           metadaCid: metadata.contentCid,
         });
         console.log("wait for the event");
+        setWaitStep(true);
         let eventWaiter = await Ancon.getPastEvents();
         console.log("event", eventWaiter);
 
         setMessage("Minting NFT...");
         setWaitStep(false);
-        setStep(3);
+        // setStep(3);
       };
       PostRequest();
     } catch (error) {
@@ -347,19 +347,19 @@ function Create() {
                   className="pb-3 mt-4 flex justify-center"
                   onClick={() =>
                     navigator.clipboard.writeText(
-                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
+                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
                     )
                   }
                 >
                   <QRCode
-                    value={`${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`}
+                    value={`${process.env.NEXT_PUBLIC_env}/mint?address=${address}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`}
                     size={150}
                   />
                 </div>
                 <p
                   onClick={() =>
                     navigator.clipboard.writeText(
-                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&height=${user.height}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
+                      `${process.env.NEXT_PUBLIC_env}/mint?address=${address}&cid=${tokenData.tokenCid}&hexdata=${packet.packet}&user=${user.key}`
                     )
                   }
                   className="text-blue-600 underline cursor-pointer active:text-blue-800 active:scale-105 select-none transform transition-all duration-150"
@@ -372,21 +372,23 @@ function Create() {
           )}
           {step == 0 ? (
             <div className="flex-col flex mt-3 w-full">
-              <div className="flex-col flex mt-3">
-                <a className="text-gray-600 text-sm font-bold">
-                  NFT Name
-                </a>
-                <input
-                  type="text"
-                  className="bg-gray-100 rounded-sm h-10 pl-2"
-                  onChange={(e) => {
-                    setTokenData({
-                      ...tokenData,
-                      name: e.target.value,
-                    });
-                  }}
-                  value={tokenData.name}
-                ></input>
+              <div className="flex justify-center items-center">
+                <div className="flex-col flex mt-6 md:w-2/3">
+                  <a className="text-gray-600 text-sm font-bold">
+                    NFT Name
+                  </a>
+                  <input
+                    type="text"
+                    className="bg-gray-100 rounded-sm h-10 pl-2"
+                    onChange={(e) => {
+                      setTokenData({
+                        ...tokenData,
+                        name: e.target.value,
+                      });
+                    }}
+                    value={tokenData.name}
+                  ></input>
+                </div>
               </div>
               <div className="flex justify-center items-center">
                 <div className="flex-col flex mt-6 md:w-2/3">

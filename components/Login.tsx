@@ -34,7 +34,6 @@ function Login() {
       case 97:
         Network = "Binance testnet";
         break;
-
       case 42:
         Network = "Kovan testnet";
         break;

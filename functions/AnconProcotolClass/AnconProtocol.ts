@@ -249,7 +249,6 @@ export default class AnconProtocol {
         break;
       default:
         const dag = await this.fetchDag(cid);
-        console.log("dag", dag);
         if (dag.cid == "error") {
           result = {
             proofCid: cid,
@@ -296,6 +295,7 @@ export default class AnconProtocol {
       `${this.anconEndpoint}dagjson/${id}/`
     );
     const response = await rawResponse.json();
+    console.log('response', response)
     if (response.error != "cid too short") {
       const cid = await Object?.values(response.contentHash)[0];
       return {
@@ -631,7 +631,7 @@ export default class AnconProtocol {
     // prepare user proof
     const userProof = await this.getProof(did.key, version);
 
-    
+    console.log('here')
 
     const anconSigner = AnconProtocol__factory.connect(
       this.anconAddress,

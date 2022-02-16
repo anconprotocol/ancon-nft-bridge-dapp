@@ -1,4 +1,5 @@
 import { BadgeCheckIcon, XCircleIcon } from "@heroicons/react/solid";
+import { recover, recoverPublicKey } from "eth-crypto";
 import { ethers } from "ethers";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
@@ -11,7 +12,10 @@ import { errorState } from "../atoms/errorAtom";
 import Header from "../components/Header";
 import AnconProtocol from "../functions/AnconProcotolClass/AnconProtocol";
 import useProvider from "../hooks/useProvider";
-import { AnconProtocol__factory } from "../types/ethers-contracts";
+import {
+  AnconProtocol__factory,
+  XDVNFT__factory,
+} from "../types/ethers-contracts";
 
 function Mint() {
   let ancon: AnconProtocol;
@@ -23,17 +27,16 @@ function Mint() {
     image: "",
     root: "",
   });
-  const [transaction, setTransaction] = useState(
-    ""
-  );
+  const [showQr, setShowQr] = useState(false);
+  const [transaction, setTransaction] = useState("");
   const [show, setShow] = useState("able");
+  const [loading, setLoading] = useState(false);
   const [mintProperties, setMintProperties] = useState({
     hexdata: "",
     userKey: "",
   });
   const router = useRouter();
-  const { address, height, cid, hexdata, user, step }: any =
-    router.query;
+  const { address, cid, hexdata, user }: any = router.query;
   // console.log(router.query)
   const provider = useProvider();
   // console.log(router.query)
@@ -58,7 +61,7 @@ function Mint() {
       );
       const data = await rawData.json();
       data["root"] = await await Object?.values(data.root)[0];
-      // setMetadata({ ...data });
+      setMetadata({ ...data });
     }
   };
 
@@ -68,7 +71,7 @@ function Mint() {
 
   const verify = async () => {
     // const did = await Ancon.getDidTransaction();
-
+    setLoading(true);
     try {
       const rawSignature = await fetch(
         `https://tensta.did.pa/v0/dag/${cid}/`
@@ -78,12 +81,13 @@ function Mint() {
       const rawData = await fetch(
         `https://tensta.did.pa/v0/dag/${cid}/contentHash`
       );
+
       const data = await rawData.json();
+      console.log("trash", trashData);
       setMintProperties({
         ...mintProperties,
         userKey: trashData.key,
       });
-      console.log(data, trashData);
       // struct the data in order
       const destructuredData = {
         name: data.name,
@@ -93,21 +97,35 @@ function Mint() {
         sources: data.sources,
       };
 
-      const digest = ethers.utils.arrayify(
-        ethers.utils.toUtf8Bytes(JSON.stringify(destructuredData))
+      const digest = ethers.utils.hexlify(
+        ethers.utils.hashMessage(JSON.stringify(destructuredData))
       );
 
       // verify the message
+      console.log(trashData.digest);
+      console.log(
+        "[signature]",
+        ethers.utils.splitSignature(signature)
+      );
 
-      const verify = ethers.utils.verifyMessage(digest, signature);
+      const verify = ethers.utils.recoverAddress(
+        digest,
+        signature
+      );
+      console.log("verify", verify);
       if (verify == addressToCheck) {
+        console.log("trying");
         try {
           // checking hashes
           const verifyProof = await ancon.verifyProofs(user);
-
+          console.log(verifyProof, "verify");
           if (verifyProof) {
             setShow("owner");
-          } else setShow("not");
+            setLoading(false);
+          } else {
+            setShow("not");
+            setLoading(false);
+          }
         } catch (error) {
           console.log("error", error);
           setShow("not");
@@ -132,6 +150,7 @@ function Mint() {
       console.log(mint);
       await mint?.wait(2);
       setTransaction(mint?.hash as string);
+      setShowQr(true);
       setShow("minted");
     } catch (error) {
       console.log(error);
@@ -150,7 +169,7 @@ function Mint() {
           ) : (
             <div>
               <h1 className="font-bold text-xl pb-2">
-                Metadata Info
+                {show === "minted" ? "Token Minted" : "Metadata Info"}
               </h1>
               <div className="space-y-4">
                 {/* owner */}
@@ -201,6 +220,15 @@ function Mint() {
               </div>
             </div>
           )}
+          {loading && (
+            <div className="flex flex-col items-center">
+              <div
+                className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-dashed border-primary-500 mt-4"
+                role="status"
+              ></div>
+              <p className="animate-pulse mt-4"></p>
+            </div>
+          )}
 
           {/* icon */}
           {(show === "owner" || show === "minted") && (
@@ -210,6 +238,27 @@ function Mint() {
                 {show === "owner"
                   ? "Metadata created, The token is ready to be minted."
                   : "Token Minted!"}
+              </p>
+            </div>
+          )}
+          {showQr && (
+            <div
+              className="pb-3 mt-4 flex items-center justify-center  relative group active:scale-95 transform"
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  `${process.env.NEXT_PUBLIC_env}/nftView?address=${address}&cid=${cid}`
+                )
+              }
+            >
+              <div className="grid justify-items-center font-light pb-5 cursor-pointer">
+                <QRCode
+                  value={`${process.env.NEXT_PUBLIC_env}/nftView?address=${address}&cid=${cid}`}
+                  size={150}
+                />
+                <p>click here to share verifable url</p>
+              </div>
+              <p className="absolute w-auto p-2 m-2 min-w-max bottom-0 scale-0 group-hover:scale-100 transiton-all font-light">
+                copy
               </p>
             </div>
           )}

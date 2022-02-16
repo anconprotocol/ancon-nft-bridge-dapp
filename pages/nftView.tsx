@@ -23,7 +23,7 @@ function Qrview() {
   const [block, setBlock] = useState(false);
   const router = useRouter();
 
-  const { address, did, cid }: any = router.query;
+  const { address, cid }: any = router.query;
   // console.log(router.query)
   const addressToCheck = useRecoilValue(addressState);
   const setErrorModal = useSetRecoilState(errorState);
@@ -72,7 +72,8 @@ function Qrview() {
       // verify the message
 
       const verify = ethers.utils.verifyMessage(digest, signature);
-      if (verify == addressToCheck) {
+      console.log(verify, address)
+      if (verify == address) {   
         setShow("owner");
         setSignatures(true);
       } else {
