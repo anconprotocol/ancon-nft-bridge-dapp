@@ -34,8 +34,6 @@ function Qrview() {
         `${apiEndpoint}dag/${cid}/contentHash`
       );
       const data = await rawData.json();
-
-      data["root"] = await await Object?.values(data.root)[0];
       setMetadata({ ...data });
     }
   };

@@ -60,7 +60,7 @@ function Mint() {
         `https://tensta.did.pa/v0/dag/${cid}/contentHash`
       );
       const data = await rawData.json();
-      data["root"] = await await Object?.values(data.root)[0];
+      console.log(data)
       setMetadata({ ...data });
     }
   };

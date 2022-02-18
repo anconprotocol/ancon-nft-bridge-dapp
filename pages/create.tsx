@@ -152,7 +152,7 @@ function Create() {
         "Creating Metadata, please wait this process can up to 30 minutes. Don't close this page"
       );
       setStep(2);
-      
+
       // creates the metadata in ancon protocol
       const PostRequest = async () => {
         const metadata = await Ancon.postProof(
@@ -160,8 +160,17 @@ function Create() {
           requestOptions
         );
         if (metadata.contentCid === "error") {
-          throw "error";
+          // setErrorModal([
+          //   "Something went wrong please try again",
+          //   "Try again",
+          //   "/create",
+          //   "Enroll Account",
+          //   "/enroll",
+          // ]);
+          // setStep(0);
+          // return;
         }
+        console.log("metadata", metadata);
 
         const metadataCid = metadata.contentCid;
         // show the modal
@@ -201,7 +210,7 @@ function Create() {
           "dagjson",
           requestOptions2
         );
-        console.log(proof)
+        console.log(proof);
         // save the keys
         setUser({ key: proof.proofKey, height: proof.proofHeight });
         setPacket({ ...packet, packet: hexdata });
@@ -222,7 +231,7 @@ function Create() {
       };
       PostRequest();
     } catch (error) {
-      console.log("error", error);
+      console.log("error2", error);
       setErrorModal([
         "Something went wrong please try again",
         "Try again",

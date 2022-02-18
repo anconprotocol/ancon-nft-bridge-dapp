@@ -295,8 +295,9 @@ export default class AnconProtocol {
       `${this.anconEndpoint}dagjson/${id}/`
     );
     const response = await rawResponse.json();
-    console.log('response', response)
-    if (response.error != "cid too short") {
+    console.log("response", rawResponse);
+    if (rawResponse.status == 200 || rawResponse.status === 201) {
+      console.log("here");
       const cid = await Object?.values(response.contentHash)[0];
       return {
         cid: cid as string,
@@ -304,6 +305,7 @@ export default class AnconProtocol {
         proofHeight: response.height as string,
       };
     }
+    console.log("here2");
     return {
       cid: "error",
       proofKey: "error",
@@ -589,7 +591,6 @@ export default class AnconProtocol {
         method: "post",
         body: body,
       });
-      console.log(ipfsRes);
       ipfsResBody = await ipfsRes.json();
     } catch (error) {
       console.log("confirmation error", error);
@@ -631,7 +632,7 @@ export default class AnconProtocol {
     // prepare user proof
     const userProof = await this.getProof(did.key, version);
 
-    console.log('here')
+    console.log("here");
 
     const anconSigner = AnconProtocol__factory.connect(
       this.anconAddress,
@@ -644,8 +645,8 @@ export default class AnconProtocol {
 
     const spec = await anconSigner.getIavlSpec();
 
-    const hash = await anconReader.getProtocolHeader(this.moniker)
-    console.log('hash', hash, decodedlastHash)
+    const hash = await anconReader.getProtocolHeader(this.moniker);
+
     // veirfy proof
     const verify = [];
     try {
@@ -658,7 +659,6 @@ export default class AnconProtocol {
       );
       if (verifyUser.length === 0) {
         verify.push("user");
-        console.log(verifyUser)
       }
     } catch (error) {
       console.log("error1", error);
@@ -675,7 +675,6 @@ export default class AnconProtocol {
 
       if (verifyPacket.length === 0) {
         verify.push("packet");
-        console.log(verifyPacket)
       }
     } catch (error) {
       console.log("error2", error);
