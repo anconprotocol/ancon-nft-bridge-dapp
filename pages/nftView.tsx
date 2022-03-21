@@ -18,6 +18,7 @@ function Qrview() {
     image: "",
     root: "",
   });
+  
   const [show, setShow] = useState("");
   const [signatures, setSignatures] = useState(false);
   const [block, setBlock] = useState(false);
