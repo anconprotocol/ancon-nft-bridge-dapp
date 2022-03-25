@@ -119,6 +119,7 @@ export default class AnconProtocol {
    * @returns retunrn the to abi Proof
    */
   toAbiProof(proof: any) {
+    console.log('proof', proof)
     proof.key = ethers.utils.hexlify(
       ethers.utils.base64.decode(proof.key)
     );
@@ -279,6 +280,7 @@ export default class AnconProtocol {
    * @returns the to abi proof
    */
   async getProof(key: string, height: string) {
+    console.log('getting proof')
     const rawResult = await fetch(
       `${this.anconEndpoint}proof/${key}?height=${height}`
     );
@@ -319,40 +321,46 @@ export default class AnconProtocol {
    * @param proof the to abi proof
    * @returns the result of the enrollment
    */
-  async enrollL2Account(cid: string, proof: any) {
+  async enrollL2Account(cid: string, proofKey: any) {
     console.log("enrolling to L2");
     // try {
     const anconContractReader = AnconProtocol__factory.connect(
       this.anconAddress,
       this.prov
     );
+    console.log("ancon", anconContractReader);
     const contract2 = AnconProtocol__factory.connect(
       this.anconAddress,
       this.signer
     );
+    console.log("signer", contract2);
 
     // encoded to utf8
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
+    console.log("utf", UTF8_cid);
 
     // get proof
     const getProof = await anconContractReader.getProof(UTF8_cid);
-
+    console.log("getproff", getProof);
     if (getProof !== "0x") {
       return "proof already exist";
     }
 
+    await this.getPastEvents();
     // check the hashes
     const rawLastHash = await fetch(
       `${this.anconEndpoint}proofs/lasthash`
     );
     const lasthash = await rawLastHash.json();
+    const version = lasthash.lastHash.version;
+    console.log(proofKey, version)
+    
 
-    await this.getPastEvents();
-
+    const proof = await this.getProof(proofKey, version);
     // estimate gas
     const gasLimit = await contract2.estimateGas.enrollL2Account(
       this.moniker,
-      proof.key,
+      proofKey,
       UTF8_cid,
       proof
     );
@@ -439,7 +447,7 @@ export default class AnconProtocol {
     let sequence = lasthash.lastHash.version;
 
     let time = Date.now();
-    const maxTime = Date.now() + 350000;
+    const maxTime = Date.now() + 600000;
     let relayHash = "0x";
     while (time < maxTime) {
       try {

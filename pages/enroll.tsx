@@ -161,11 +161,11 @@ function Enroll() {
         //save the cid to state
         setDIDCid(data.contentCid);
 
-        const proof = await Ancon.getProof(
-          data.proofKey,
-          data.proofHeight
-        );
-        console.log("getproff", proof);
+        // const proof = await Ancon.getProof(
+        //   data.proofKey,
+        //   data.proofHeight
+        // );
+        // console.log("getproff", proof);
 
         // enroll to L2
         let enroll;
@@ -176,7 +176,7 @@ function Enroll() {
         setTimeout(async () => {
           enroll = await Ancon.enrollL2Account(
             data.contentCid,
-            proof
+            data.proofKey
           );
           setStep(2);
         }, 30000);
