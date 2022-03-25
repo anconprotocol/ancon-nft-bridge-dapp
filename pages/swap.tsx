@@ -6,7 +6,7 @@ import Header from "../components/Header";
 
 import GetChain from "../functions/GetChain";
 import useProvider from "../hooks/useProvider";
-import { WXDV__factory, XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
+import {  XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
 import Step1 from "../sections/swap/Step1";
 import Step3 from "../sections/swap/Step3";
 import Web3 from "web3";

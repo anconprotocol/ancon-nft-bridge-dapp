@@ -11,7 +11,7 @@ import GetDid from "../functions/GetDid";
 import GetPastEvents from "../functions/GetPastEvents";
 import toAbiProof from "../functions/ToAbiProof";
 import useProvider from "../hooks/useProvider";
-import { AnconProtocol__factory, WXDV__factory, XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
+import { AnconProtocol__factory, XDVNFT, XDVNFT__factory } from "../types/ethers-contracts";
 const AnconToken = require("../contracts/ANCON.sol/ANCON.json");
 export default function Release() {
   // release the token
