@@ -456,7 +456,7 @@ export default class AnconProtocol {
     let sequence = lasthash.lastHash.version;
 
     let time = Date.now();
-    const maxTime = Date.now() + 600000;
+    const maxTime = Date.now() + 1800000;
     let relayHash = "0x";
     while (time < maxTime) {
       try {
