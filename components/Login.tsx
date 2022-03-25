@@ -31,20 +31,23 @@ function Login() {
     Network = await Network.chainId;
     console.log(Network);
     switch (Network) {
-      case 97:
-        Network = "Binance testnet";
-        break;
-      case 42:
-        Network = "Kovan testnet";
-        break;
-      case 80001:
-        Network = "Mumbai testnet";
-        break;
+      // case 97:
+      //   Network = "Binance testnet";
+      //   break;
+      // case 42:
+      //   Network = "Kovan testnet";
+      //   break;
+      // case 80001:
+      //   Network = "Mumbai testnet";
+      //   break;
+      case 56:
+        Network = "Binance Smart Chain"
+        break
       default:
         try {
           const net = await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x61" }],
+            params: [{ chainId: "0x38" }],
           });
           console.log("net", net);
         } catch (switchError: any) {
@@ -55,10 +58,10 @@ function Login() {
                 method: "wallet_addEthereumChain",
                 params: [
                   {
-                    chainId: "0x61",
-                    chainName: "Binance SC testnet",
+                    chainId: "0x38",
+                    chainName: "Binance Smart Chain",
                     rpcUrls: [
-                      "https://data-seed-prebsc-1-s1.binance.org:8545/",
+                      "https://bsc-dataseed.binance.org/",
                     ],
                   },
                 ],
