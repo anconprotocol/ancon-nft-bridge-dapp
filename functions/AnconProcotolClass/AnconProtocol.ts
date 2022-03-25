@@ -77,6 +77,11 @@ export default class AnconProtocol {
         daiAddress = process.env.NEXT_PUBLIC_DAI_mumbai;
         xdvnftAdress = process.env.NEXT_PUBLIC_XDVNFT_mumbai;
         break;
+      case 56:
+        anconAddress = process.env.NEXT_PUBLIC_ANCON_bnb;
+        daiAddress = process.env.NEXT_PUBLIC_ANCON_eth;
+        xdvnftAdress = process.env.NEXT_PUBLIC_ANCON_eth;
+        break;
     }
     this.anconAddress = anconAddress;
     this.daiAddress = daiAddress;
@@ -119,7 +124,6 @@ export default class AnconProtocol {
    * @returns retunrn the to abi Proof
    */
   toAbiProof(proof: any) {
-    console.log('proof', proof)
     proof.key = ethers.utils.hexlify(
       ethers.utils.base64.decode(proof.key)
     );
@@ -175,7 +179,7 @@ export default class AnconProtocol {
     const transaction: any = await this.prov.getTransaction(
       transactionHash
     );
-    console.log("transaction", transaction);
+
     // joins the sig
     const sig = ethers.utils.joinSignature({
       r: transaction.r,
@@ -280,7 +284,7 @@ export default class AnconProtocol {
    * @returns the to abi proof
    */
   async getProof(key: string, height: string) {
-    console.log('getting proof')
+    console.log("getting proof");
     const rawResult = await fetch(
       `${this.anconEndpoint}proof/${key}?height=${height}`
     );
@@ -299,7 +303,6 @@ export default class AnconProtocol {
     const response = await rawResponse.json();
     console.log("response", rawResponse);
     if (rawResponse.status == 200 || rawResponse.status === 201) {
-      console.log("here");
       const cid = await Object?.values(response.contentHash)[0];
       return {
         cid: cid as string,
@@ -307,7 +310,7 @@ export default class AnconProtocol {
         proofHeight: response.height as string,
       };
     }
-    console.log("here2");
+
     return {
       cid: "error",
       proofKey: "error",
@@ -322,26 +325,23 @@ export default class AnconProtocol {
    * @returns the result of the enrollment
    */
   async enrollL2Account(cid: string, proofKey: any) {
-    console.log("enrolling to L2");
     // try {
     const anconContractReader = AnconProtocol__factory.connect(
       this.anconAddress,
       this.prov
     );
-    console.log("ancon", anconContractReader);
+
     const contract2 = AnconProtocol__factory.connect(
       this.anconAddress,
       this.signer
     );
-    console.log("signer", contract2);
 
     // encoded to utf8
     const UTF8_cid = ethers.utils.toUtf8Bytes(cid);
-    console.log("utf", UTF8_cid);
 
     // get proof
     const getProof = await anconContractReader.getProof(UTF8_cid);
-    console.log("getproff", getProof);
+
     if (getProof !== "0x") {
       return "proof already exist";
     }
@@ -353,14 +353,12 @@ export default class AnconProtocol {
     );
     const lasthash = await rawLastHash.json();
     const version = lasthash.lastHash.version;
-    console.log(proofKey, version)
-    
 
     const proof = await this.getProof(proofKey, version);
     // estimate gas
     const gasLimit = await contract2.estimateGas.enrollL2Account(
       this.moniker,
-      proofKey,
+      proof.key,
       UTF8_cid,
       proof
     );
@@ -391,6 +389,17 @@ export default class AnconProtocol {
             gasPrice: "400000000000",
             gasLimit: 900000,
             from: this.address,
+          }
+        );
+        break;
+      case 56:
+        enroll = await contract2.enrollL2Account(
+          this.moniker,
+          proof.key,
+          UTF8_cid,
+          proof,
+          {
+            gasLimit: rate.toString(),
           }
         );
         break;

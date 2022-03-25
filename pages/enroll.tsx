@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import {  useRouter } from "next/router";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { addressState } from "../atoms/addressAtom";
@@ -14,9 +14,8 @@ import Web3 from "web3";
 
 function Enroll() {
   // web3
-  let signer: ethers.providers.JsonRpcSigner;
-  let network: ethers.providers.Network;
-  const apiEndpoint: string = process.env.NEXT_PUBLIC_API_CALL as string;
+  const apiEndpoint: string = process.env
+    .NEXT_PUBLIC_API_CALL as string;
   // state
   const [step, setStep] = useState(0);
   const [error, setError] = useState(false);
@@ -43,11 +42,12 @@ function Enroll() {
   const getDomainName = async () => {
     const prov = new ethers.providers.Web3Provider(provider);
 
+    const apiUrl = String(process.env.NEXT_PUBLIC_API_CALL)
     // get the network
     const network = await prov.getNetwork();
 
     const rawResponse = await fetch(
-      `https://tensta.did.pa/v0/did/did:ethr:${network.name}:${address}`
+      `${apiUrl}did/did:ethr:${network.name}:${address}`
     );
     const response = await rawResponse.json();
     console.log("response", rawResponse);
@@ -78,18 +78,18 @@ function Enroll() {
           provider
         );
 
+        const moniker: any = process.env.NEXT_PUBLIC_MONIKER;
         Ancon = new AnconProtocol(
           provider,
           address,
-          Web3.utils.keccak256("tensta"),
+          Web3.utils.keccak256(moniker),
           apiEndpoint
         );
         await Ancon.initialize();
-        
+
         // the pubkey from ancon
         const getPubKey = await Ancon.getPubKey(trans);
 
-        
         const pubkey = getPubKey[2];
         const recoveredAddress = getPubKey[0];
         const sentAddress = getPubKey[1];
@@ -97,9 +97,9 @@ function Enroll() {
         setMessage("Validating proof...");
         // if the address are equal procced to get the proof
         if (recoveredAddress === sentAddress) {
-        setTimeout(() => {
-          handleProof(pubkey);
-        }, 2000);
+          setTimeout(() => {
+            handleProof(pubkey);
+          }, 2000);
         } else {
           setError(true);
         }
@@ -150,7 +150,7 @@ function Enroll() {
     try {
       const getDid = async () => {
         // post the data
-        console.log('posting')
+        console.log("posting");
         const data = await Ancon.postProof(
           "did",
           requestOptions,
